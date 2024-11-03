@@ -1,0 +1,1 @@
+[{"AgentId":1,"NeuronWeights":[[0.1,0.2],[0.3,0.4]],"Fitness":5,"BrainType":3,"AgentType":0,"Bias":1,"P":0.5,"TotalWeights":0},{"AgentId":2,"NeuronWeights":[[0.1,0.2],[0.3,0.4]],"Fitness":5.2,"BrainType":3,"AgentType":0,"Bias":2,"P":0.6,"TotalWeights":4},{"AgentId":3,"NeuronWeights":[[0.1,0.2],[1.3,0.4]],"Fitness":5,"BrainType":3,"AgentType":0,"Bias":1,"P":0.5,"TotalWeights":0}]
