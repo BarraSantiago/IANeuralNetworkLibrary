@@ -1,4 +1,8 @@
-﻿namespace NeuralNetworkLib.Utils
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace NeuralNetworkLib.Utils
 {
     public abstract class SimGraph<TNodeType, TCoordinateNode, TCoordinateType>
         where TNodeType : INode<TCoordinateType>
@@ -10,7 +14,7 @@
         public static float CellSize;
         public TCoordinateNode[,] CoordNodes;
         public readonly TNodeType[,] NodesType;
-        private ParallelOptions parallelOptions = new()
+        private ParallelOptions parallelOptions = new ParallelOptions()
         {
             MaxDegreeOfParallelism = 32
         };

@@ -1,0 +1,15 @@
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\bin\Debug\net7.0\Tester.exe
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\bin\Debug\net7.0\Tester.deps.json
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\bin\Debug\net7.0\Tester.runtimeconfig.json
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\bin\Debug\net7.0\Tester.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\bin\Debug\net7.0\Tester.pdb
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.csproj.AssemblyReference.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.AssemblyInfoInputs.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.AssemblyInfo.cs
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.csproj.CoreCompileInputs.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\refint\Tester.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.pdb
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.genruntimeconfig.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\ref\Tester.dll

@@ -1,4 +1,8 @@
-﻿using System.Text.Json;
+﻿
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace NeuralNetworkLib.DataManagement
 {
@@ -33,7 +37,7 @@ namespace NeuralNetworkLib.DataManagement
 
                 string fileName = $"gen{generation}{group.Key.BrainType}.json";
                 string filePath = Path.Combine(agentTypeDirectory, fileName);
-                string json = JsonSerializer.Serialize(group.Value);
+                string json = "";// JsonSerializer.Serialize(group.Value);
                 File.WriteAllText(filePath, json);
             }
         }
@@ -58,8 +62,8 @@ namespace NeuralNetworkLib.DataManagement
                 var brainType = Enum.Parse<BrainType>(Path.GetFileName(latestFile).Split('n')[1].Split('.')[0]);
 
                 var json = File.ReadAllText(latestFile);
-                var agentData = JsonSerializer.Deserialize<List<AgentNeuronData>>(json);
-                agentsData[agentType][brainType] = agentData;
+                //var agentData = JsonSerializer.Deserialize<List<AgentNeuronData>>(json);
+                //agentsData[agentType][brainType] = agentData;
             }
 
             return agentsData;

@@ -1,3 +1,4 @@
+using System;
 using NeuralNetworkLib.Agents.States;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
@@ -153,9 +154,9 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         private void Attack()
         {
-            if (target is not Herbivore<IVector, ITransform<IVector>> herbivore ||
-                !Approximatly(herbivore.Transform.position, transform.position, 0.2f)) return;
-
+            if (target.agentType != SimAgentTypes.Herbivore ||
+                !Approximatly(target.Transform.position, transform.position, 0.2f)) return;
+            Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)target;
             herbivore.Hp--;
             HasAttacked = true;
             DamageDealt++;

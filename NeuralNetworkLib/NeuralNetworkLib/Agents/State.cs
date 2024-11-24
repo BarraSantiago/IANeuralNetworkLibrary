@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace NeuralNetworkLib.Agents
 {
-    public record struct BehaviourActions
+    public struct BehaviourActions
     {
         public void AddMainThreadBehaviours(int executionOrder, Action behaviour)
         {

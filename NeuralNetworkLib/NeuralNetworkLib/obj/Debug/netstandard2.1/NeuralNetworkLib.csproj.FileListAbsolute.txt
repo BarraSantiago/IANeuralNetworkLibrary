@@ -1,0 +1,10 @@
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\netstandard2.1\NeuralNetworkLib.csproj.AssemblyReference.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\netstandard2.1\NeuralNetworkLib.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\netstandard2.1\NeuralNetworkLib.AssemblyInfoInputs.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\netstandard2.1\NeuralNetworkLib.AssemblyInfo.cs
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\netstandard2.1\NeuralNetworkLib.csproj.CoreCompileInputs.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\bin\Debug\netstandard2.1\NeuralNetworkLib.deps.json
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\bin\Debug\netstandard2.1\NeuralNetworkLib.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\bin\Debug\netstandard2.1\NeuralNetworkLib.pdb
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\netstandard2.1\NeuralNetworkLib.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\netstandard2.1\NeuralNetworkLib.pdb

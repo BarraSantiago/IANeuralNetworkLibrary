@@ -1,4 +1,8 @@
-﻿namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
 {
     public class Genome
     {
@@ -33,8 +37,8 @@
     public class GeneticAlgorithm
     {
         private static readonly Random random = new Random();
-        private readonly List<Genome> newPopulation = new();
-        private readonly List<Genome> population = new();
+        private readonly List<Genome> newPopulation = new List<Genome>();
+        private readonly List<Genome> population = new List<Genome>();
 
         private readonly int eliteCount;
         private readonly float mutationChance;

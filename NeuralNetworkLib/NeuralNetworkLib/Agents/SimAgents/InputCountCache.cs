@@ -1,11 +1,12 @@
 ﻿using System.Collections.Concurrent;
+using System.Linq;
 using NeuralNetworkLib.DataManagement;
 
 namespace NeuralNetworkLib.Agents.SimAgents
 {
     public static class InputCountCache
     {
-        private static readonly ConcurrentDictionary<(SimAgentTypes, BrainType), int> cache = new();
+        private static readonly ConcurrentDictionary<(SimAgentTypes, BrainType), int> cache = new ConcurrentDictionary<(SimAgentTypes, BrainType), int>();
 
         public static int GetInputCount(SimAgentTypes agentType, BrainType brainType)
         {

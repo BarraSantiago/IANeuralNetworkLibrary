@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.DataManagement
+﻿using System.Collections.Generic;
+
+namespace NeuralNetworkLib.DataManagement
 {
     public class AgentNeuronData
     {

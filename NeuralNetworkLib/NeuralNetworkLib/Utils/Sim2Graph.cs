@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.Utils
+﻿using System.Threading.Tasks;
+
+namespace NeuralNetworkLib.Utils
 {
     public class Sim2Graph : SimGraph<SimNode<IVector>, SimCoordinate, IVector>
     {

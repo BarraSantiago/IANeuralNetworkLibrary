@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
+﻿using System;
+
+namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
 {
     public class Neuron
     {

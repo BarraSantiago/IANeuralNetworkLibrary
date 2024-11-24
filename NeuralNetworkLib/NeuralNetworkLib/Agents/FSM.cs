@@ -1,4 +1,8 @@
-﻿namespace NeuralNetworkLib.Agents
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace NeuralNetworkLib.Agents
 {
     public class FSM<EnumState, EnumFlag>
         where EnumState : Enum
@@ -12,7 +16,7 @@
         private readonly (int destinationInState, Action onTransition)[,] _transitions;
         private int _currentState;
 
-        private readonly ParallelOptions parallelOptions = new()
+        private readonly ParallelOptions parallelOptions = new ParallelOptions()
         {
             MaxDegreeOfParallelism = 32
         };

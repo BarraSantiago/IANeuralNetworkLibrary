@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
+﻿using System.Collections.Generic;
+using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 
 namespace NeuralNetworkLib.NeuralNetDirectory.ECS
@@ -7,6 +8,6 @@ namespace NeuralNetworkLib.NeuralNetDirectory.ECS
     {
         public float[] Fitness;
         public float[] FitnessMod;
-        public List<List<NeuronLayer>> Layers { get; set; } = new();
+        public List<List<NeuronLayer>> Layers { get; set; } = new List<List<NeuronLayer>>();
     }
 }

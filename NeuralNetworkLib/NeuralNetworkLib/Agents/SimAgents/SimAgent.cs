@@ -1,4 +1,6 @@
-﻿using NeuralNetworkLib.Agents.States;
+﻿using System;
+using System.Collections.Generic;
+using NeuralNetworkLib.Agents.States;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 using NeuralNetworkLib.Utils;
@@ -69,7 +71,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         Genome[] genomes;
         public float[][] output;
         public float[][] input;
-        public Dictionary<int, BrainType> brainTypes = new();
+        public Dictionary<int, BrainType> brainTypes = new Dictionary<int, BrainType>();
 
         public SimAgent()
         {

@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.Utils
+﻿using System;
+
+namespace NeuralNetworkLib.Utils
 {
     public class ITransform<TVector>
         where TVector : IVector, IEquatable<TVector>

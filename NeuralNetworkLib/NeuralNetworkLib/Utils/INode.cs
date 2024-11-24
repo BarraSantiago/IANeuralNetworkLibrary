@@ -1,4 +1,7 @@
-﻿namespace NeuralNetworkLib.Utils
+﻿using System;
+using System.Collections.Generic;
+
+namespace NeuralNetworkLib.Utils
 {
     public enum SimNodeType
     {

@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace NeuralNetworkLib.NeuralNetDirectory.ECS.Patron
 {
     public class EcsEntity

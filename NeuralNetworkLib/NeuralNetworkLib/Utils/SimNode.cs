@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.Utils;
+﻿using System;
+using System.Collections.Generic;
+using NeuralNetworkLib.Utils;
 
 public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>
     where Coordinate : IEquatable<Coordinate>
@@ -17,6 +19,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     {
         coordinate = coord;
     }
+
     public SimNodeType NodeType { get; set; }
 
     public bool Equals(INode<Coordinate> other)

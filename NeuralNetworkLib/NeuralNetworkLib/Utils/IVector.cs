@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.Utils
+﻿using System;
+
+namespace NeuralNetworkLib.Utils
 {
     public interface IVector : IEquatable<IVector>
     {

@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.Utils
+﻿using System;
+
+namespace NeuralNetworkLib.Utils
 {
     public interface ICoordinate<T> : IEquatable<T>
         where T : IEquatable<T>

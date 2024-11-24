@@ -1,10 +1,13 @@
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NeuralNetworkLib.NeuralNetDirectory.ECS.Patron
 {
     public static class ECSManager
     {
-        private static readonly ParallelOptions parallelOptions = new() { MaxDegreeOfParallelism = 32 };
+        private static readonly ParallelOptions parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 32 };
 
         private static ConcurrentDictionary<uint, EcsEntity> entities;
         private static ConcurrentDictionary<Type, ConcurrentDictionary<uint, EcsComponent>> components;

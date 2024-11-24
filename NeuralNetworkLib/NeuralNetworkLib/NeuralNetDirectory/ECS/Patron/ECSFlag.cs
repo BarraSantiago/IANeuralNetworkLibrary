@@ -1,3 +1,5 @@
+using System;
+
 namespace NeuralNetworkLib.NeuralNetDirectory.ECS.Patron
 {
     [Flags]

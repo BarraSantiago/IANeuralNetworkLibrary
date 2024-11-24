@@ -1,4 +1,6 @@
-﻿using NeuralNetworkLib.Agents.SimAgents;
+﻿using System;
+using System.Collections.Generic;
+using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.ECS;
 using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
@@ -144,7 +146,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float reward = 10;
             const float punishment = 0.90f;
 
-            if(_agents[agentId] is not Carnivore<IVector, ITransform<IVector>> agent) return;
+            Carnivore<TVector, TTransform> agent = (Carnivore<TVector, TTransform>)_agents[agentId];
             SimAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
                 DataContainer.GetNearestEntity(SimAgentTypes.Herbivore, agent.Transform.position);
 

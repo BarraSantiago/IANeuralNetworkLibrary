@@ -1,12 +1,14 @@
-﻿using Flocking;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Flocking;
 using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.SimAgents;
+using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.DataManagement;
-
-using SimAgentType = SimAgent<IVector, ITransform<IVector>>;
-using SimBoid = Boid<IVector, ITransform<IVector>>;
+using SimAgentType = NeuralNetworkLib.Agents.SimAgents.SimAgent<NeuralNetworkLib.Utils.IVector, NeuralNetworkLib.Utils.ITransform<NeuralNetworkLib.Utils.IVector>>;
+using SimBoid = NeuralNetworkLib.Agents.Flocking.Boid<NeuralNetworkLib.Utils.IVector, NeuralNetworkLib.Utils.ITransform<NeuralNetworkLib.Utils.IVector>>;
 
 public struct NeuronInputCount
 {
@@ -20,14 +22,14 @@ public struct NeuronInputCount
 public class DataContainer
 {
     public static Sim2Graph graph;
-    private static Dictionary<uint, SimAgentType> _agents = new();
-    private static Dictionary<uint, Scavenger<IVector, ITransform<IVector>>> _scavengers = new();
-    public static FlockingManager flockingManager = new();
+    private static Dictionary<uint, SimAgentType> _agents = new Dictionary<uint, SimAgentType>();
+    private static Dictionary<uint, Scavenger<IVector, ITransform<IVector>>> _scavengers = new Dictionary<uint, Scavenger<IVector, ITransform<IVector>>>();
+    public static FlockingManager flockingManager = new FlockingManager();
     public static Dictionary<(BrainType, SimAgentTypes), NeuronInputCount> InputCountCache;
     public static NeuronInputCount[] inputCounts;
-    private static Dictionary<int, BrainType> herbBrainTypes = new();
-    private static Dictionary<int, BrainType> scavBrainTypes = new();
-    private static Dictionary<int, BrainType> carnBrainTypes = new();
+    private static Dictionary<int, BrainType> herbBrainTypes = new  Dictionary<int, BrainType>();
+    private static Dictionary<int, BrainType> scavBrainTypes = new  Dictionary<int, BrainType>();
+    private static Dictionary<int, BrainType> carnBrainTypes = new  Dictionary<int, BrainType>();
 
     public static INode<IVector> CoordinateToNode(IVector coordinate)
     {
