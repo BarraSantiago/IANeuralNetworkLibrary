@@ -13,6 +13,7 @@
         "packagesPath": "C:\\Users\\barra\\.nuget\\packages\\",
         "outputPath": "C:\\Users\\barra\\Documents\\Image Campus\\Image Campus 2024\\Inteligencia Artifical\\IANeuralDirectoryLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\obj\\",
         "projectStyle": "PackageReference",
+        "UsingMicrosoftNETSdk": false,
         "configFilePaths": [
           "C:\\Users\\barra\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"

@@ -4,7 +4,7 @@ namespace NeuralNetworkLib.DataManagement
 {
     public enum SimAgentTypes
     {
-        Carnivorous,
+        Carnivore,
         Herbivore,
         Scavenger
     }

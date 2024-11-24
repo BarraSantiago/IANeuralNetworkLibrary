@@ -1,0 +1,12 @@
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\bin\Debug\net7.0\NeuralNetworkLib.deps.json
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\bin\Debug\net7.0\NeuralNetworkLib.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\bin\Debug\net7.0\NeuralNetworkLib.pdb
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\NeuralNetworkLib.csproj.AssemblyReference.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\NeuralNetworkLib.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\NeuralNetworkLib.AssemblyInfoInputs.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\NeuralNetworkLib.AssemblyInfo.cs
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\NeuralNetworkLib.csproj.CoreCompileInputs.cache
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\NeuralNetworkLib.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\refint\NeuralNetworkLib.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\NeuralNetworkLib.pdb
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\NeuralNetworkLib\obj\Debug\net7.0\ref\NeuralNetworkLib.dll
