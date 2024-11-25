@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Flocking;
-using NeuralNetworkLib.Agents.Flocking;
+﻿using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.SimAgents;
-using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
-using SimAgentType = NeuralNetworkLib.Agents.SimAgents.SimAgent<NeuralNetworkLib.Utils.IVector, NeuralNetworkLib.Utils.ITransform<NeuralNetworkLib.Utils.IVector>>;
-using SimBoid = NeuralNetworkLib.Agents.Flocking.Boid<NeuralNetworkLib.Utils.IVector, NeuralNetworkLib.Utils.ITransform<NeuralNetworkLib.Utils.IVector>>;
+namespace NeuralNetworkLib.DataManagement;
 
 public struct NeuronInputCount
 {
@@ -22,14 +16,14 @@ public struct NeuronInputCount
 public class DataContainer
 {
     public static Sim2Graph graph;
-    private static Dictionary<uint, SimAgentType> _agents = new Dictionary<uint, SimAgentType>();
+    private static Dictionary<uint, SimAgent<IVector, ITransform<IVector>>> _agents = new Dictionary<uint, SimAgent<IVector, ITransform<IVector>>>();
     private static Dictionary<uint, Scavenger<IVector, ITransform<IVector>>> _scavengers = new Dictionary<uint, Scavenger<IVector, ITransform<IVector>>>();
     public static FlockingManager flockingManager = new FlockingManager();
     public static Dictionary<(BrainType, SimAgentTypes), NeuronInputCount> InputCountCache;
     public static NeuronInputCount[] inputCounts;
-    private static Dictionary<int, BrainType> herbBrainTypes = new  Dictionary<int, BrainType>();
-    private static Dictionary<int, BrainType> scavBrainTypes = new  Dictionary<int, BrainType>();
-    private static Dictionary<int, BrainType> carnBrainTypes = new  Dictionary<int, BrainType>();
+    public static Dictionary<int, BrainType> herbBrainTypes = new  Dictionary<int, BrainType>();
+    public static Dictionary<int, BrainType> scavBrainTypes = new  Dictionary<int, BrainType>();
+    public static Dictionary<int, BrainType> carnBrainTypes = new  Dictionary<int, BrainType>();
 
     public static INode<IVector> CoordinateToNode(IVector coordinate)
     {
@@ -63,12 +57,12 @@ public class DataContainer
         return nearestNode;
     }
 
-    public static SimAgentType GetNearestEntity(SimAgentTypes entityType, IVector position)
+    public static SimAgent<IVector, ITransform<IVector>> GetNearestEntity(SimAgentTypes entityType, IVector position)
     {
-        SimAgentType nearestAgent = null;
+        SimAgent<IVector, ITransform<IVector>> nearestAgent = null;
         float minDistance = float.MaxValue;
 
-        foreach (SimAgentType agent in _agents.Values)
+        foreach (SimAgent<IVector, ITransform<IVector>> agent in _agents.Values)
         {
             if (agent.agentType != entityType) continue;
 
@@ -83,7 +77,7 @@ public class DataContainer
         return nearestAgent;
     }
 
-    public static List<ITransform<IVector>> GetBoidsInsideRadius(SimBoid boid)
+    public static List<ITransform<IVector>> GetBoidsInsideRadius(Boid<IVector, ITransform<IVector>> boid)
     {
         List<ITransform<IVector>> insideRadiusBoids = new List<ITransform<IVector>>();
         float detectionRadiusSquared = boid.detectionRadious * boid.detectionRadious;

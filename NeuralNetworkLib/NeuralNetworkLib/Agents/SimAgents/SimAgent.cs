@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using NeuralNetworkLib.Agents.States;
+﻿using NeuralNetworkLib.Agents.States;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 using NeuralNetworkLib.Utils;

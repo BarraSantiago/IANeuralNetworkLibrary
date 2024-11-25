@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace NeuralNetworkLib.Utils
+﻿namespace NeuralNetworkLib.Utils
 {
     public abstract class SimGraph<TNodeType, TCoordinateNode, TCoordinateType>
         where TNodeType : INode<TCoordinateType>

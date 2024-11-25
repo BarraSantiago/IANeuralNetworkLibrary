@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
+﻿namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
 {
     public class Neuron
     {
@@ -11,7 +9,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
         {
             weights = new float[(int)weightsCount];
 
-            Random random = new System.Random();
+            Random random = new Random();
             for (int i = 0; i < weights.Length; i++) weights[i] = (float)(random.NextDouble() * 2.0 - 1.0);
             this.bias = bias;
         }

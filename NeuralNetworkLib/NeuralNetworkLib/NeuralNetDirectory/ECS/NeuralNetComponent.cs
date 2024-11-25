@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
+﻿using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 
 namespace NeuralNetworkLib.NeuralNetDirectory.ECS

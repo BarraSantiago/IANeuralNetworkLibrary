@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using NeuralNetworkLib.Agents.SimAgents;
+﻿using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.ECS;
 using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
@@ -230,7 +228,8 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float safeDistance = 0.7f;
 
             Scavenger<TVector, TTransform> agent = (Scavenger<TVector, TTransform>)_agents[agentId];
-            IVector targetPosition = agent.GetTarget(SimNodeType.Carrion).GetCoordinate();
+            // CHANGE THIS agent.GetTarget(SimNodeType.Carrion).GetCoordinate(); TO TARGET VARIABLE
+            IVector targetPosition = agent.target;
 
             bool isMaintainingDistance = true;
             bool isAligningWithFlock = true;
@@ -341,6 +340,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             IVector currentPosition = agent.Transform.position;
             IVector agentDirection = agent.Transform.forward;
 
+            if (targetPosition == null || currentPosition == null) return false;
             IVector directionToTarget = (targetPosition - currentPosition).Normalized();
             if(directionToTarget == null || agentDirection == null) return false;
             float dotProduct = IVector.Dot(directionToTarget, agentDirection);

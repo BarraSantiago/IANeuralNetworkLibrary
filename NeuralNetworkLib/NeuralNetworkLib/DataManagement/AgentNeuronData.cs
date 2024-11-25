@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace NeuralNetworkLib.DataManagement
+﻿namespace NeuralNetworkLib.DataManagement
 {
     public class AgentNeuronData
     {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace NeuralNetworkLib.Utils
+﻿namespace NeuralNetworkLib.Utils
 {
     public interface IVector : IEquatable<IVector>
     {
@@ -32,30 +30,53 @@ namespace NeuralNetworkLib.Utils
 
         public static MyVector operator -(IVector a, IVector b)
         {
+            if (a == null || b == null)
+            {
+                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
+            }
+
             return new MyVector(a.X - b.X, a.Y - b.Y);
         }
 
         public static MyVector operator /(IVector a, int integer)
         {
+            if (a == null)
+            {
+                throw new ArgumentNullException(nameof(a), "IVector instance is null");
+            }
+
             return new MyVector(a.X / integer, a.Y / integer);
         }
-        
+
         public static bool operator <(IVector a, IVector b)
         {
-            return (a.X < b.X  && a.Y < b.Y );
+            if (a == null || b == null)
+            {
+                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
+            }
+            
+            return (a.X < b.X && a.Y < b.Y);
         }
 
         public static bool operator >(IVector a, IVector b)
         {
+            if (a == null || b == null)
+            {
+                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
+            }
             return (a.X > b.X && a.Y > b.Y);
         }
 
         static float Dot(IVector a, IVector b)
         {
-            if(a == null || b == null) return 0;
+            if (a == null || b == null)
+            {
+                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
+            }
+            if (a == null || b == null) return 0;
             return a.X * b.X + a.Y * b.Y;
         }
-        
+
         public float Magnitude()
         {
             return (float)Math.Sqrt(X * X + Y * Y);

@@ -1,5 +1,4 @@
-﻿using System;
-using NeuralNetworkLib.Agents.SimAgents;
+﻿using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.States
@@ -31,6 +30,7 @@ namespace NeuralNetworkLib.Agents.States
         }
         private bool Approximatly(IVector coord1, IVector coord2, float tolerance)
         {
+            if (coord1 == null || coord2 == null) return false;
             return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;
         }
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)

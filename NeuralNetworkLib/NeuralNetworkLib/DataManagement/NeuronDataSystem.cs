@@ -1,10 +1,4 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-namespace NeuralNetworkLib.DataManagement
+﻿namespace NeuralNetworkLib.DataManagement
 {
     public enum SimAgentTypes
     {

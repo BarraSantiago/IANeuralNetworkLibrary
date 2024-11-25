@@ -1,5 +1,4 @@
-﻿using System;
-using NeuralNetworkLib.Agents.SimAgents;
+﻿using NeuralNetworkLib.Agents.SimAgents;
 
 namespace NeuralNetworkLib.Agents.States
 {

@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Utils;
 
-namespace Flocking
+namespace NeuralNetworkLib.Agents.Flocking
 {
     using SimBoid = Boid<IVector, ITransform<IVector>>;
 

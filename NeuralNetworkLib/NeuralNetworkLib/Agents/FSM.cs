@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace NeuralNetworkLib.Agents
+﻿namespace NeuralNetworkLib.Agents
 {
     public class FSM<EnumState, EnumFlag>
         where EnumState : Enum

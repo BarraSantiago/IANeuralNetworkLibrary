@@ -1,4 +1,3 @@
-using System;
 using NeuralNetworkLib.Agents.States;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;

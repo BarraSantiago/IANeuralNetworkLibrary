@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
+﻿namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
 {
     public class Genome
     {

@@ -1,4 +1,3 @@
-using System;
 using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.States;
 using NeuralNetworkLib.DataManagement;
@@ -10,9 +9,9 @@ namespace NeuralNetworkLib.Agents.SimAgents
         where TTransform : ITransform<IVector>, new()
         where TVector : IVector, IEquatable<TVector>
     {
-
         public Boid<IVector, ITransform<IVector>> boid = new Boid<IVector, ITransform<IVector>>();
         private IVector targetPosition = new MyVector();
+        public IVector target;
 
         public override TTransform Transform
         {
@@ -186,7 +185,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             foreach (var neighbor in boid.NearBoids)
             {
                 if (neighbor?.position == null) continue;
-                
+
                 averagePosition += neighbor.position;
                 neighborCount++;
             }
@@ -233,9 +232,9 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         private IVector GetTargetPosition()
         {
-            INode<IVector> targetNode = GetTarget(foodTarget);
+            target = GetTarget(foodTarget)?.GetCoordinate();
 
-            return targetNode == null ? MyVector.NoTarget() : targetNode.GetCoordinate();
+            return target == null ? MyVector.NoTarget() : target;
         }
 
         protected override void Eat()
@@ -323,13 +322,31 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         protected override object[] EatTickParameters()
         {
-            object[] objects =
+            object[] objects = new object[4];
+            objects[0] = Transform.position;
+
+            if (targetPosition.X >= 0 && targetPosition.X < DataContainer.graph.NodesType.GetLength(0) &&
+                targetPosition.Y >= 0 && targetPosition.Y < DataContainer.graph.NodesType.GetLength(1))
             {
-                Transform.position,
-                DataContainer.graph.NodesType[(int)targetPosition.X, (int)targetPosition.Y],
-                OnEat,
-                output[GetBrainTypeKeyByValue(BrainType.Eat)]
-            };
+                objects[1] = DataContainer.graph.NodesType[(int)targetPosition.X, (int)targetPosition.Y];
+            }
+            else
+            {
+                objects[1] = null;
+            }
+
+            objects[2] = OnEat;
+
+            int brainKey = GetBrainTypeKeyByValue(BrainType.Eat);
+            if (brainKey >= 0 && brainKey < output.Length)
+            {
+                objects[3] = output[brainKey];
+            }
+            else
+            {
+                objects[3] = null;
+            }
+
             return objects;
         }
 
