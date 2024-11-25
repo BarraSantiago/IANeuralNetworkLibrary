@@ -56,7 +56,8 @@ namespace NeuralNetworkLib.Agents.Flocking
 
         private IVector EnsureValidVector(IVector vector)
         {
-            if (float.IsNaN(vector.X) || float.IsNaN(vector.Y))
+            
+            if (vector == null || float.IsNaN(vector.X) || float.IsNaN(vector.Y))
             {
                 return MyVector.zero();
             }

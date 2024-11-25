@@ -13,3 +13,5 @@ C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\I
 C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.pdb
 C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.genruntimeconfig.cache
 C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\ref\Tester.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\bin\Debug\net7.0\Newtonsoft.Json.dll
+C:\Users\barra\Documents\Image Campus\Image Campus 2024\Inteligencia Artifical\IANeuralDirectoryLibrary\NeuralNetworkLib\Tester\obj\Debug\net7.0\Tester.csproj.CopyComplete

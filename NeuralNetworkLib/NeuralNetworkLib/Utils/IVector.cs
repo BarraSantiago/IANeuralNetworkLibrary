@@ -33,7 +33,7 @@
         {
             if (a == null || b == null)
             {
-                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
+                return MyVector.zero();
             }
 
             return new MyVector(a.X - b.X, a.Y - b.Y);
@@ -43,7 +43,7 @@
         {
             if (a == null)
             {
-                throw new ArgumentNullException(nameof(a), "IVector instance is null");
+                return MyVector.zero();
             }
 
             return new MyVector(a.X / integer, a.Y / integer);
@@ -53,7 +53,7 @@
         {
             if (a == null || b == null)
             {
-                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
+                return false;
             }
             
             return (a.X < b.X && a.Y < b.Y);
@@ -63,17 +63,13 @@
         {
             if (a == null || b == null)
             {
-                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
+                return false;
             }
             return (a.X > b.X && a.Y > b.Y);
         }
 
         static float Dot(IVector a, IVector b)
         {
-            if (a == null || b == null)
-            {
-                throw new ArgumentNullException(a == null ? nameof(a) : nameof(b), "IVector instance is null");
-            }
             if (a == null || b == null) return 0;
             return a.X * b.X + a.Y * b.Y;
         }
