@@ -246,24 +246,24 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
             if (!DataContainer.graph.IsWithinGraphBorders(currentPos))
             {
-                if (currentPos.X < DataContainer.graph.MinX)
+                if (currentPos.X <= DataContainer.graph.MinX)
                 {
                     currentPos.X = DataContainer.graph.MaxX - 1;
                 }
 
-                if (currentPos.X > DataContainer.graph.MaxX)
+                if (currentPos.X >= DataContainer.graph.MaxX)
                 {
-                    currentPos.X = DataContainer.graph.MinX;
+                    currentPos.X = DataContainer.graph.MinX + 1;
                 }
 
-                if (currentPos.Y < DataContainer.graph.MinY)
+                if (currentPos.Y <= DataContainer.graph.MinY)
                 {
                     currentPos.Y = DataContainer.graph.MaxY - 1;
                 }
 
-                if (currentPos.Y > DataContainer.graph.MaxY)
+                if (currentPos.Y >= DataContainer.graph.MaxY)
                 {
-                    currentPos.Y = DataContainer.graph.MinY;
+                    currentPos.Y = DataContainer.graph.MinY + 1;
                 }
             }
 

@@ -16,8 +16,8 @@ public struct NeuronInputCount
 public class DataContainer
 {
     public static Sim2Graph graph;
-    private static Dictionary<uint, SimAgent<IVector, ITransform<IVector>>> _agents = new Dictionary<uint, SimAgent<IVector, ITransform<IVector>>>();
-    private static Dictionary<uint, Scavenger<IVector, ITransform<IVector>>> _scavengers = new Dictionary<uint, Scavenger<IVector, ITransform<IVector>>>();
+    public static Dictionary<uint, SimAgent<IVector, ITransform<IVector>>> Agents = new Dictionary<uint, SimAgent<IVector, ITransform<IVector>>>();
+    public static Dictionary<uint, Scavenger<IVector, ITransform<IVector>>> Scavengers = new Dictionary<uint, Scavenger<IVector, ITransform<IVector>>>();
     public static FlockingManager flockingManager = new FlockingManager();
     public static Dictionary<(BrainType, SimAgentTypes), NeuronInputCount> InputCountCache;
     public static NeuronInputCount[] inputCounts;
@@ -62,7 +62,7 @@ public class DataContainer
         SimAgent<IVector, ITransform<IVector>> nearestAgent = null;
         float minDistance = float.MaxValue;
 
-        foreach (SimAgent<IVector, ITransform<IVector>> agent in _agents.Values)
+        foreach (SimAgent<IVector, ITransform<IVector>> agent in Agents.Values)
         {
             if (agent.agentType != entityType) continue;
 
@@ -83,7 +83,7 @@ public class DataContainer
         float detectionRadiusSquared = boid.detectionRadious * boid.detectionRadious;
         IVector boidPosition = boid.transform.position;
 
-        Parallel.ForEach(_scavengers.Values, scavenger =>
+        Parallel.ForEach(Scavengers.Values, scavenger =>
         {
             if (scavenger?.Transform.position == null || boid == scavenger.boid)
             {

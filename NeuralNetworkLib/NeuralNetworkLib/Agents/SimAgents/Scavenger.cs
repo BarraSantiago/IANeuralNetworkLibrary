@@ -129,19 +129,19 @@ namespace NeuralNetworkLib.Agents.SimAgents
             }
 
             IVector avgNeighborPosition = GetAverageNeighborPosition();
-            input[brain][4] = avgNeighborPosition.X;
-            input[brain][5] = avgNeighborPosition.Y;
+            input[brain][4] = float.IsNaN(avgNeighborPosition.X) ? NoTarget : avgNeighborPosition.X;
+            input[brain][5] = float.IsNaN(avgNeighborPosition.Y) ? NoTarget : avgNeighborPosition.Y;
 
             IVector avgNeighborVelocity = GetAverageNeighborDirection();
-            input[brain][6] = avgNeighborVelocity.X;
-            input[brain][7] = avgNeighborVelocity.Y;
+            input[brain][6] = float.IsNaN(avgNeighborVelocity.X) ? NoTarget : avgNeighborVelocity.X;
+            input[brain][7] = float.IsNaN(avgNeighborVelocity.Y) ? NoTarget : avgNeighborVelocity.Y;
 
             IVector separationVector = GetSeparationVector();
-            input[brain][8] = separationVector.X;
-            input[brain][9] = separationVector.Y;
+            input[brain][8] = float.IsNaN(separationVector.X) ? NoTarget : separationVector.X;
+            input[brain][9] = float.IsNaN(separationVector.Y) ? NoTarget : separationVector.Y;
 
             IVector alignmentVector = GetAlignmentVector();
-            if (alignmentVector == null)
+            if (alignmentVector == null || float.IsNaN(alignmentVector.X) || float.IsNaN(alignmentVector.Y))
             {
                 input[brain][10] = NoTarget;
                 input[brain][11] = NoTarget;
@@ -153,7 +153,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             }
 
             IVector cohesionVector = GetCohesionVector();
-            if (cohesionVector == null)
+            if (cohesionVector == null || float.IsNaN(cohesionVector.X) || float.IsNaN(cohesionVector.Y))
             {
                 input[brain][12] = NoTarget;
                 input[brain][13] = NoTarget;
@@ -239,7 +239,10 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         protected override void Eat()
         {
+            if (!DataContainer.graph.IsWithinGraphBorders(targetPosition)) return;
+
             SimNode<IVector> node = DataContainer.graph.NodesType[(int)targetPosition.X, (int)targetPosition.Y];
+
             lock (node)
             {
                 if (node.Food <= 0) return;
@@ -252,34 +255,50 @@ namespace NeuralNetworkLib.Agents.SimAgents
         protected override void Move()
         {
             int index = GetBrainTypeKeyByValue(BrainType.ScavengerMovement);
-            if (output[index].Length != 2) return;
+            int flockIndex = GetBrainTypeKeyByValue(BrainType.Flocking);
+
+            if (output[index].Length != 2 || output[flockIndex].Length != 4) return;
+
+            boid.alignmentOffset = output[flockIndex][0];
+            boid.cohesionOffset = output[flockIndex][1];
+            boid.separationOffset = output[flockIndex][2];
+            boid.directionOffset = output[flockIndex][3];
+
+            var flocking = boid.ACS();
+
+            if (float.IsNaN(flocking.X) || float.IsNaN(flocking.Y))
+            {
+                flocking = MyVector.zero();
+            }
+
             float leftForce = output[index][0];
             float rightForce = output[index][1];
 
             MyVector currentPos = new MyVector(Transform.position.X, Transform.position.Y);
             currentPos.X += rightForce * movement;
             currentPos.Y += leftForce * movement;
+            currentPos += flocking;
 
             if (!DataContainer.graph.IsWithinGraphBorders(currentPos))
             {
-                if (currentPos.X < DataContainer.graph.MinX)
+                if (currentPos.X <= DataContainer.graph.MinX)
                 {
-                    currentPos.X = DataContainer.graph.MaxX;
+                    currentPos.X = DataContainer.graph.MaxX - 1;
                 }
 
-                if (currentPos.X > DataContainer.graph.MaxX)
+                if (currentPos.X >= DataContainer.graph.MaxX)
                 {
-                    currentPos.X = DataContainer.graph.MinX;
+                    currentPos.X = DataContainer.graph.MinX + 1;
                 }
 
-                if (currentPos.Y < DataContainer.graph.MinY)
+                if (currentPos.Y <= DataContainer.graph.MinY)
                 {
-                    currentPos.Y = DataContainer.graph.MaxY;
+                    currentPos.Y = DataContainer.graph.MaxY - 1;
                 }
 
-                if (currentPos.Y > DataContainer.graph.MaxY)
+                if (currentPos.Y >= DataContainer.graph.MaxY)
                 {
-                    currentPos.Y = DataContainer.graph.MinY;
+                    currentPos.Y = DataContainer.graph.MinY + 1;
                 }
             }
 

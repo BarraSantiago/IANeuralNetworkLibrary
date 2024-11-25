@@ -13,8 +13,9 @@
             return (float)Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
         }
 
-        public static MyVector operator *(IVector vector, float scalar)
+        public static MyVector operator *(IVector? vector, float scalar)
         {
+            if (vector == null) return new MyVector();
             return new MyVector(vector.X * scalar, vector.Y * scalar);
         }
 
@@ -110,7 +111,7 @@
         public IVector Normalized()
         {
             float magnitude = (float)Math.Sqrt(X * X + Y * Y);
-            return new MyVector(X / magnitude, Y / magnitude);
+            return magnitude == 0 ? new MyVector(0, 0) : new MyVector(X / magnitude, Y / magnitude);
         }
 
         public float Distance(IVector other)
@@ -138,8 +139,9 @@
             return new MyVector(a.X / scalar, a.Y / scalar);
         }
 
-        public static MyVector operator *(MyVector a, float scalar)
+        public static MyVector operator *(MyVector? a, float scalar)
         {
+            if (a == null) return zero();
             return new MyVector(a.X * scalar, a.Y * scalar);
         }
 

@@ -4,7 +4,7 @@ namespace NeuralNetworkLib.Agents.Flocking
 {
     using SimBoid = Boid<IVector, ITransform<IVector>>;
 
-    public class FlockingManager 
+    public class FlockingManager
     {
         public IVector Alignment(SimBoid boid)
         {
@@ -17,7 +17,7 @@ namespace NeuralNetworkLib.Agents.Flocking
             }
 
             avg /= boid.NearBoids.Count;
-            return avg.Normalized();
+            return EnsureValidVector(avg.Normalized());
         }
 
         public IVector Cohesion(SimBoid boid)
@@ -32,7 +32,7 @@ namespace NeuralNetworkLib.Agents.Flocking
 
             avg /= boid.NearBoids.Count;
             MyVector average = avg - boid.transform.position;
-            return (average).Normalized();
+            return EnsureValidVector(average.Normalized());
         }
 
         public IVector Separation(SimBoid boid)
@@ -46,12 +46,22 @@ namespace NeuralNetworkLib.Agents.Flocking
             }
 
             avg /= boid.NearBoids.Count;
-            return avg.Normalized();
+            return EnsureValidVector(avg.Normalized());
         }
 
         public IVector Direction(SimBoid boid)
         {
-            return boid.transform.forward;
+            return EnsureValidVector(boid.transform.forward);
+        }
+
+        private IVector EnsureValidVector(IVector vector)
+        {
+            if (float.IsNaN(vector.X) || float.IsNaN(vector.Y))
+            {
+                return MyVector.zero();
+            }
+
+            return vector;
         }
     }
 }
