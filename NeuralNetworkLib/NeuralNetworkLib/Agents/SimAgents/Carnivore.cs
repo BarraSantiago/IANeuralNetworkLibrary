@@ -15,7 +15,6 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public int DamageDealt { get; private set; } = 0;
 
         private SimAgent<IVector, ITransform<IVector>> target;
-        public override bool CanReproduce => true;
 
         public override void Init()
         {

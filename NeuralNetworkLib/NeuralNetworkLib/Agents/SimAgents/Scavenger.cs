@@ -12,8 +12,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public Boid<IVector, ITransform<IVector>> boid = new Boid<IVector, ITransform<IVector>>();
         private IVector targetPosition = new MyVector();
         public IVector target;
-        public override bool CanReproduce => true;
-
+    
         public override TTransform Transform
         {
             get => transform;
