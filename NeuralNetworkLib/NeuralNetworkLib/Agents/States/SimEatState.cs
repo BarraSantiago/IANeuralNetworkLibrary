@@ -30,11 +30,17 @@ namespace NeuralNetworkLib.Agents.States
             behaviours.SetTransitionBehaviour(() =>
             {
                 if (currentNode == null || currentNode.Food <= 0 || foodTarget != currentNode.NodeType)
+                {
                     OnFlag?.Invoke(Flags.OnSearchFood);
+                    return;
+                }
 
                 if (outputBrain1 != null && outputBrain1[0] > 0.5f && currentNode != null &&
                     currentNode.NodeType == foodTarget)
+                {
                     OnFlag?.Invoke(Flags.OnEat);
+                    return;
+                }
 
                 SpecialAction(outputBrain2);
             });
@@ -94,10 +100,17 @@ namespace NeuralNetworkLib.Agents.States
             behaviours.SetTransitionBehaviour(() =>
             {
                 if (foodNode == null || foodNode.Food <= 0 || distanceToFood.Magnitude() > maxDistance.Magnitude())
+                {
                     OnFlag?.Invoke(Flags.OnSearchFood);
+                    return;
+                }
 
                 if (outputBrain1 != null && outputBrain1[0] > 0.5f && currentPos != null &&
-                    distanceToFood.Magnitude() <= maxDistance.Magnitude()) OnFlag?.Invoke(Flags.OnEat);
+                    distanceToFood.Magnitude() <= maxDistance.Magnitude())
+                {
+                    OnFlag?.Invoke(Flags.OnEat);
+                    return;
+                }
             });
 
             return behaviours;
@@ -108,7 +121,11 @@ namespace NeuralNetworkLib.Agents.States
     {
         protected override void SpecialAction(float[] outputs)
         {
-            if (outputs != null && outputs[0] > 0.5f) OnFlag?.Invoke(Flags.OnEscape);
+            if (outputs != null && outputs[0] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnEscape);
+                return;
+            }
         }
     }
 
@@ -141,12 +158,14 @@ namespace NeuralNetworkLib.Agents.States
                 if (currentNode == null || currentNode.Food <= 0 || foodTarget != currentNode.NodeType)
                 {
                     OnFlag?.Invoke(Flags.OnSearchFood);
+                    return;
                 }
 
                 if (outputBrain1 != null && outputBrain1[0] > 0.5f && currentNode != null &&
                     currentNode.NodeType == foodTarget)
                 {
                     OnFlag?.Invoke(Flags.OnEat);
+                    return;
                 }
 
                 SpecialAction(outputBrain2);
@@ -157,7 +176,11 @@ namespace NeuralNetworkLib.Agents.States
 
         protected void SpecialAction(float[] outputs)
         {
-            if (outputs != null && outputs[0] > 0.5f) OnFlag?.Invoke(Flags.OnAttack);
+            if (outputs != null && outputs[0] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnAttack);
+                return;
+            }
         }
 
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)

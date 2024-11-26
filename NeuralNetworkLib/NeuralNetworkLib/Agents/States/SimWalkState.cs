@@ -17,18 +17,14 @@ namespace NeuralNetworkLib.Agents.States
 
             behaviours.AddMultiThreadableBehaviours(0, () => { onMove?.Invoke(); });
 
-            //behaviours.AddMainThreadBehaviours(1, () =>
-            //{
-            //    if (currentNode == null) return;
-
-            //    position.position = new Vector3(currentNode.GetCoordinate().x, currentNode.GetCoordinate().y);
-            //});
-
             behaviours.SetTransitionBehaviour(() =>
             {
                 if(outputBrain1 == null || outputBrain2 == null) return;
                 if (outputBrain1[0] > 0.5f && currentNode != null && currentNode.NodeType == foodTarget)
+                {
                     OnFlag?.Invoke(Flags.OnEat);
+                    return;
+                }
                 SpecialAction(outputBrain2);
             });
             return behaviours;
@@ -73,7 +69,10 @@ namespace NeuralNetworkLib.Agents.States
             {
                 if(outputBrain1 == null) return;
                 if (outputBrain1[0] > 0.5f && distanceToFood.Magnitude() < maxDistance.Magnitude())
+                {
                     OnFlag?.Invoke(Flags.OnEat);
+                    return;
+                }
             });
             return behaviours;
         }
@@ -93,19 +92,20 @@ namespace NeuralNetworkLib.Agents.States
 
             behaviours.AddMultiThreadableBehaviours(0, () => { onMove?.Invoke(); });
 
-            //behaviours.AddMainThreadBehaviours(1, () =>
-            //{
-            //    if (currentNode == null) return;
-
-            //    position.position = new Vector3(currentNode.GetCoordinate().x, currentNode.GetCoordinate().y);
-            //});
-
             behaviours.SetTransitionBehaviour(() =>
             {
                 if(outputBrain1 == null || outputBrain2 == null) return;
                 if (outputBrain1[0] > 0.5f && currentNode != null && currentNode.NodeType == foodTarget)
+                {
                     OnFlag?.Invoke(Flags.OnEat);
-                if (outputBrain2[0] > 0.5f) OnFlag?.Invoke(Flags.OnEscape);
+                    return;
+                }
+
+                if (outputBrain2[0] > 0.5f)
+                {
+                    OnFlag?.Invoke(Flags.OnEscape);
+                    return;
+                }
             });
             return behaviours;
         }

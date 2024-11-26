@@ -30,9 +30,23 @@ namespace NeuralNetworkLib.Agents.States
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if(outputBrain1[0] > 0.5f) OnFlag?.Invoke(Flags.OnEat);
-                if(outputBrain2[0] > 0.5f) OnFlag?.Invoke(Flags.OnAttack);
-                if(outputBrain3 > 0.5f) OnFlag?.Invoke(Flags.OnSearchFood);
+                if (outputBrain1[0] > 0.5f)
+                {
+                    OnFlag?.Invoke(Flags.OnEat);
+                    return;
+                }
+
+                if (outputBrain2[0] > 0.5f)
+                {
+                    OnFlag?.Invoke(Flags.OnAttack);
+                    return;
+                }
+
+                if (outputBrain3 > 0.5f)
+                {
+                    OnFlag?.Invoke(Flags.OnSearchFood);
+                    return;
+                }
             });
             return behaviours;
         }

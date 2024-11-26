@@ -23,8 +23,17 @@ namespace NeuralNetworkLib.Agents.States
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (outputBrain1[0] > 0.5f && currentNode != null && currentNode.NodeType == foodTarget) OnFlag?.Invoke(Flags.OnEat);
-                if (outputBrain2[0] > 0.5f && Approximatly(target, currentNode?.GetCoordinate(), 0.2f)) OnFlag?.Invoke(Flags.OnAttack);
+                if (outputBrain1[0] > 0.5f && currentNode != null && currentNode.NodeType == foodTarget)
+                {
+                    OnFlag?.Invoke(Flags.OnEat);
+                    return;
+                }
+
+                if (outputBrain2[0] > 0.5f && Approximatly(target, currentNode?.GetCoordinate(), 0.2f))
+                {
+                    OnFlag?.Invoke(Flags.OnAttack);
+                    return;
+                }
             });
             return behaviours;
         }
