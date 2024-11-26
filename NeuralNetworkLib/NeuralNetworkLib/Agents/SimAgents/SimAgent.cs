@@ -53,7 +53,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         public static Action<SimAgent<TVector, TTransform>> OnDeath;
         protected TTransform transform = new TTransform();
-        public bool CanReproduce => Food >= FoodLimit;
+        public virtual bool CanReproduce => Food >= FoodLimit;
         public SimAgentTypes agentType { get; set; }
         public FSM<Behaviours, Flags> Fsm;
 

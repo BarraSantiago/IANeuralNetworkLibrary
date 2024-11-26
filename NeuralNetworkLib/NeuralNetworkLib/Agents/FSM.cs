@@ -79,7 +79,7 @@
             _transitions[_currentState, Convert.ToInt32(flag)].onTransition?.Invoke();
 
             int currentState = _transitions[_currentState, Convert.ToInt32(flag)].destinationInState;
-            if(currentState == UNNASIGNED_TRANSITION) return;
+            if (currentState == UNNASIGNED_TRANSITION) return;
             _currentState = _transitions[_currentState, Convert.ToInt32(flag)].destinationInState;
 
             ExecuteBehaviour(GetCurrentStateOnEnterBehaviours);
@@ -147,7 +147,8 @@
 
         public int GetMultiThreadCount()
         {
-            return GetCurrentStateTickBehaviours.MultiThreadablesBehaviour.Count;
+            BehaviourActions currentStateBehaviours = GetCurrentStateTickBehaviours;
+            return currentStateBehaviours.MultiThreadablesBehaviour == null ? 0 : currentStateBehaviours.MultiThreadablesBehaviour.Count;
         }
 
         public void ExecuteMainThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)

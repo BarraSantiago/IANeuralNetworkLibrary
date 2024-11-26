@@ -67,7 +67,7 @@ namespace NeuralNetworkLib.Agents.States
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
-            if (parameters == null || parameters.Length < 4)
+            if (parameters == null || parameters.Length != 5)
             {
                 throw new ArgumentException("Invalid parameters for GetTickBehaviour");
             }
@@ -76,7 +76,8 @@ namespace NeuralNetworkLib.Agents.States
             IVector currentPos = parameters[0] as IVector;
             SimNode<IVector> foodNode = parameters[1] as SimNode<IVector>;
             Action onEat = parameters[2] as Action;
-            float[] outputBrain1 = parameters[3] as float[];
+            Action onMove = parameters[3] as Action;
+            float[] outputBrain1 = parameters[4] as float[];
 
             IVector distanceToFood = new MyVector();
             IVector maxDistance = new MyVector(4, 4);
@@ -85,6 +86,7 @@ namespace NeuralNetworkLib.Agents.States
             {
                 if (currentPos == null || foodNode == null || onEat == null || outputBrain1 == null)
                 {
+                    onMove?.Invoke();
                     return;
                 }
 
@@ -92,9 +94,14 @@ namespace NeuralNetworkLib.Agents.States
                     foodNode.GetCoordinate().Y - currentPos.Y);
 
                 if (foodNode.Food <= 0 || foodNode.NodeType != SimNodeType.Carrion ||
-                    distanceToFood.Magnitude() > maxDistance.Magnitude()) return;
+                    distanceToFood.Magnitude() > maxDistance.Magnitude())
+                {
+                    onMove?.Invoke();
+                    return;
+                }
 
                 onEat?.Invoke();
+                onMove?.Invoke();
             });
 
             behaviours.SetTransitionBehaviour(() =>
@@ -139,7 +146,7 @@ namespace NeuralNetworkLib.Agents.States
             }
 
             BehaviourActions behaviours = new BehaviourActions();
-            SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
+            if (parameters[0] is not SimNode<IVector> currentNode) return default;
             SimNodeType foodTarget = (SimNodeType)parameters[1];
             Action onEat = parameters[2] as Action;
             float[] outputBrain1 = parameters[3] as float[];
