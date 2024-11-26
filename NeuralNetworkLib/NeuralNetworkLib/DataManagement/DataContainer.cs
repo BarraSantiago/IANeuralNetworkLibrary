@@ -113,7 +113,7 @@ public class DataContainer
             _ => throw new ArgumentException("Invalid agent type")
         };
 
-        foreach (var kvp in brainTypes)
+        foreach (KeyValuePair<int, BrainType> kvp in brainTypes)
         {
             if (kvp.Value == value)
             {

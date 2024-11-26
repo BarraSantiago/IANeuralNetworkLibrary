@@ -2,7 +2,7 @@
 {
     public class Genome
     {
-        private static readonly Random random = new Random();
+        private static readonly ThreadLocal<Random> random = new ThreadLocal<Random>(() => new Random());
 
         public float fitness;
         public float[] genome;
@@ -18,7 +18,7 @@
             genome = new float[genesCount];
 
             for (int j = 0; j < genesCount; j++)
-                genome[j] = (float)(random.NextDouble() * 2.0 - 1.0);
+                genome[j] = (float)(random.Value.NextDouble() * 2.0 - 1.0);
 
             fitness = 0;
         }
@@ -32,7 +32,7 @@
 
     public class GeneticAlgorithm
     {
-        private static readonly Random random = new Random();
+        private static readonly ThreadLocal<Random> random = new ThreadLocal<Random>(() => new Random());
         private readonly List<Genome> newPopulation = new List<Genome>();
         private readonly List<Genome> population = new List<Genome>();
 
@@ -115,19 +115,19 @@
             child1.genome = new float[mom.genome.Length];
             child2.genome = new float[mom.genome.Length];
 
-            int pivot = random.Next(0, mom.genome.Length);
+            int pivot = random.Value.Next(0, mom.genome.Length);
 
             for (int i = 0; i < pivot; i++)
             {
                 child1.genome[i] = mom.genome[i];
 
                 if (ShouldMutate())
-                    child1.genome[i] += (float)(random.NextDouble() * 2.0 - 1.0);
+                    child1.genome[i] += (float)(random.Value.NextDouble() * 2.0 - 1.0);
 
                 child2.genome[i] = dad.genome[i];
 
                 if (ShouldMutate())
-                    child2.genome[i] += (float)(random.NextDouble() * 2.0 - 1.0);
+                    child2.genome[i] += (float)(random.Value.NextDouble() * 2.0 - 1.0);
             }
 
             for (int i = pivot; i < mom.genome.Length; i++)
@@ -135,12 +135,12 @@
                 child2.genome[i] = mom.genome[i];
 
                 if (ShouldMutate())
-                    child2.genome[i] += (float)(random.NextDouble() * 2.0 - 1.0);
+                    child2.genome[i] += (float)(random.Value.NextDouble() * 2.0 - 1.0);
 
                 child1.genome[i] = dad.genome[i];
 
                 if (ShouldMutate())
-                    child1.genome[i] += (float)(random.NextDouble() * 2.0 - 1.0);
+                    child1.genome[i] += (float)(random.Value.NextDouble() * 2.0 - 1.0);
             }
         }
 
@@ -151,8 +151,8 @@
 
             int chromosomeLength = parent1Chromosome.Count - 1;
 
-            int locus = random.Next(0, chromosomeLength);
-            int length = random.Next(0, (int)Math.Ceiling(chromosomeLength / 2.0));
+            int locus = random.Value.Next(0, chromosomeLength);
+            int length = random.Value.Next(0, (int)Math.Ceiling(chromosomeLength / 2.0));
 
             List<float> child1Chromosome = new List<float>();
             List<float> child2Chromosome = new List<float>();
@@ -195,7 +195,7 @@
 
             for (int i = 0; i < parent1.genome.Length; i++)
             {
-                if (random.NextDouble() < selectionChance)
+                if (random.Value.NextDouble() < selectionChance)
                 {
                     child1.genome[i] = parent1.genome[i];
                     child2.genome[i] = parent2.genome[i];
@@ -210,7 +210,7 @@
 
         private bool ShouldMutate()
         {
-            return random.NextDouble() < mutationChance;
+            return random.Value.NextDouble() < mutationChance;
         }
 
         private static int HandleComparison(Genome x, Genome y)
@@ -220,7 +220,7 @@
 
         public Genome RouletteSelection()
         {
-            float rnd = (float)(random.NextDouble() * Math.Max(totalFitness, 0));
+            float rnd = (float)(random.Value.NextDouble() * Math.Max(totalFitness, 0));
 
             float fitness = 0;
 

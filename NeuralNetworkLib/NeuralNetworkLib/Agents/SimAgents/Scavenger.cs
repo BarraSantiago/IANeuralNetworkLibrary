@@ -182,7 +182,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             IVector averagePosition = new MyVector(0, 0);
             int neighborCount = 0;
 
-            foreach (var neighbor in boid.NearBoids)
+            foreach (ITransform<IVector>? neighbor in boid.NearBoids)
             {
                 if (neighbor?.position == null) continue;
 
@@ -264,7 +264,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             boid.separationOffset = output[flockIndex][2];
             boid.directionOffset = output[flockIndex][3];
 
-            var flocking = boid.ACS();
+            IVector flocking = boid.ACS();
 
             if (float.IsNaN(flocking.X) || float.IsNaN(flocking.Y))
             {

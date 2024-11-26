@@ -11,7 +11,7 @@ namespace Tester
             int generation = 1;
 
             // Create test data
-            var agentsData = new List<AgentNeuronData>
+            List<AgentNeuronData> agentsData = new List<AgentNeuronData>
             {
                 new AgentNeuronData
                 {
@@ -84,17 +84,17 @@ namespace Tester
             Console.WriteLine("Save Done");
 
             // Load the data
-            var loadedData = NeuronDataSystem.LoadLatestNeurons(directoryPath);
+            Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>>> loadedData = NeuronDataSystem.LoadLatestNeurons(directoryPath);
             Console.WriteLine("Load Started");
 
             // Display the loaded data
-            foreach (var agentType in loadedData.Keys)
+            foreach (SimAgentTypes agentType in loadedData.Keys)
             {
                 Console.WriteLine($"Agent Type: {agentType}");
-                foreach (var brainType in loadedData[agentType].Keys)
+                foreach (BrainType brainType in loadedData[agentType].Keys)
                 {
                     Console.WriteLine($"  Brain Type: {brainType}");
-                    foreach (var agentData in loadedData[agentType][brainType])
+                    foreach (AgentNeuronData agentData in loadedData[agentType][brainType])
                     {
                         Console.WriteLine($"    Agent ID: {agentData.AgentId}");
                         Console.WriteLine($"    Neuron Weights: {JsonSerializer.Serialize(agentData.NeuronWeights)}");
