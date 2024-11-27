@@ -145,6 +145,11 @@ namespace NeuralNetworkLib.DataManagement
 
                                 return -1;
                             }).First();
+                        OnSpecificLoaded?.Invoke(false);
+                    }
+                    else
+                    {
+                        OnSpecificLoaded?.Invoke(true);
                     }
 
                     var json = File.ReadAllText(targetFile);
