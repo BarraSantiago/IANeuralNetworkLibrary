@@ -69,7 +69,7 @@ namespace NeuralNetworkLib.Agents.States
         {
             if (parameters == null || parameters.Length != 5)
             {
-                throw new ArgumentException("Invalid parameters for GetTickBehaviour");
+                return default;
             }
 
             BehaviourActions behaviours = new BehaviourActions();
@@ -142,7 +142,7 @@ namespace NeuralNetworkLib.Agents.States
         {
             if (parameters == null || parameters.Length < 5)
             {
-                throw new ArgumentException("Invalid parameters for GetTickBehaviour");
+                return default;
             }
 
             BehaviourActions behaviours = new BehaviourActions();

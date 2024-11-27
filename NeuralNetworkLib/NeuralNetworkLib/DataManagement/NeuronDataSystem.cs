@@ -21,8 +21,15 @@ namespace NeuralNetworkLib.DataManagement
 
     public static class NeuronDataSystem
     {
+        public static Action<bool> OnSpecificLoaded;
+
         public static void SaveNeurons(List<AgentNeuronData> agentsData, string directoryPath, int generation)
         {
+            if (agentsData == null)
+            {
+                throw new ArgumentNullException(nameof(agentsData), "Agents data cannot be null.");
+            }
+
             var groupedData = agentsData
                 .GroupBy(agent => new { agent.AgentType, agent.BrainType })
                 .ToDictionary(group => group.Key, group => group.ToList());
@@ -43,7 +50,9 @@ namespace NeuralNetworkLib.DataManagement
         public static Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> LoadLatestNeurons(
             string directoryPath)
         {
-            Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> agentsData = new Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
+            Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> agentsData =
+                new Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
+
             string[] agentDirectories = Directory.Exists(directoryPath)
                 ? Directory.GetDirectories(directoryPath)
                 : Array.Empty<string>();
@@ -91,7 +100,7 @@ namespace NeuralNetworkLib.DataManagement
 
             return agentsData;
         }
-        
+
         public static Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> LoadSpecificNeurons(
             string directoryPath, int specificGeneration)
         {
@@ -118,7 +127,8 @@ namespace NeuralNetworkLib.DataManagement
                         {
                             var fileName = Path.GetFileName(f);
                             var parts = fileName.Split('n');
-                            return parts.Length > 1 && int.TryParse(parts[1].Split('.')[0], out int generation) && generation == specificGeneration;
+                            return parts.Length > 1 && int.TryParse(parts[1].Split('.')[0], out int generation) &&
+                                   generation == specificGeneration;
                         });
 
                     if (targetFile == null)
