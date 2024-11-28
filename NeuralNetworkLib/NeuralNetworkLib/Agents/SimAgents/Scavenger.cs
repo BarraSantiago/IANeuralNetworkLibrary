@@ -259,11 +259,6 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
             if (output[index].Length != 2 || output[flockIndex].Length != 4) return;
 
-            boid.alignmentOffset = output[flockIndex][0];
-            boid.cohesionOffset = output[flockIndex][1];
-            boid.separationOffset = output[flockIndex][2];
-            boid.directionOffset = output[flockIndex][3];
-
             IVector flocking = boid.ACS();
 
             if (float.IsNaN(flocking.X) || float.IsNaN(flocking.Y))

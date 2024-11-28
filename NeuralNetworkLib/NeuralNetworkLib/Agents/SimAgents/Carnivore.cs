@@ -153,6 +153,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         private void Attack()
         {
+            if(target == null) return;
             if (target.agentType != SimAgentTypes.Herbivore ||
                 !Approximatly(target.Transform.position, transform.position, 0.2f)) return;
             Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)target;

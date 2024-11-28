@@ -283,7 +283,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
 
             int brainId = (int)BrainType.ScavengerMovement;
             Scavenger<TVector, TTransform> agent = (Scavenger<TVector, TTransform>)_agents[agentId];
-            int neighbors = DataContainer.GetBoidsInsideRadius(agent.boid).Count;
+            int neighbors = agent.boid.NearBoids.Count;
             INode<IVector> nearestCarrionNode = DataContainer.GetNearestNode(SimNodeType.Carrion, agent.Transform.position);
             INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(SimNodeType.Corpse, agent.Transform.position);
             SimAgent<IVector, ITransform<IVector>> nearestCarNode = DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent.Transform.position);

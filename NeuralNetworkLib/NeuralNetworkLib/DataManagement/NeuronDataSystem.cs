@@ -104,29 +104,30 @@ namespace NeuralNetworkLib.DataManagement
         public static Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> LoadSpecificNeurons(
             string directoryPath, int specificGeneration)
         {
-            var agentsData = new Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
-            var agentDirectories = Directory.Exists(directoryPath)
+            Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> agentsData =
+                new Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
+            string[] agentDirectories = Directory.Exists(directoryPath)
                 ? Directory.GetDirectories(directoryPath)
                 : Array.Empty<string>();
 
-            foreach (var agentTypeDirectory in agentDirectories)
+            foreach (string agentTypeDirectory in agentDirectories)
             {
-                var agentType = Enum.Parse<SimAgentTypes>(Path.GetFileName(agentTypeDirectory));
+                SimAgentTypes agentType = Enum.Parse<SimAgentTypes>(Path.GetFileName(agentTypeDirectory));
                 agentsData[agentType] = new Dictionary<BrainType, List<AgentNeuronData>?>();
 
-                var brainDirectories = Directory.GetDirectories(agentTypeDirectory);
-                foreach (var brainTypeDirectory in brainDirectories)
+                string[] brainDirectories = Directory.GetDirectories(agentTypeDirectory);
+                foreach (string brainTypeDirectory in brainDirectories)
                 {
-                    var brainType = Enum.Parse<BrainType>(Path.GetFileName(brainTypeDirectory));
-                    var files = Directory.GetFiles(brainTypeDirectory, "gen*.json");
+                    BrainType brainType = Enum.Parse<BrainType>(Path.GetFileName(brainTypeDirectory));
+                    string[] files = Directory.GetFiles(brainTypeDirectory, "gen*.json");
                     if (files.Length == 0)
                         continue;
 
                     string? targetFile = files
                         .FirstOrDefault(f =>
                         {
-                            var fileName = Path.GetFileName(f);
-                            var parts = fileName.Split('n');
+                            string? fileName = Path.GetFileName(f);
+                            string[]? parts = fileName.Split('n');
                             return parts.Length > 1 && int.TryParse(parts[1].Split('.')[0], out int generation) &&
                                    generation == specificGeneration;
                         });
@@ -136,8 +137,8 @@ namespace NeuralNetworkLib.DataManagement
                         targetFile = files
                             .OrderByDescending(f =>
                             {
-                                var fileName = Path.GetFileName(f);
-                                var parts = fileName.Split('n');
+                                string? fileName = Path.GetFileName(f);
+                                string[]? parts = fileName.Split('n');
                                 if (parts.Length > 1 && int.TryParse(parts[1].Split('.')[0], out int generation))
                                 {
                                     return generation;
@@ -152,7 +153,7 @@ namespace NeuralNetworkLib.DataManagement
                         OnSpecificLoaded?.Invoke(true);
                     }
 
-                    var json = File.ReadAllText(targetFile);
+                    string json = File.ReadAllText(targetFile);
                     List<AgentNeuronData>? agentData;
                     try
                     {
