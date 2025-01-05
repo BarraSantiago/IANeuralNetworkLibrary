@@ -1,28 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\barra\\Documents\\Image Campus\\Image Campus 2024\\Inteligencia Artifical\\IANeuralDirectoryLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj": {}
+    "F:\\Image Campus\\Image 2025\\Cuatrimestre 1\\Inteligancia Artificial\\IANeuralNetworkLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj": {}
   },
   "projects": {
-    "C:\\Users\\barra\\Documents\\Image Campus\\Image Campus 2024\\Inteligencia Artifical\\IANeuralDirectoryLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj": {
+    "F:\\Image Campus\\Image 2025\\Cuatrimestre 1\\Inteligancia Artificial\\IANeuralNetworkLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\barra\\Documents\\Image Campus\\Image Campus 2024\\Inteligencia Artifical\\IANeuralDirectoryLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj",
+        "projectUniqueName": "F:\\Image Campus\\Image 2025\\Cuatrimestre 1\\Inteligancia Artificial\\IANeuralNetworkLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj",
         "projectName": "NeuralNetworkLib",
-        "projectPath": "C:\\Users\\barra\\Documents\\Image Campus\\Image Campus 2024\\Inteligencia Artifical\\IANeuralDirectoryLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj",
+        "projectPath": "F:\\Image Campus\\Image 2025\\Cuatrimestre 1\\Inteligancia Artificial\\IANeuralNetworkLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\NeuralNetworkLib.csproj",
         "packagesPath": "C:\\Users\\barra\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\barra\\Documents\\Image Campus\\Image Campus 2024\\Inteligencia Artifical\\IANeuralDirectoryLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\obj\\",
+        "outputPath": "F:\\Image Campus\\Image 2025\\Cuatrimestre 1\\Inteligancia Artificial\\IANeuralNetworkLibrary\\NeuralNetworkLib\\NeuralNetworkLib\\obj\\",
         "projectStyle": "PackageReference",
-        "UsingMicrosoftNETSdk": false,
         "configFilePaths": [
-          "C:\\Users\\barra\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\barra\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "netstandard2.1"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -66,7 +63,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\barra\\.dotnet\\sdk\\7.0.410\\RuntimeIdentifierGraph.json"
         }
       }
     }

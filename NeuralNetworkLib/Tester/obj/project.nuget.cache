@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "OeETXDQVIkQ=",
+  "dgSpecHash": "3dyONbiT0ok=",
   "success": true,
-  "projectFilePath": "C:\\Users\\barra\\Documents\\Image Campus\\Image Campus 2024\\Inteligencia Artifical\\IANeuralDirectoryLibrary\\NeuralNetworkLib\\Tester\\Tester.csproj",
+  "projectFilePath": "F:\\Image Campus\\Image 2025\\Cuatrimestre 1\\Inteligancia Artificial\\IANeuralNetworkLibrary\\NeuralNetworkLib\\Tester\\Tester.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\barra\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
   ],
