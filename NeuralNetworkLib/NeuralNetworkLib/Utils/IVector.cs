@@ -41,7 +41,7 @@
 
         public static MyVector operator /(IVector a, int integer)
         {
-            if (a == null)
+            if (a == null || integer == 0)
             {
                 return MyVector.zero();
             }
