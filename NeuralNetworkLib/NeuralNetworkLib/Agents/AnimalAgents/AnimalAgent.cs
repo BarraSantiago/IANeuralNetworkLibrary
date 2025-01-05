@@ -13,7 +13,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         OnAttack
     }
 
-    public class SimAgent<TVector, TTransform>
+    public class AnimalAgent<TVector, TTransform>
         where TVector : IVector, IEquatable<TVector>
         where TTransform : ITransform<IVector>, new()
     {
@@ -51,7 +51,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public virtual INode<IVector> CurrentNode =>
             DataContainer.graph.NodesType[(int)Transform.position.X, (int)Transform.position.Y];
 
-        public static Action<SimAgent<TVector, TTransform>> OnDeath;
+        public static Action<AnimalAgent<TVector, TTransform>> OnDeath;
         protected TTransform transform = new TTransform();
         public virtual bool CanReproduce => Food >= FoodLimit;
         public SimAgentTypes agentType { get; set; }
@@ -71,11 +71,11 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public float[][] input;
         public Dictionary<int, BrainType> brainTypes = new Dictionary<int, BrainType>();
 
-        public SimAgent()
+        public AnimalAgent()
         {
         }
 
-        public SimAgent(SimAgentTypes agentType)
+        public AnimalAgent(SimAgentTypes agentType)
         {
             this.agentType = agentType;
         }

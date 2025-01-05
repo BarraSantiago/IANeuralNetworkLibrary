@@ -4,7 +4,7 @@ using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.SimAgents
 {
-    public class Herbivore<TVector, TTransform> : SimAgent<TVector, TTransform>
+    public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
         where TTransform : ITransform<IVector>, new()
         where TVector : IVector, IEquatable<TVector>
     {
@@ -46,7 +46,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             input[brain] = new float[inputCount];
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
-            SimAgent<IVector, ITransform<IVector>> target =
+            AnimalAgent<IVector, ITransform<IVector>> target =
                 DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
@@ -69,7 +69,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
 
-            SimAgent<IVector, ITransform<IVector>> target =
+            AnimalAgent<IVector, ITransform<IVector>> target =
                 DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
             if (target == null)
             {

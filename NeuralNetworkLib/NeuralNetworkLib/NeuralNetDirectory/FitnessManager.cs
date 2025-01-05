@@ -10,16 +10,16 @@ namespace NeuralNetworkLib.NeuralNetDirectory
         where TTransform : ITransform<IVector>, new()
         where TVector : IVector, IEquatable<TVector>
     {
-        private static Dictionary<uint, SimAgent<TVector, TTransform>> _agents;
+        private static Dictionary<uint, AnimalAgent<TVector, TTransform>> _agents;
 
-        public FitnessManager(Dictionary<uint, SimAgent<TVector, TTransform>> agents)
+        public FitnessManager(Dictionary<uint, AnimalAgent<TVector, TTransform>> agents)
         {
             _agents = agents;
         }
 
         public void Tick()
         {
-            foreach (KeyValuePair<uint, SimAgent<TVector, TTransform>> agent in _agents)
+            foreach (KeyValuePair<uint, AnimalAgent<TVector, TTransform>> agent in _agents)
             {
                 CalculateFitness(agent.Value.agentType, agent.Key);
             }
@@ -73,7 +73,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float punishment = 0.90f;
 
             Herbivore<IVector, ITransform<IVector>> agent = _agents[agentId] as Herbivore<IVector, ITransform<IVector>>;
-            SimAgent<IVector, ITransform<IVector>> nearestPredatorNode =
+            AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
                 DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent?.Transform.position);
 
             IVector targetPosition;
@@ -97,8 +97,8 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float reward = 10;
             const float punishment = 0.90f;
 
-            SimAgent<TVector, TTransform> agent = _agents[agentId];
-            SimAgent<IVector, ITransform<IVector>> nearestPredatorNode =
+            AnimalAgent<TVector, TTransform> agent = _agents[agentId];
+            AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
                 DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent.Transform.position);
 
             if (nearestPredatorNode?.CurrentNode?.GetCoordinate() == null) return;
@@ -145,7 +145,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float punishment = 0.90f;
 
             Carnivore<TVector, TTransform> agent = (Carnivore<TVector, TTransform>)_agents[agentId];
-            SimAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
+            AnimalAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
                 DataContainer.GetNearestEntity(SimAgentTypes.Herbivore, agent.Transform.position);
 
             if (nearestHerbivoreNode?.CurrentNode?.GetCoordinate() == null) return;
@@ -171,8 +171,8 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float reward = 10;
             const float punishment = 0.90f;
 
-            SimAgent<TVector, TTransform> agent = _agents[agentId];
-            SimAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
+            AnimalAgent<TVector, TTransform> agent = _agents[agentId];
+            AnimalAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
                 DataContainer.GetNearestEntity(SimAgentTypes.Herbivore, agent.Transform.position);
             INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(NodeType.Corpse, agent.Transform.position);
 
@@ -286,7 +286,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             int neighbors = agent.boid.NearBoids.Count;
             INode<IVector> nearestCarrionNode = DataContainer.GetNearestNode(NodeType.Carrion, agent.Transform.position);
             INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(NodeType.Corpse, agent.Transform.position);
-            SimAgent<IVector, ITransform<IVector>> nearestCarNode = DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent.Transform.position);
+            AnimalAgent<IVector, ITransform<IVector>> nearestCarNode = DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent.Transform.position);
 
             IVector targetPosition;
 
@@ -326,7 +326,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float reward = 10;
             const float punishment = 0.90f;
 
-            SimAgent<TVector, TTransform> agent = _agents[agentId];
+            AnimalAgent<TVector, TTransform> agent = _agents[agentId];
 
             if (agent.Food <= 0) return;
 
@@ -336,7 +336,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
 
         private bool IsMovingTowardsTarget(uint agentId, IVector targetPosition)
         {
-            SimAgent<TVector, TTransform> agent = _agents[agentId];
+            AnimalAgent<TVector, TTransform> agent = _agents[agentId];
             IVector currentPosition = agent.Transform.position;
             IVector agentDirection = agent.Transform.forward;
 

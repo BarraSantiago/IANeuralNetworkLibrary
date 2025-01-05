@@ -4,7 +4,7 @@ using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.SimAgents
 {
-    public class Carnivore<TVector, TTransform> : SimAgent<TVector, TTransform>
+    public class Carnivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
         where TTransform : ITransform<IVector>, new()
         where TVector : IVector, IEquatable<TVector>
     {
@@ -14,7 +14,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         public int DamageDealt { get; private set; } = 0;
 
-        private SimAgent<IVector, ITransform<IVector>> target;
+        private AnimalAgent<IVector, ITransform<IVector>> target;
 
         public override void Init()
         {

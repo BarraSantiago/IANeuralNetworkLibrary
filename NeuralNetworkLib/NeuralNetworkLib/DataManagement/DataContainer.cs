@@ -17,8 +17,8 @@ public class DataContainer
 {
     public static Sim2Graph graph;
 
-    public static Dictionary<uint, SimAgent<IVector, ITransform<IVector>>> Agents =
-        new Dictionary<uint, SimAgent<IVector, ITransform<IVector>>>();
+    public static Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>> Agents =
+        new Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>>();
 
     public static Dictionary<uint, Scavenger<IVector, ITransform<IVector>>> Scavengers =
         new Dictionary<uint, Scavenger<IVector, ITransform<IVector>>>();
@@ -133,12 +133,12 @@ public class DataContainer
         return nearestNode;
     }
 
-    public static SimAgent<IVector, ITransform<IVector>> GetNearestEntity(SimAgentTypes entityType, IVector position)
+    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(SimAgentTypes entityType, IVector position)
     {
-        SimAgent<IVector, ITransform<IVector>> nearestAgent = null;
+        AnimalAgent<IVector, ITransform<IVector>> nearestAgent = null;
         float minDistance = float.MaxValue;
 
-        foreach (SimAgent<IVector, ITransform<IVector>> agent in Agents.Values)
+        foreach (AnimalAgent<IVector, ITransform<IVector>> agent in Agents.Values)
         {
             if (agent.agentType != entityType) continue;
 
