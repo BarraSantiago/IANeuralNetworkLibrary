@@ -6,10 +6,11 @@ namespace NeuralNetworkLib.NeuralNetDirectory.ECS
     public sealed class NeuralNetSystem : ECSSystem
     {
         private ParallelOptions parallelOptions;
-        private IDictionary<uint, NeuralNetComponent> neuralNetworkComponents;
-        private IDictionary<uint, OutputComponent> outputComponents;
-        private IDictionary<uint, InputComponent> inputComponents;
-        private IEnumerable<uint> queriedEntities;
+        private IDictionary<uint, NeuralNetComponent> neuralNetworkComponents = null;
+        private IDictionary<uint, OutputComponent> outputComponents = null;
+        private IDictionary<uint, InputComponent> inputComponents = null;
+        private IDictionary<uint, BrainAmountComponent> brainAmountComponents = null;
+        private IEnumerable<uint> queriedEntities = null;
 
         public override void Initialize()
         {
@@ -31,14 +32,15 @@ namespace NeuralNetworkLib.NeuralNetDirectory.ECS
             inputComponents ??= ECSManager.GetComponents<InputComponent>();
             queriedEntities ??= ECSManager.GetEntitiesWithComponentTypes(
                 typeof(NeuralNetComponent), typeof(OutputComponent), typeof(InputComponent));
+            brainAmountComponents ??= ECSManager.GetComponents<BrainAmountComponent>();
         }
 
         protected override void Execute(float deltaTime)
         {
-            const int MaxBrains = 3;
             Parallel.ForEach(queriedEntities, parallelOptions, entityId =>
             {
-                Parallel.For(0, MaxBrains, i =>
+                int brainAmount = brainAmountComponents[entityId].BrainAmount;
+                Parallel.For(0, brainAmount, i =>
                 {
                     NeuralNetComponent neuralNetwork = neuralNetworkComponents[entityId];
                     float[][] inputs = inputComponents[entityId].inputs;
