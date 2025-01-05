@@ -6,17 +6,17 @@ namespace NeuralNetworkLib.Agents.States
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
-            if (parameters == null || parameters.Length < 9)
+            if (parameters == null || parameters.Length < 4)
             {
                 return default;
             }
             
             BehaviourActions behaviours = new BehaviourActions();
 
-            Action onAttack = parameters[5] as Action;
-            float[] outputBrain1 = (float[])parameters[6];
-            float[] outputBrain2 = (float[])parameters[7];
-            float outputBrain3 = (float)parameters[8];
+            Action? onAttack = parameters[0] as Action;
+            float[] outputBrain1 = (float[])parameters[1];
+            float[] outputBrain2 = (float[])parameters[2];
+            float outputBrain3 = (float)parameters[3];
 
             if (outputBrain1 == null || outputBrain2 == null)
             {

@@ -124,14 +124,8 @@ namespace NeuralNetworkLib.Agents.SimAgents
                 return Array.Empty<object>();
             }
 
-            int extraBrain = GetBrainTypeKeyByValue(BrainType.Attack);
             object[] objects =
             {
-                CurrentNode,
-                foodTarget,
-                OnMove,
-                output[GetBrainTypeKeyByValue(BrainType.Eat)],
-                output[extraBrain],
                 OnAttack,
                 output[GetBrainTypeKeyByValue(BrainType.Eat)],
                 output[GetBrainTypeKeyByValue(BrainType.Attack)],
