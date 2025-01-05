@@ -13,7 +13,7 @@ namespace NeuralNetworkLib.Agents.States
 
             if (parameters[0] is not SimNode<IVector> currentNode) return default;
             if (parameters[1] is not IVector target) return default;
-            if (parameters[2] is not SimNodeType foodTarget) return default;
+            if (parameters[2] is not NodeType foodTarget) return default;
             if (parameters[3] is not Action onMove) return default;
             if (parameters[4] is not float[] outputBrain1) return default;
             if (parameters[5] is not float[] outputBrain2) return default;

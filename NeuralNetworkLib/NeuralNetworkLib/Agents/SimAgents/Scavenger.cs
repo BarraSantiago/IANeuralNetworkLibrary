@@ -43,7 +43,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             boid.transform.forward ??= MyVector.zero();
 
             base.Init();
-            foodTarget = SimNodeType.Carrion;
+            foodTarget = NodeType.Carrion;
             FoodLimit = 20;
             movement = 5;
 
@@ -248,7 +248,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
                 if (node.Food <= 0) return;
                 Food++;
                 node.Food--;
-                if (node.Food <= 0) node.NodeType = SimNodeType.Empty;
+                if (node.Food <= 0) node.NodeType = NodeType.Empty;
             }
         }
 
@@ -305,10 +305,10 @@ namespace NeuralNetworkLib.Agents.SimAgents
             Transform = (TTransform)new ITransform<IVector>(position);
         }
 
-        public override INode<IVector> GetTarget(SimNodeType nodeType = SimNodeType.Empty)
+        public override INode<IVector> GetTarget(NodeType nodeType = NodeType.Empty)
         {
             INode<IVector> target = DataContainer.GetNearestNode(nodeType, Transform.position) ??
-                                    DataContainer.GetNearestNode(SimNodeType.Corpse, Transform.position);
+                                    DataContainer.GetNearestNode(NodeType.Corpse, Transform.position);
 
 
             if (target != null) return target;

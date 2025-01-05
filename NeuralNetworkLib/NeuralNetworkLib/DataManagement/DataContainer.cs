@@ -112,7 +112,7 @@ public class DataContainer
     }
 
 
-    public static INode<IVector> GetNearestNode(SimNodeType nodeType, IVector position)
+    public static INode<IVector> GetNearestNode(NodeType nodeType, IVector position)
     {
         INode<IVector> nearestNode = null;
         float minDistance = float.MaxValue;

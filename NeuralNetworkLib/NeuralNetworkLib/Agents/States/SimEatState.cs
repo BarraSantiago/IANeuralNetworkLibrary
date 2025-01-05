@@ -14,7 +14,7 @@ namespace NeuralNetworkLib.Agents.States
 
             BehaviourActions behaviours = new BehaviourActions();
             SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
-            SimNodeType foodTarget = (SimNodeType)parameters[1];
+            NodeType foodTarget = (NodeType)parameters[1];
             Action onEat = parameters[2] as Action;
             float[] outputBrain1 = parameters[3] as float[];
             float[] outputBrain2 = parameters[4] as float[];
@@ -93,7 +93,7 @@ namespace NeuralNetworkLib.Agents.States
                 distanceToFood = new MyVector(foodNode.GetCoordinate().X - currentPos.X,
                     foodNode.GetCoordinate().Y - currentPos.Y);
 
-                if (foodNode.Food <= 0 || foodNode.NodeType != SimNodeType.Carrion ||
+                if (foodNode.Food <= 0 || foodNode.NodeType != NodeType.Carrion ||
                     distanceToFood.Magnitude() > maxDistance.Magnitude())
                 {
                     onMove?.Invoke();
@@ -147,7 +147,7 @@ namespace NeuralNetworkLib.Agents.States
 
             BehaviourActions behaviours = new BehaviourActions();
             if (parameters[0] is not SimNode<IVector> currentNode) return default;
-            SimNodeType foodTarget = (SimNodeType)parameters[1];
+            NodeType foodTarget = (NodeType)parameters[1];
             Action onEat = parameters[2] as Action;
             float[] outputBrain1 = parameters[3] as float[];
             float[] outputBrain2 = parameters[4] as float[];

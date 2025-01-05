@@ -10,7 +10,7 @@ namespace NeuralNetworkLib.Agents.States
             BehaviourActions behaviours = new BehaviourActions();
 
             SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
-            SimNodeType foodTarget = (SimNodeType)parameters[1];
+            NodeType foodTarget = (NodeType)parameters[1];
             Action onMove = parameters[2] as Action;
             float[] outputBrain1 = parameters[3] as float[];
             float[] outputBrain2 = parameters[4] as float[];
@@ -85,7 +85,7 @@ namespace NeuralNetworkLib.Agents.States
             BehaviourActions behaviours = new BehaviourActions();
 
             SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
-            SimNodeType foodTarget = (SimNodeType)parameters[1];
+            NodeType foodTarget = (NodeType)parameters[1];
             Action onMove = parameters[2] as Action;
             float[] outputBrain1 = parameters[3] as float[];
             float[] outputBrain2 = parameters[4] as float[];

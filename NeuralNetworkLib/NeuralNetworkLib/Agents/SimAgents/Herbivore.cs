@@ -25,7 +25,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public override void Init()
         {
             base.Init();
-            foodTarget = SimNodeType.Bush;
+            foodTarget = NodeType.Bush;
 
             CalculateInputs();
 
@@ -101,7 +101,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         private void Die()
         {
             INode<IVector> node = CurrentNode;
-            node.NodeType = SimNodeType.Corpse;
+            node.NodeType = NodeType.Corpse;
             node.Food = FoodDropped;
             OnDeath?.Invoke(this);
         }

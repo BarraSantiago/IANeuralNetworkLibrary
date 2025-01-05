@@ -24,15 +24,46 @@
             {
                 for (int j = 0; j < y; j++)
                 {
+                    Random random = new Random();
+                    int nodeTerrain = random.Next(0, 100);
+                    int type = random.Next(0, 100);
+
                     SimCoordinate node = new SimCoordinate();
                     node.SetCoordinate(i * cellSize, j * cellSize);
                     CoordNodes[i, j] = node;
 
                     SimNode<IVector> nodeType = new SimNode<IVector>();
                     nodeType.SetCoordinate(new MyVector(i * cellSize, j * cellSize));
+                    var type2 = GetNodeType(type);
+                    nodeType.NodeType = type2;
+                    nodeType.NodeTerrain = type2 is NodeType.Lake or NodeType.Mountain
+                                                    ? NodeTerrain.Empty : GetTerrain(nodeTerrain);
                     NodesType[i, j] = nodeType;
                 }
             });
+        }
+
+        private NodeType GetNodeType(int type)
+        {
+            return type switch
+            {
+                < 50 => NodeType.Plains,
+                < 60 => NodeType.Mountain,
+                < 85 => NodeType.Sand,
+                < 100 => NodeType.Lake,
+                _ => NodeType.Plains
+            };
+        }
+
+        private NodeTerrain GetTerrain(int nodeTerrain)
+        {
+            return nodeTerrain switch
+            {
+                < 60 => NodeTerrain.Empty,
+                < 80 => NodeTerrain.Mine,
+                < 100 => NodeTerrain.Tree,
+                _ => NodeTerrain.Empty
+            };
         }
 
         public bool IsWithinGraphBorders(IVector position)

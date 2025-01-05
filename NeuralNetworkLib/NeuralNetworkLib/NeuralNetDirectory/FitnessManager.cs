@@ -174,7 +174,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             SimAgent<TVector, TTransform> agent = _agents[agentId];
             SimAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
                 DataContainer.GetNearestEntity(SimAgentTypes.Herbivore, agent.Transform.position);
-            INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(SimNodeType.Corpse, agent.Transform.position);
+            INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(NodeType.Corpse, agent.Transform.position);
 
             if (nearestHerbivoreNode?.CurrentNode?.GetCoordinate() == null) return;
 
@@ -284,8 +284,8 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             int brainId = (int)BrainType.ScavengerMovement;
             Scavenger<TVector, TTransform> agent = (Scavenger<TVector, TTransform>)_agents[agentId];
             int neighbors = agent.boid.NearBoids.Count;
-            INode<IVector> nearestCarrionNode = DataContainer.GetNearestNode(SimNodeType.Carrion, agent.Transform.position);
-            INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(SimNodeType.Corpse, agent.Transform.position);
+            INode<IVector> nearestCarrionNode = DataContainer.GetNearestNode(NodeType.Carrion, agent.Transform.position);
+            INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(NodeType.Corpse, agent.Transform.position);
             SimAgent<IVector, ITransform<IVector>> nearestCarNode = DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent.Transform.position);
 
             IVector targetPosition;

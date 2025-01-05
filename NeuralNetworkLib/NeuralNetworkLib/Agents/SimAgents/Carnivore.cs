@@ -19,7 +19,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public override void Init()
         {
             base.Init();
-            foodTarget = SimNodeType.Corpse;
+            foodTarget = NodeType.Corpse;
             FoodLimit = 1;
             movement = 2;
             HasAttacked = false;
@@ -172,7 +172,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
                 if (node.Food > 0) return;
 
-                node.NodeType = SimNodeType.Carrion;
+                node.NodeType = NodeType.Carrion;
                 node.Food = 30;
             }
         }

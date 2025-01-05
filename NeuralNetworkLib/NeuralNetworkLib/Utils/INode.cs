@@ -1,14 +1,28 @@
 ﻿namespace NeuralNetworkLib.Utils
 {
-    public enum SimNodeType
+    public enum NodeType
     {
         Empty,
         Blocked,
         Bush,
         Corpse,
-        Carrion
+        Carrion,
+        Lake,
+        Sand,
+        Plains,
+        Mountain
     }
-    
+
+    public enum NodeTerrain
+    {
+        Empty,
+        Mine,
+        Tree,
+        Stump,
+        TownCenter,
+        WatchTower,
+    }
+
     public interface INode
     {
         public bool IsBlocked();
@@ -24,11 +38,13 @@
         public void SetNeighbors(ICollection<INode<Coordinate>> neighbors);
 
         public ICollection<INode<Coordinate>> GetNeighbors();
-        
+
         public int GetCost();
 
         public void SetCost(int newCost);
-        SimNodeType NodeType { get; set; }
+        NodeType NodeType { get; set; }
+
+        NodeTerrain NodeTerrain { get; set; }
         int Food { get; set; }
     }
 }

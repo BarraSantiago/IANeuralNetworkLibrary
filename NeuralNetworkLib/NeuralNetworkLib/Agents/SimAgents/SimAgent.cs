@@ -58,7 +58,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public FSM<Behaviours, Flags> Fsm;
 
         protected int movement = 3;
-        protected SimNodeType foodTarget;
+        protected NodeType foodTarget;
         public int FoodLimit { get; protected set; } = 5;
         public int Food { get; protected set; } = 0;
         protected Action OnMove;
@@ -233,7 +233,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
                 if (currNode.Food <= 0) return;
                 Food++;
                 currNode.Food--;
-                if (currNode.Food <= 0) currNode.NodeType = SimNodeType.Empty;
+                if (currNode.Food <= 0) currNode.NodeType = NodeType.Empty;
             }
         }
 
@@ -281,7 +281,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             return targetPos;
         }
 
-        public virtual INode<IVector> GetTarget(SimNodeType nodeType = SimNodeType.Empty)
+        public virtual INode<IVector> GetTarget(NodeType nodeType = NodeType.Empty)
         {
             return DataContainer.GetNearestNode(nodeType, transform.position);
         }

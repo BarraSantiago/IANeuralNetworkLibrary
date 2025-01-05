@@ -5,6 +5,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
 {
     private Coordinate coordinate;
     private int cost;
+    public NodeTerrain NodeTerrain { get; set; }
     public int Food { get; set; }
 
     private ICollection<INode<Coordinate>> neighbors;
@@ -18,7 +19,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         coordinate = coord;
     }
 
-    public SimNodeType NodeType { get; set; }
+    public NodeType NodeType { get; set; }
 
     public bool Equals(INode<Coordinate> other)
     {
