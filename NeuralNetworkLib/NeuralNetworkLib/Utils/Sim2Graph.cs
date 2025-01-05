@@ -34,7 +34,7 @@
 
                     SimNode<IVector> nodeType = new SimNode<IVector>();
                     nodeType.SetCoordinate(new MyVector(i * cellSize, j * cellSize));
-                    var type2 = GetNodeType(type);
+                    NodeType type2 = GetNodeType(type);
                     nodeType.NodeType = type2;
                     nodeType.NodeTerrain = type2 is NodeType.Lake or NodeType.Mountain
                                                     ? NodeTerrain.Empty : GetTerrain(nodeTerrain);
