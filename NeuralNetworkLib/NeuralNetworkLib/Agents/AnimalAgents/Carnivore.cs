@@ -1,4 +1,5 @@
 using NeuralNetworkLib.Agents.States;
+using NeuralNetworkLib.Agents.States.SimStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
@@ -19,7 +20,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public override void Init()
         {
             base.Init();
-            foodTarget = NodeType.Corpse;
+            foodTarget = NodeTerrain.Stump;
             FoodLimit = 1;
             movement = 2;
             HasAttacked = false;
@@ -166,14 +167,14 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
             lock (node)
             {
-                if (node.Food <= 0) return;
+                if (node.Resource <= 0) return;
                 Food++;
-                node.Food--;
+                node.Resource--;
 
-                if (node.Food > 0) return;
+                if (node.Resource > 0) return;
 
                 node.NodeType = NodeType.Carrion;
-                node.Food = 30;
+                node.Resource = 30;
             }
         }
 

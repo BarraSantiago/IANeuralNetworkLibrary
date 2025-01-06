@@ -1,10 +1,11 @@
-using System.Diagnostics;
+using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.TCAgent
 {
-    public class Cart : TCAgent
+    public class Cart : TcAgent
     {
+        TcAgent _target;
         private Action onGather;
         private Action onDeliver;
 
@@ -19,15 +20,15 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         private void Gather()
         {
-            Food++;
+            CurrentFood++;
         }
 
         private void DeliverFood()
         {
-            if (Food <= 0) return;
+            if (CurrentFood <= 0) return;
 
-            Food--;
-            CurrentNode.food++;
+            CurrentFood--;
+            _target.CurrentFood++;
         }
 
         protected override void FsmBehaviours()
@@ -50,28 +51,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
-                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners.Count <= 0)
-                    {
-                        Debug.Log("No mines with miners.");
-                        return;
-                    }
-                    
-                    SimNode<IVector> target = GameManager.MinesWithMiners[0];
-                    if(target == null) return;
-
-                    TargetNode = GameManager.Graph.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
-                    if(TargetNode == null) return;
-                    
-                    Debug.Log("Delivering food to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
+                   // TODO set target Node or agent
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = GetTarget(NodeType.TownCenter);
-                    if(TargetNode == null) return;
-
-                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
-                              TargetNode.GetCoordinate().y);
+                    TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter);
                 });
         }
 
@@ -80,45 +65,27 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = GetTarget(NodeType.TownCenter);
-                    if(TargetNode == null) return;
-
-                    
-                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
-                              TargetNode.GetCoordinate().y);
+                    TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter);
                 });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners.Count <= 0)
-                    {
-                        Debug.Log("No mines with miners.");
-                        return;
-                    }
-                    SimNode<IVector> target = GameManager.MinesWithMiners[0];
-                    if(target == null) return;
-
-                    TargetNode = GameManager.Graph.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
-                    if(TargetNode == null) return;
-
-                    Debug.Log("Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
+                    // TODO set target Node or agent
                 });
             
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver,
-                () => Debug.Log("Deliver food"));
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources,
-                () => Debug.Log("Deliver food"));
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources);
         }
 
         protected override object[] GetFoodTickParameters()
         {
-            return new object[] { Food, FoodLimit, onGather, Retreat };
+            return new object[] { CurrentFood, FoodLimit, onGather, Retreat };
         }
 
         protected override object[] GatherTickParameters()
         {
-            return new object[] { Retreat, Food, CurrentGold, GoldLimit, onGather };
+            return new object[] { Retreat, CurrentFood, CurrentGold, ResourceLimit, onGather };
         }
 
         protected override void DeliverTransitions()
@@ -127,24 +94,23 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () =>
                 {
                     TargetNode = TownCenter;
-                    if(TargetNode == null) return;
-
-                    Debug.Log("To town center");
                 });
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = TownCenter;
-                    if(TargetNode == null) return;
-
-                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
-                              TargetNode.GetCoordinate().y);
                 });
         }
 
         private object[] DeliverTickParameters()
         {
-            return new object[] { Food, onDeliver, Retreat };
+            return new object[] { CurrentFood, onDeliver, Retreat };
+        }
+
+        protected SimNode<IVector> GetTarget()
+        {
+            // TODO get target
+            return null;
         }
     }
 }

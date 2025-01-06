@@ -1,4 +1,5 @@
 using NeuralNetworkLib.Agents.States;
+using NeuralNetworkLib.Agents.States.SimStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
@@ -102,7 +103,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         {
             INode<IVector> node = CurrentNode;
             node.NodeType = NodeType.Corpse;
-            node.Food = FoodDropped;
+            node.Resource = FoodDropped;
             OnDeath?.Invoke(this);
         }
 

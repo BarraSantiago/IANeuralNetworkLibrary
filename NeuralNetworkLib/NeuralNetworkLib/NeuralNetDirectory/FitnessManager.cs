@@ -35,9 +35,6 @@ namespace NeuralNetworkLib.NeuralNetDirectory
                 case SimAgentTypes.Herbivore:
                     HerbivoreFitnessCalculator(agentId);
                     break;
-                case SimAgentTypes.Scavenger:
-                    ScavengerFitnessCalculator(agentId);
-                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(agentType), agentType, null);
             }
@@ -195,132 +192,8 @@ namespace NeuralNetworkLib.NeuralNetDirectory
                 Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId),punishment, BrainType.Movement);
             }
         }
-
-        private void ScavengerFitnessCalculator(uint agentId)
-        {
-            foreach (KeyValuePair<int, BrainType> brainType in _agents[agentId].brainTypes)
-            {
-                switch (brainType.Value)
-                {
-                    case BrainType.ScavengerMovement:
-                        ScavengerMovementFC(agentId);
-                        break;
-                    case BrainType.Eat:
-                        EatFitnessCalculator(agentId);
-                        break;
-                    case BrainType.Flocking:
-                        ScavengerFlockingFC(agentId);
-                        break;
-                    case BrainType.Movement:
-                    case BrainType.Attack:
-                    case BrainType.Escape:
-                    default:
-                        throw new ArgumentException("Scavenger doesn't have a brain type: ", nameof(brainType));
-                }
-            }
-        }
-
-
-        private void ScavengerFlockingFC(uint agentId)
-        {
-            const float reward = 10;
-            const float punishment = 0.90f;
-            const float safeDistance = 0.7f;
-
-            Scavenger<TVector, TTransform> agent = (Scavenger<TVector, TTransform>)_agents[agentId];
-            // CHANGE THIS agent.GetTarget(SimNodeType.Carrion).GetCoordinate(); TO TARGET VARIABLE
-            IVector targetPosition = agent.target;
-
-            bool isMaintainingDistance = true;
-            bool isAligningWithFlock = true;
-            bool isColliding = false;
-
-            IVector averageDirection = null;
-            int neighborCount = 0;
-
-            foreach (ITransform<IVector> neighbor in agent.boid.NearBoids)
-            {
-                IVector neighborPosition = neighbor.position;
-                float distance = agent.Transform.position.Distance(neighborPosition);
-
-                if (distance < safeDistance)
-                {
-                    isColliding = true;
-                    isMaintainingDistance = false;
-                }
-
-                averageDirection += neighbor.forward;
-                neighborCount++;
-            }
-
-            if (neighborCount > 0)
-            {
-                averageDirection /= neighborCount;
-                IVector agentDirection = agent.boid.transform.forward;
-                float alignmentDotProduct = IVector.Dot(agentDirection, averageDirection.Normalized());
-
-                if (alignmentDotProduct < 0.9f)
-                {
-                    isAligningWithFlock = false;
-                }
-            }
-
-            if (isMaintainingDistance || isAligningWithFlock || IsMovingTowardsTarget(agentId, targetPosition))
-            {
-                Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId),reward, BrainType.Flocking);
-            }
-            
-            if (isColliding || !IsMovingTowardsTarget(agentId, targetPosition))
-            {
-                Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId),punishment, BrainType.Flocking);
-            }
-        }
-
-        private void ScavengerMovementFC(uint agentId)
-        {
-            const float reward = 10;
-            const float punishment = 0.90f;
-
-            int brainId = (int)BrainType.ScavengerMovement;
-            Scavenger<TVector, TTransform> agent = (Scavenger<TVector, TTransform>)_agents[agentId];
-            int neighbors = agent.boid.NearBoids.Count;
-            INode<IVector> nearestCarrionNode = DataContainer.GetNearestNode(NodeType.Carrion, agent.Transform.position);
-            INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(NodeType.Corpse, agent.Transform.position);
-            AnimalAgent<IVector, ITransform<IVector>> nearestCarNode = DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent.Transform.position);
-
-            IVector targetPosition;
-
-            if (nearestCarrionNode != null)
-            {
-                targetPosition = nearestCarrionNode.GetCoordinate();
-            }
-            else if (nearestCorpseNode != null)
-            {
-                targetPosition = nearestCorpseNode.GetCoordinate();
-            }
-            else
-            {
-                if (nearestCarNode?.CurrentNode?.GetCoordinate() == null) return;
-                targetPosition = nearestCarNode.CurrentNode.GetCoordinate();
-            }
-
-            if (targetPosition == null) return;
-
-            if(neighbors > 0)
-            {
-                Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId),reward/5+neighbors, BrainType.ScavengerMovement);
-            }
-            
-            if (IsMovingTowardsTarget(agentId, targetPosition))
-            {
-                Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId),reward, BrainType.ScavengerMovement);
-            }
-            else
-            {
-                Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId),punishment, BrainType.ScavengerMovement);
-            }
-        }
-
+        
+        
         private void EatFitnessCalculator(uint agentId)
         {
             const float reward = 10;

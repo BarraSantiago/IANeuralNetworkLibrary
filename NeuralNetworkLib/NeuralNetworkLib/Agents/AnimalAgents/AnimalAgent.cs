@@ -1,4 +1,5 @@
 ﻿using NeuralNetworkLib.Agents.States;
+using NeuralNetworkLib.Agents.States.SimStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 using NeuralNetworkLib.Utils;
@@ -58,7 +59,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public FSM<Behaviours, Flags> Fsm;
 
         protected int movement = 3;
-        protected NodeType foodTarget;
+        protected NodeTerrain foodTarget;
         public int FoodLimit { get; protected set; } = 5;
         public int Food { get; protected set; } = 0;
         protected Action OnMove;
@@ -230,10 +231,10 @@ namespace NeuralNetworkLib.Agents.SimAgents
             INode<IVector> currNode = CurrentNode;
             lock (currNode)
             {
-                if (currNode.Food <= 0) return;
+                if (currNode.Resource <= 0) return;
                 Food++;
-                currNode.Food--;
-                if (currNode.Food <= 0) currNode.NodeType = NodeType.Empty;
+                currNode.Resource--;
+                if (currNode.Resource <= 0) currNode.NodeType = NodeType.Empty;
             }
         }
 

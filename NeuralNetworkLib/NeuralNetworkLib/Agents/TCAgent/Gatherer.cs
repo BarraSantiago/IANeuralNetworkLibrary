@@ -1,21 +1,24 @@
-﻿using System.Diagnostics;
+﻿using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.TCAgent
 {
-    public class Gatherer : TCAgent
+    public class Gatherer : TcAgent
     {
         private Action onMine;
         public static Action OnEmptyMine;
         public static Action<SimNode<IVector>> OnReachMine;
         public static Action<SimNode<IVector>> OnLeaveMine;
+        protected const int GoldPerFood = 3;
+        protected const int FoodPerFood = 3;
+        protected const int WoodPerFood = 5;
 
         public override void Init()
         {
             base.Init();
             AgentType = AgentTypes.Gatherer;
             Fsm.ForceTransition(Behaviours.Walk);
-            onMine += Mine;
+            onMine += Gather;
         }
         
         protected override void FsmTransitions()
@@ -28,36 +31,29 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void FsmBehaviours()
         {
             base.FsmBehaviours();
-            Fsm.AddBehaviour<GatherGoldState>(Behaviours.GatherResources, GatherTickParameters, GatherEnterParameters, GatherLeaveParameters);
+            Fsm.AddBehaviour<GatherResource>(Behaviours.GatherResources, GatherTickParameters, GatherEnterParameters, GatherLeaveParameters);
         }
 
         protected override void GatherTransitions()
         {
             base.GatherTransitions();
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
-                () => Debug.Log("Wait"));
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait);
 
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
-                    
-                    if(TargetNode == null) return;
-                    
-                    Debug.Log("Gold full. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = GetTarget();
-                    if(TargetNode == null) return;
-                    Debug.Log("Mine empty. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
         }
 
         protected override object[] GatherTickParameters()
         {
-            return new object[] { Retreat, Food, CurrentGold, GoldLimit, onMine, CurrentNode };
+            return new object[] { Retreat, CurrentFood, CurrentGold, ResourceLimit, onMine, CurrentNode };
         }
         
         protected object[] GatherEnterParameters()
@@ -73,8 +69,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
-                () => Debug.Log("Gather gold"));
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources);
         }
         
         protected override object[] WaitEnterParameters()
@@ -86,25 +81,47 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             return new object[] { CurrentNode, OnLeaveMine };
         }
-        
-        private void Mine()
+
+        protected override void Wait()
         {
-            if (Food <= 0 || CurrentNode.gold <= 0) return;
+            base.Wait();
+            if (CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
+
+            if (CurrentGold > 0)
+            {
+                CurrentGold--;
+                TownCenter.Gold++;
+            }
+            if (CurrentWood > 0)
+            {
+                CurrentWood--;
+                TownCenter.Wood++;
+            }
+            if (CurrentFood > 3)
+            {
+                CurrentFood--;
+                TownCenter.Food++;
+            }
+        }
+
+        private void Gather()
+        {
+            if (CurrentFood <= 0 || CurrentNode.Resource <= 0) return;
 
             CurrentGold++;
 
             LastTimeEat++;
-            CurrentNode.gold--;
-            if (CurrentNode.gold <= 0) OnEmptyMine?.Invoke();
+            CurrentNode.Resource--;
+            if (CurrentNode.Resource <= 0) OnEmptyMine?.Invoke();
 
             if (LastTimeEat < GoldPerFood) return;
 
-            Food--;
+            CurrentFood--;
             LastTimeEat = 0;
 
-            if (Food > 0 || CurrentNode.food <= 0) return;
+            if (CurrentFood > 0 || CurrentNode.food <= 0) return;
 
-            Food++;
+            CurrentFood++;
             CurrentNode.food--;
         }
     }

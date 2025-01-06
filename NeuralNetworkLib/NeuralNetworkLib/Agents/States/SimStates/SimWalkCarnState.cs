@@ -1,7 +1,7 @@
 ﻿using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.Agents.States
+namespace NeuralNetworkLib.Agents.States.SimStates
 {
     public class SimWalkCarnState : State
     {

@@ -1,6 +1,6 @@
 ﻿using NeuralNetworkLib.Agents.SimAgents;
 
-namespace NeuralNetworkLib.Agents.States
+namespace NeuralNetworkLib.Agents.States.SimStates
 {
     public class SimAttackState : State
     {

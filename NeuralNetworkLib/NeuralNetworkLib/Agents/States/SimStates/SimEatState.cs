@@ -1,7 +1,7 @@
 ﻿using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.Agents.States
+namespace NeuralNetworkLib.Agents.States.SimStates
 {
     public class SimEatState : State
     {
@@ -22,14 +22,14 @@ namespace NeuralNetworkLib.Agents.States
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
                 if (foodTarget == null || currentNode == null || onEat == null) return;
-                if (currentNode.Food <= 0 || foodTarget != currentNode.NodeType) return;
+                if (currentNode.Resource <= 0 || foodTarget != currentNode.NodeType) return;
 
                 onEat?.Invoke();
             });
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (currentNode == null || currentNode.Food <= 0 || foodTarget != currentNode.NodeType)
+                if (currentNode == null || currentNode.Resource <= 0 || foodTarget != currentNode.NodeType)
                 {
                     OnFlag?.Invoke(Flags.OnSearchFood);
                     return;
@@ -93,7 +93,7 @@ namespace NeuralNetworkLib.Agents.States
                 distanceToFood = new MyVector(foodNode.GetCoordinate().X - currentPos.X,
                     foodNode.GetCoordinate().Y - currentPos.Y);
 
-                if (foodNode.Food <= 0 || foodNode.NodeType != NodeType.Carrion ||
+                if (foodNode.Resource <= 0 || foodNode.NodeType != NodeType.Carrion ||
                     distanceToFood.Magnitude() > maxDistance.Magnitude())
                 {
                     onMove?.Invoke();
@@ -106,7 +106,7 @@ namespace NeuralNetworkLib.Agents.States
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (foodNode == null || foodNode.Food <= 0 || distanceToFood.Magnitude() > maxDistance.Magnitude())
+                if (foodNode == null || foodNode.Resource <= 0 || distanceToFood.Magnitude() > maxDistance.Magnitude())
                 {
                     OnFlag?.Invoke(Flags.OnSearchFood);
                     return;
@@ -155,14 +155,14 @@ namespace NeuralNetworkLib.Agents.States
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
                 if (foodTarget == null || currentNode == null || onEat == null) return;
-                if (currentNode.Food <= 0 || foodTarget != currentNode.NodeType) return;
+                if (currentNode.Resource <= 0 || foodTarget != currentNode.NodeType) return;
 
                 onEat?.Invoke();
             });
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (currentNode == null || currentNode.Food <= 0 || foodTarget != currentNode.NodeType)
+                if (currentNode == null || currentNode.Resource <= 0 || foodTarget != currentNode.NodeType)
                 {
                     OnFlag?.Invoke(Flags.OnSearchFood);
                     return;
