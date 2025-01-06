@@ -18,7 +18,7 @@
         void Perpendicular();
     }
 
-    public class SimCoordinate : ICoordinate<IVector>, IEquatable<SimCoordinate>
+    public class SimCoordinate : ICoordinate<IVector>, IEquatable<SimCoordinate>, ICoordinate<MyVector>
     {
         public IVector coordinate = new MyVector();
         public bool Equals(IVector other)
@@ -30,6 +30,16 @@
         public void Add(IVector a)
         {
             coordinate += a;
+        }
+
+        public void Add(MyVector a)
+        {
+            coordinate += a;
+        }
+
+        MyVector ICoordinate<MyVector>.Multiply(float b)
+        {
+            return coordinate * b;
         }
 
         public IVector Multiply(float b)
@@ -57,6 +67,11 @@
             coordinate.Y = y;
         }
 
+        public float Distance(MyVector b)
+        {
+            return MyVector.Distance(coordinate, b);
+        }
+
         public float Distance(IVector b)
         {
             return MyVector.Distance(coordinate, b);
@@ -67,6 +82,11 @@
             return (float)Math.Sqrt(coordinate.X * coordinate.X + coordinate.Y * coordinate.Y);
         }
 
+        MyVector ICoordinate<MyVector>.GetCoordinate()
+        {
+            return (MyVector)coordinate;
+        }
+
         public IVector GetCoordinate()
         {
             return coordinate;
@@ -75,6 +95,11 @@
         public void SetCoordinate(float x, float y)
         {
             coordinate = new MyVector(x, y);
+        }
+
+        public void SetCoordinate(MyVector coordinate)
+        {
+            this.coordinate = coordinate;
         }
 
         public void SetCoordinate(IVector coordinate)
@@ -96,6 +121,12 @@
         {
             const float epsilon = 0.0001f;
             return other != null && Math.Abs(coordinate.X - other.GetCoordinate().X) < epsilon && Math.Abs(coordinate.Y - other.GetCoordinate().Y) < epsilon;
+        }
+
+        public bool Equals(MyVector other)
+        {
+            const float epsilon = 0.0001f;
+            return other != null && Math.Abs(coordinate.X - other.X) < epsilon && Math.Abs(coordinate.Y - other.Y) < epsilon;
         }
     }
 }

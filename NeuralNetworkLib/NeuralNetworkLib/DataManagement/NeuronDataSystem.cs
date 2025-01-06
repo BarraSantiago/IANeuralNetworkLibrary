@@ -5,8 +5,7 @@ namespace NeuralNetworkLib.DataManagement
     public enum SimAgentTypes
     {
         Carnivore,
-        Herbivore,
-        Scavenger
+        Herbivore
     }
 
     public enum BrainType

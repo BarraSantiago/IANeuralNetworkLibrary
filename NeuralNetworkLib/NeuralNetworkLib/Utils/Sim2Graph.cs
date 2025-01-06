@@ -36,8 +36,14 @@
                     nodeType.SetCoordinate(new MyVector(i * cellSize, j * cellSize));
                     NodeType type2 = GetNodeType(type);
                     nodeType.NodeType = type2;
-                    nodeType.NodeTerrain = type2 is NodeType.Lake or NodeType.Mountain
-                                                    ? NodeTerrain.Empty : GetTerrain(nodeTerrain);
+                    
+                    nodeType.NodeTerrain = type2 switch
+                    {
+                        NodeType.Lake => NodeTerrain.Lake,
+                        NodeType.Mountain => NodeTerrain.Empty,
+                        _ => GetTerrain(nodeTerrain)
+                    };
+                    
                     NodesType[i, j] = nodeType;
                 }
             });

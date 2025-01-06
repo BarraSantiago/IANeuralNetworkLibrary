@@ -1,13 +1,14 @@
 ﻿using NeuralNetworkLib.Utils;
 
-public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>
-    where Coordinate : IEquatable<Coordinate>
+public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>, IEquatable<SimNode<IVector>> where Coordinate : IEquatable<Coordinate>
 {
-    private Coordinate coordinate;
-    private int cost;
+    public bool IsOccupied { get; set; }
+    public NodeType NodeType { get; set; }
     public NodeTerrain NodeTerrain { get; set; }
-    public int Food { get; set; }
+    public int Resource { get; set; }
 
+    private int cost;
+    private Coordinate coordinate;
     private ICollection<INode<Coordinate>> neighbors;
 
     public SimNode()
@@ -19,7 +20,6 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         coordinate = coord;
     }
 
-    public NodeType NodeType { get; set; }
 
     public bool Equals(INode<Coordinate> other)
     {
@@ -74,6 +74,11 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     protected bool Equals(SimNode<Coordinate> other)
     {
         return coordinate.Equals(other.coordinate);
+    }
+
+    public bool Equals(SimNode<IVector> other)
+    {
+        return coordinate.Equals(other.GetCoordinate());
     }
 
     public override bool Equals(object obj)

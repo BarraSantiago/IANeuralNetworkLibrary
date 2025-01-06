@@ -18,8 +18,10 @@
         Empty,
         Mine,
         Tree,
+        Lake,
         Stump,
         TownCenter,
+        Construction,
         WatchTower,
     }
 
@@ -31,6 +33,7 @@
     public interface INode<Coordinate> : IEquatable<Coordinate>
         where Coordinate : IEquatable<Coordinate>
     {
+        
         public void SetCoordinate(Coordinate coordinateType);
 
         public Coordinate GetCoordinate();
@@ -45,6 +48,6 @@
         NodeType NodeType { get; set; }
 
         NodeTerrain NodeTerrain { get; set; }
-        int Food { get; set; }
+        int Resource { get; set; }
     }
 }
