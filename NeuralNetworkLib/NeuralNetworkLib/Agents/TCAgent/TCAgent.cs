@@ -106,7 +106,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm = new FSM<Behaviours, Flags>();
 
             // TODO make pathfinders with different movement costs
-            Pathfinder = GameManager.MinerPathfinder;
+            //Pathfinder = GameManager.MinerPathfinder;
 
             OnMove += Move;
             OnWait += Wait;

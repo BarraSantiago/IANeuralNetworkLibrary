@@ -1,112 +1,82 @@
-﻿using System.Text.Json;
-using Tester.DataManagement;
+﻿using NeuralNetworkLib.Utils;
+using Newtonsoft.Json;
+using Xunit;
 
-namespace Tester
+namespace Tester;
+
+public class Sim2GraphTests
 {
-    class Program
+    [Fact]
+    public void SaveGraph_SavesCorrectDataToFile()
     {
-        static void Main(string[] args)
+        // Arrange
+        var graph = new Sim2Graph(2, 2, 1.0f);
+        graph.CreateGraph(2, 2, 1.0f);
+        string filePath = "test_graph.json";
+
+        // Act
+        graph.SaveGraph(filePath);
+
+        // Assert
+        var json = File.ReadAllText(filePath);
+        var nodeData = JsonConvert.DeserializeObject<List<Sim2Graph.NodeData>>(json);
+        Assert.NotNull(nodeData);
+        Assert.Equal(4, nodeData.Count);
+        File.Delete(filePath);
+    }
+
+    [Fact]
+    public void LoadGraph_LoadsCorrectDataFromFile()
+    {
+        // Arrange
+        var graph = new Sim2Graph(2, 2, 1.0f);
+        int[] nodeTypes = { 0, 1, 2, 3 };
+        int[] nodeTerrains = { 0, 1, 2, 3 };
+
+        // Act
+        graph.LoadGraph(nodeTypes, nodeTerrains);
+
+        // Assert
+        for (int i = 0; i < 2; i++)
         {
-            string directoryPath = "NeuronData";
-            int generation = 1;
-
-            // Create test data
-            List<AgentNeuronData> agentsData = new List<AgentNeuronData>
+            for (int j = 0; j < 2; j++)
             {
-                new AgentNeuronData
-                {
-                    AgentId = 1,
-                    AgentType = SimAgentTypes.Carnivorous,
-                    BrainType = BrainType.Attack,
-                    NeuronWeights = new List<float[]> { new float[] { 0.1f, 0.2f }, new float[] { 0.3f, 0.4f } },
-                    Fitness = 5,
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 2,
-                    AgentType = SimAgentTypes.Carnivorous,
-                    BrainType = BrainType.Attack,
-                    NeuronWeights = new List<float[]> { new float[] { 0.1f, 0.2f }, new float[] { 0.3f, 0.4f } },
-                    Fitness = 5.2f,
-                    Bias = 2,
-                    P = 0.6f,
-                    TotalWeights = 4
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 3,
-                    AgentType = SimAgentTypes.Carnivorous,
-                    BrainType = BrainType.Attack,
-                    NeuronWeights = new List<float[]> { new float[] { 0.1f, 0.2f }, new float[] { 1.3f, 0.4f } },
-                    Fitness = 5
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 1,
-                    AgentType = SimAgentTypes.Carnivorous,
-                    BrainType = BrainType.Movement,
-                    NeuronWeights = new List<float[]> { new float[] { 0.1f, 0.2f }, new float[] { 0.3f, 0.4f } },
-                    Fitness = 2
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 2,
-                    AgentType = SimAgentTypes.Herbivore,
-                    BrainType = BrainType.Escape,
-                    NeuronWeights = new List<float[]> { new float[] { 0.5f, 0.6f }, new float[] { 0.7f, 0.8f } }
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 2,
-                    AgentType = SimAgentTypes.Herbivore,
-                    BrainType = BrainType.Movement,
-                    NeuronWeights = new List<float[]> { new float[] { 0.5f, 0.6f }, new float[] { 0.7f, 0.8f } }
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 3,
-                    AgentType = SimAgentTypes.Scavenger,
-                    BrainType = BrainType.ScavengerMovement,
-                    NeuronWeights = new List<float[]> { new float[] { 0.9f, 1.0f }, new float[] { 1.1f, 1.2f } }
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 3,
-                    AgentType = SimAgentTypes.Scavenger,
-                    BrainType = BrainType.Eat,
-                    NeuronWeights = new List<float[]> { new float[] { 0.9f, 1.0f }, new float[] { 1.1f, 1.2f } }
-                }
-            };
-            
-
-            // Save the data
-            NeuronDataSystem.SaveNeurons(agentsData, directoryPath, generation);
-            Console.WriteLine("Save Done");
-
-            // Load the data
-            Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>>> loadedData = NeuronDataSystem.LoadLatestNeurons(directoryPath);
-            Console.WriteLine("Load Started");
-
-            // Display the loaded data
-            foreach (SimAgentTypes agentType in loadedData.Keys)
-            {
-                Console.WriteLine($"Agent Type: {agentType}");
-                foreach (BrainType brainType in loadedData[agentType].Keys)
-                {
-                    Console.WriteLine($"  Brain Type: {brainType}");
-                    foreach (AgentNeuronData agentData in loadedData[agentType][brainType])
-                    {
-                        Console.WriteLine($"    Agent ID: {agentData.AgentId}");
-                        Console.WriteLine($"    Neuron Weights: {JsonSerializer.Serialize(agentData.NeuronWeights)}");
-                        Console.WriteLine($"    Fitness: {JsonSerializer.Serialize(agentData.Fitness)}");
-                        Console.WriteLine($"    Bias: {JsonSerializer.Serialize(agentData.Bias)}");
-                        Console.WriteLine($"    P: {JsonSerializer.Serialize(agentData.P)}");
-                        Console.WriteLine($"    Total Weights: {JsonSerializer.Serialize(agentData.TotalWeights)}");
-                    }
-                }
+                Assert.Equal((NodeType)nodeTypes[i * 2 + j], graph.NodesType[i, j].NodeType);
+                Assert.Equal((NodeTerrain)nodeTerrains[i * 2 + j], graph.NodesType[i, j].NodeTerrain);
             }
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
         }
+    }
+
+    [Fact]
+    public void SaveGraph_EmptyGraph_SavesEmptyData()
+    {
+        // Arrange
+        var graph = new Sim2Graph(0, 0, 1.0f);
+        string filePath = "empty_graph.json";
+
+        // Act
+        graph.SaveGraph(filePath);
+
+        // Assert
+        var json = File.ReadAllText(filePath);
+        var nodeData = JsonConvert.DeserializeObject<List<Sim2Graph.NodeData>>(json);
+        Assert.NotNull(nodeData);
+        Assert.Empty(nodeData);
+        File.Delete(filePath);
+    }
+
+    [Fact]
+    public void LoadGraph_EmptyData_LoadsEmptyGraph()
+    {
+        // Arrange
+        var graph = new Sim2Graph(0, 0, 1.0f);
+        int[] nodeTypes = { };
+        int[] nodeTerrains = { };
+
+        // Act
+        graph.LoadGraph(nodeTypes, nodeTerrains);
+
+        // Assert
+        Assert.Empty(graph.CoordNodes);
     }
 }
