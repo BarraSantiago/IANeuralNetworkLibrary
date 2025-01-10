@@ -22,7 +22,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             {
                 if (retreat)
                 {
-                    if (currentNode.NodeType != NodeType.TownCenter)
+                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter)
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
                     }
@@ -30,23 +30,25 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 }
 
                 if (currentNode.NodeType == NodeType.Empty || 
-                    (currentNode.NodeType == NodeType.Mine && currentNode.gold <= 0))
+                    ((currentNode.NodeTerrain == NodeTerrain.Mine || currentNode.NodeTerrain == NodeTerrain.Lake ||
+                currentNode.NodeTerrain == NodeTerrain.Tree) && currentNode.Resource <= 0))
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
                 }
 
-                if (food > 0 && currentNode.NodeType == NodeType.Mine)
+                if (food > 0 && currentNode.NodeTerrain == NodeTerrain.Mine 
+                    || currentNode.NodeTerrain == NodeTerrain.Lake 
+                    || currentNode.NodeTerrain == NodeTerrain.Tree)
                 {
                     OnFlag?.Invoke(Flags.OnGather);
                     return;
                 }
 
-                if (gold <= 0 && currentNode.NodeType == NodeType.TownCenter)
-                {
-                    OnFlag?.Invoke(Flags.OnGather);
-                    return;
-                }
+                if (!(gold <= 0) || currentNode.NodeTerrain != NodeTerrain.TownCenter) return;
+                
+                OnFlag?.Invoke(Flags.OnGather);
+                return;
             });
 
             return behaviours;
@@ -54,33 +56,12 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
         {
-            BehaviourActions behaviours = new BehaviourActions();
-
-            SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
-            Action<SimNode<IVector>> onReachMine = parameters[1] as Action<SimNode<IVector>>;
-
-            behaviours.AddMultiThreadableBehaviours(0, () =>
-            {
-                if (currentNode.NodeType == NodeType.Mine) onReachMine?.Invoke(currentNode);
-            });
-
-            return behaviours;
+            return default;
         }
 
         public override BehaviourActions GetOnExitBehaviour(params object[] parameters)
         {
-            BehaviourActions behaviours = new BehaviourActions();
-
-            if(parameters == null) return default;
-            SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
-            Action<SimNode<IVector>> onLeaveMine = parameters[1] as Action<SimNode<IVector>>;
-
-            behaviours.AddMultiThreadableBehaviours(0, () =>
-            {
-                if (currentNode.NodeType == NodeType.Mine) onLeaveMine?.Invoke(currentNode);
-            });
-
-            return behaviours;
+            return default;
         }
     }
 }

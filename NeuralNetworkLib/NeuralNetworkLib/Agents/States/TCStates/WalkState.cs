@@ -14,7 +14,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
             SimNode<IVector> targetNode = parameters[1] as SimNode<IVector>;
             bool retreat = (bool)parameters[2];
-            Action onMove = parameters[4] as Action;
+            Action onMove = parameters[3] as Action;
 
             behaviours.AddMultiThreadableBehaviours(0, () => { onMove?.Invoke(); });
 
@@ -29,27 +29,30 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
 
                 if (currentNode == null || targetNode == null ||
-                    targetNode.NodeTerrain == NodeType.Mine && targetNode.Resource <= 0)
+                    targetNode is { NodeTerrain: NodeTerrain.Mine, Resource: <= 0 } ||
+                    targetNode.NodeTerrain == NodeTerrain.Empty)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
                 }
 
-                if (currentNode.GetCoordinate() == targetNode.GetCoordinate())
+                // TODO change to be 1 node away from target
+                if (currentNode.GetCoordinate() != targetNode.GetCoordinate())
                 {
                     return;
                 }
                 
-                switch (currentNode.NodeType)
+                switch (currentNode.NodeTerrain)
                 {
-                    case NodeType.Mine:
+                    case NodeTerrain.Mine:
+                    case NodeTerrain.Lake:
+                    case NodeTerrain.Tree:
                         OnFlag?.Invoke(Flags.OnGather);
                         break;
-                    case NodeType.TownCenter:
+                    case NodeTerrain.TownCenter:
                         OnFlag?.Invoke(Flags.OnWait);
                         break;
-                    case NodeType.Empty:
-                    case NodeType.Blocked:
+                    case NodeTerrain.Empty:
                     default:
                         OnFlag?.Invoke(Flags.OnTargetLost);
                         break;

@@ -35,32 +35,12 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
         {
-            BehaviourActions behaviours = new BehaviourActions();
-            
-            Action<SimNode<IVector>> onReachMine = parameters[0] as Action<SimNode<IVector>>;
-            SimNode<IVector> currentNode = parameters[1] as SimNode<IVector>;
-            
-            behaviours.AddMultiThreadableBehaviours(0, () =>
-            {
-                onReachMine?.Invoke(currentNode);
-            });
-            
-            return behaviours;
+            return default;
         }
 
         public override BehaviourActions GetOnExitBehaviour(params object[] parameters)
         {
-            BehaviourActions behaviours = new BehaviourActions();
-            
-            Action<SimNode<IVector>> onLeaveMine = parameters[0] as Action<SimNode<IVector>>;
-            SimNode<IVector> currentNode = parameters[1] as SimNode<IVector>;
-            
-            behaviours.AddMultiThreadableBehaviours(0, () =>
-            {
-                onLeaveMine?.Invoke(currentNode);
-            });
-            
-            return behaviours;
+            return default;
         }
     }
 }
