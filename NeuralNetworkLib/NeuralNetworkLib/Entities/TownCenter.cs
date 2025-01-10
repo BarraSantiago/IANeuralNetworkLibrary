@@ -27,7 +27,7 @@ public class TownCenter
     private int _initialCarts = 1;
     private int _initialBuilders = 1;
     private int _initialGatherer = 5;
-    public SimNode<IVector> position;
+    public SimNode<MyVector> position;
     int gathererCount = 5;
 
     public int Gold

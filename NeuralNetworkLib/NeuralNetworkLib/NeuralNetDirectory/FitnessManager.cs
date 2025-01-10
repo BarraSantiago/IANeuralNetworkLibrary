@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.Agents.SimAgents;
+﻿using NeuralNetworkLib.Agents.AnimalAgents;
+using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.ECS;
 using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
@@ -25,14 +26,14 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             }
         }
 
-        public void CalculateFitness(SimAgentTypes agentType, uint agentId)
+        public void CalculateFitness(AnimalAgentTypes agentType, uint agentId)
         {
             switch (agentType)
             {
-                case SimAgentTypes.Carnivore:
+                case AnimalAgentTypes.Carnivore:
                     CarnivoreFitnessCalculator(agentId);
                     break;
-                case SimAgentTypes.Herbivore:
+                case AnimalAgentTypes.Herbivore:
                     HerbivoreFitnessCalculator(agentId);
                     break;
                 default:
@@ -71,7 +72,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
 
             Herbivore<IVector, ITransform<IVector>> agent = _agents[agentId] as Herbivore<IVector, ITransform<IVector>>;
             AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
-                DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent?.Transform.position);
+                DataContainer.GetNearestEntity(AnimalAgentTypes.Carnivore, agent?.Transform.position);
 
             IVector targetPosition;
 
@@ -96,7 +97,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
 
             AnimalAgent<TVector, TTransform> agent = _agents[agentId];
             AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
-                DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, agent.Transform.position);
+                DataContainer.GetNearestEntity(AnimalAgentTypes.Carnivore, agent.Transform.position);
 
             if (nearestPredatorNode?.CurrentNode?.GetCoordinate() == null) return;
             IVector targetPosition = nearestPredatorNode.CurrentNode.GetCoordinate();
@@ -143,7 +144,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
 
             Carnivore<TVector, TTransform> agent = (Carnivore<TVector, TTransform>)_agents[agentId];
             AnimalAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
-                DataContainer.GetNearestEntity(SimAgentTypes.Herbivore, agent.Transform.position);
+                DataContainer.GetNearestEntity(AnimalAgentTypes.Herbivore, agent.Transform.position);
 
             if (nearestHerbivoreNode?.CurrentNode?.GetCoordinate() == null) return;
             IVector targetPosition = nearestHerbivoreNode.CurrentNode.GetCoordinate();
@@ -170,7 +171,7 @@ namespace NeuralNetworkLib.NeuralNetDirectory
 
             AnimalAgent<TVector, TTransform> agent = _agents[agentId];
             AnimalAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
-                DataContainer.GetNearestEntity(SimAgentTypes.Herbivore, agent.Transform.position);
+                DataContainer.GetNearestEntity(AnimalAgentTypes.Herbivore, agent.Transform.position);
             INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(NodeType.Corpse, agent.Transform.position);
 
             if (nearestHerbivoreNode?.CurrentNode?.GetCoordinate() == null) return;
