@@ -10,8 +10,8 @@ public class Sim2GraphTests
     public void SaveGraph_SavesCorrectDataToFile()
     {
         // Arrange
-        var graph = new Sim2Graph(2, 2, 1.0f);
-        graph.CreateGraph(2, 2, 1.0f);
+        var graph = new Sim2Graph(200, 200, 1.0f);
+        graph.CreateGraph(200, 200, 1.0f);
         string filePath = "test_graph.json";
 
         // Act
@@ -21,7 +21,7 @@ public class Sim2GraphTests
         var json = File.ReadAllText(filePath);
         var nodeData = JsonConvert.DeserializeObject<List<Sim2Graph.NodeData>>(json);
         Assert.NotNull(nodeData);
-        Assert.Equal(4, nodeData.Count);
+        Assert.Equal(40000, nodeData.Count);
         File.Delete(filePath);
     }
 
