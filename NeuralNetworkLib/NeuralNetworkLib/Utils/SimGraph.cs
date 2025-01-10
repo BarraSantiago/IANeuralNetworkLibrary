@@ -10,10 +10,12 @@
         public static float CellSize;
         public TCoordinateNode[,] CoordNodes;
         public readonly TNodeType[,] NodesType;
+
         private ParallelOptions parallelOptions = new ParallelOptions()
         {
             MaxDegreeOfParallelism = 32
         };
+
         public SimGraph(int x, int y, float cellSize)
         {
             MapDimensions = new TCoordinateNode();
@@ -32,13 +34,12 @@
 
         private void AddNeighbors(float cellSize)
         {
-            List<INode<TCoordinateType>> neighbors = new List<INode<TCoordinateType>>();
-
             Parallel.For(0, CoordNodes.GetLength(0), parallelOptions, i =>
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
-                    neighbors.Clear();
+                    var neighbors = new List<INode<TCoordinateType>>();
+
                     for (int k = 0; k < CoordNodes.GetLength(0); k++)
                     {
                         for (int l = 0; l < CoordNodes.GetLength(1); l++)
@@ -56,7 +57,7 @@
                         }
                     }
 
-                    NodesType[i, j].SetNeighbors(new List<INode<TCoordinateType>>(neighbors));
+                    NodesType[i, j].SetNeighbors(neighbors);
                 }
             });
         }

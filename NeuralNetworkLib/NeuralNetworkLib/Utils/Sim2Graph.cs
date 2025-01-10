@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.Utils
+﻿using Newtonsoft.Json;
+
+namespace NeuralNetworkLib.Utils
 {
     public class Sim2Graph : SimGraph<SimNode<IVector>, SimCoordinate, IVector>
     {
@@ -67,6 +69,30 @@
                     NodesType[i, j] = nodeType;
                 }
             });
+        }
+        
+        public void SaveGraph(string filePath)
+        {
+            var nodeData = new List<NodeData>();
+
+            for (int i = 0; i < CoordNodes.GetLength(0); i++)
+            {
+                for (int j = 0; j < CoordNodes.GetLength(1); j++)
+                {
+                    var nodeType = (int)NodesType[i, j].NodeType;
+                    var nodeTerrain = (int)NodesType[i, j].NodeTerrain;
+                    nodeData.Add(new NodeData { NodeType = nodeType, NodeTerrain = nodeTerrain });
+                }
+            }
+
+            var json = JsonConvert.SerializeObject(nodeData, Formatting.Indented);
+            File.WriteAllText(filePath, json);
+        }
+
+        public class NodeData
+        {
+            public int NodeType { get; set; }
+            public int NodeTerrain { get; set; }
         }
         
         private NodeType GetNodeType(int type)
