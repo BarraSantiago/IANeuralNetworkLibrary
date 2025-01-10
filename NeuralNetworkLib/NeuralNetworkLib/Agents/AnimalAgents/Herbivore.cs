@@ -1,9 +1,8 @@
-using NeuralNetworkLib.Agents.States;
-using NeuralNetworkLib.Agents.States.SimStates;
+using NeuralNetworkLib.Agents.States.AnimalStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.Agents.SimAgents
+namespace NeuralNetworkLib.Agents.AnimalAgents
 {
     public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
         where TTransform : ITransform<IVector>, new()
@@ -21,7 +20,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         private int hp;
         private const int FoodDropped = 1;
-        private const int InitialHp = 2;
+        private const int InitialHp = 1;
 
         public override void Init()
         {
@@ -48,7 +47,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
             AnimalAgent<IVector, ITransform<IVector>> target =
-                DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
+                DataContainer.GetNearestEntity(AnimalAgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
                 input[brain][2] = NoTarget;
@@ -71,7 +70,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             input[brain][1] = CurrentNode.GetCoordinate().Y;
 
             AnimalAgent<IVector, ITransform<IVector>> target =
-                DataContainer.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
+                DataContainer.GetNearestEntity(AnimalAgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
                 input[brain][2] = NoTarget;
@@ -101,9 +100,6 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         private void Die()
         {
-            INode<IVector> node = CurrentNode;
-            node.NodeType = NodeType.Corpse;
-            node.Resource = FoodDropped;
             OnDeath?.Invoke(this);
         }
 
@@ -134,8 +130,8 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         protected override void ExtraBehaviours()
         {
-            Fsm.AddBehaviour<SimEatHerbState>(Behaviours.Eat, EatTickParameters);
-            Fsm.AddBehaviour<SimWalkHerbState>(Behaviours.Walk, WalkTickParameters);
+            Fsm.AddBehaviour<AnimalEatState>(Behaviours.Eat, EatTickParameters);
+            Fsm.AddBehaviour<AnimalWalkHerbState>(Behaviours.Walk, WalkTickParameters);
         }
     }
 }

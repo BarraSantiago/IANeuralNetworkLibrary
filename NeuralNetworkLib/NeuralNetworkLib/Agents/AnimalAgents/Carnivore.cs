@@ -1,9 +1,8 @@
-using NeuralNetworkLib.Agents.States;
-using NeuralNetworkLib.Agents.States.SimStates;
+using NeuralNetworkLib.Agents.States.AnimalStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.Agents.SimAgents
+namespace NeuralNetworkLib.Agents.AnimalAgents
 {
     public class Carnivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
         where TTransform : ITransform<IVector>, new()
@@ -12,15 +11,15 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public Action OnAttack { get; set; }
         public bool HasAttacked { get; private set; }
         public bool HasKilled { get; private set; }
-
         public int DamageDealt { get; private set; } = 0;
 
-        private AnimalAgent<IVector, ITransform<IVector>> target;
+        private uint target;
+        private bool isTargetAnimal;
+        private IVector targetPosition;
 
         public override void Init()
         {
             base.Init();
-            foodTarget = NodeTerrain.Stump;
             FoodLimit = 1;
             movement = 2;
             HasAttacked = false;
@@ -46,7 +45,10 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         public override void UpdateInputs()
         {
-            target = DataContainer.GetNearestEntity(SimAgentTypes.Herbivore, Transform.position);
+            (uint, bool) nearestPrey = DataContainer.GetNearestPrey(Transform.position);
+            target = nearestPrey.Item1;
+            isTargetAnimal = nearestPrey.Item2;
+            targetPosition = DataContainer.GetPosition(target, isTargetAnimal);
             FindFoodInputs();
             MovementInputs();
             ExtraInputs();
@@ -68,8 +70,8 @@ namespace NeuralNetworkLib.Agents.SimAgents
                 return;
             }
 
-            input[brain][2] = target.CurrentNode.GetCoordinate().X;
-            input[brain][3] = target.CurrentNode.GetCoordinate().Y;
+            input[brain][2] = targetPosition.X;
+            input[brain][3] = targetPosition.Y;
         }
 
         protected override void MovementInputs()
@@ -91,8 +93,8 @@ namespace NeuralNetworkLib.Agents.SimAgents
             }
             else
             {
-                input[brain][2] = target.CurrentNode.GetCoordinate().X;
-                input[brain][3] = target.CurrentNode.GetCoordinate().Y;
+                input[brain][2] = targetPosition.X;
+                input[brain][3] = targetPosition.Y;
             }
 
             if (nodeTarget == null)
@@ -111,11 +113,9 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         protected override void ExtraBehaviours()
         {
-            Fsm.AddBehaviour<SimEatCarnState>(Behaviours.Eat, EatTickParameters);
+            Fsm.AddBehaviour<WalkCarnState>(Behaviours.Walk, WalkTickParameters);
 
-            Fsm.AddBehaviour<SimWalkCarnState>(Behaviours.Walk, WalkTickParameters);
-
-            Fsm.AddBehaviour<SimAttackState>(Behaviours.Attack, AttackTickParameters);
+            Fsm.AddBehaviour<AttackState>(Behaviours.Attack, AttackTickParameters);
         }
 
         private object[] AttackTickParameters()
@@ -128,7 +128,6 @@ namespace NeuralNetworkLib.Agents.SimAgents
             object[] objects =
             {
                 OnAttack,
-                output[GetBrainTypeKeyByValue(BrainType.Eat)],
                 output[GetBrainTypeKeyByValue(BrainType.Attack)],
                 output[GetBrainTypeKeyByValue(BrainType.Movement)][2]
             };
@@ -139,8 +138,8 @@ namespace NeuralNetworkLib.Agents.SimAgents
         {
             object[] objects =
             {
-                CurrentNode, target?.CurrentNode.GetCoordinate(), foodTarget, OnMove,
-                output[GetBrainTypeKeyByValue(BrainType.Eat)], output[GetBrainTypeKeyByValue(BrainType.Attack)]
+                CurrentNode, targetPosition, OnMove,
+                output[GetBrainTypeKeyByValue(BrainType.Attack)]
             };
             return objects;
         }
@@ -148,37 +147,23 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         private void Attack()
         {
-            if(target == null) return;
-            if (target.agentType != SimAgentTypes.Herbivore ||
-                !Approximatly(target.Transform.position, transform.position, 0.2f)) return;
-            Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)target;
-            herbivore.Hp--;
+            if (target <= 0) return;
+            if (!Approximately(targetPosition, transform.position, 0.2f)) return;
+
+            DataContainer.Attack(target, isTargetAnimal);
             HasAttacked = true;
             DamageDealt++;
-            if (herbivore.Hp <= 0)
-            {
-                HasKilled = true;
-            }
+
+            HasKilled = true;
+            Eat();
         }
 
         protected override void Eat()
         {
-            INode<IVector> node = CurrentNode;
-
-            lock (node)
-            {
-                if (node.Resource <= 0) return;
-                Food++;
-                node.Resource--;
-
-                if (node.Resource > 0) return;
-
-                node.NodeType = NodeType.Carrion;
-                node.Resource = 30;
-            }
+            Food++;
         }
 
-        private bool Approximatly(IVector coord1, IVector coord2, float tolerance)
+        private bool Approximately(IVector coord1, IVector coord2, float tolerance)
         {
             return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;
         }

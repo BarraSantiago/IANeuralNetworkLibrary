@@ -6,11 +6,11 @@ namespace NeuralNetworkLib.Agents.SimAgents
 {
     public static class InputCountCache
     {
-        private static readonly ConcurrentDictionary<(SimAgentTypes, BrainType), int> cache = new ConcurrentDictionary<(SimAgentTypes, BrainType), int>();
+        private static readonly ConcurrentDictionary<(AnimalAgentTypes, BrainType), int> cache = new ConcurrentDictionary<(AnimalAgentTypes, BrainType), int>();
 
-        public static int GetInputCount(SimAgentTypes agentType, BrainType brainType)
+        public static int GetInputCount(AnimalAgentTypes agentType, BrainType brainType)
         {
-            (SimAgentTypes agentType, BrainType brainType) key = (agentType, brainType);
+            (AnimalAgentTypes agentType, BrainType brainType) key = (agentType, brainType);
             if (cache.TryGetValue(key, out int inputCount)) return inputCount;
             
             inputCount = DataContainer.inputCounts

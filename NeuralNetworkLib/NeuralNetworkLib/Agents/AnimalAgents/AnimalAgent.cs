@@ -1,10 +1,10 @@
-﻿using NeuralNetworkLib.Agents.States;
-using NeuralNetworkLib.Agents.States.SimStates;
+﻿using NeuralNetworkLib.Agents.SimAgents;
+using NeuralNetworkLib.Agents.States.AnimalStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.Agents.SimAgents
+namespace NeuralNetworkLib.Agents.AnimalAgents
 {
     public enum Flags
     {
@@ -55,11 +55,11 @@ namespace NeuralNetworkLib.Agents.SimAgents
         public static Action<AnimalAgent<TVector, TTransform>> OnDeath;
         protected TTransform transform = new TTransform();
         public virtual bool CanReproduce => Food >= FoodLimit;
-        public SimAgentTypes agentType { get; set; }
+        public AnimalAgentTypes agentType { get; set; }
         public FSM<Behaviours, Flags> Fsm;
 
         protected int movement = 3;
-        protected NodeTerrain foodTarget;
+        protected NodeType foodTarget;
         public int FoodLimit { get; protected set; } = 5;
         public int Food { get; protected set; } = 0;
         protected Action OnMove;
@@ -76,7 +76,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         {
         }
 
-        public AnimalAgent(SimAgentTypes agentType)
+        public AnimalAgent(AnimalAgentTypes agentType)
         {
             this.agentType = agentType;
         }
@@ -194,7 +194,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         protected virtual void FsmBehaviours()
         {
-            Fsm.AddBehaviour<SimWalkState>(Behaviours.Walk, WalkTickParameters);
+            Fsm.AddBehaviour<AnimalWalkState>(Behaviours.Walk, WalkTickParameters);
             ExtraBehaviours();
         }
 
@@ -204,7 +204,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
 
         protected virtual object[] WalkTickParameters()
         {
-            int extraBrain = agentType == SimAgentTypes.Carnivore
+            int extraBrain = agentType == AnimalAgentTypes.Carnivore
                 ? GetBrainTypeKeyByValue(BrainType.Attack)
                 : GetBrainTypeKeyByValue(BrainType.Escape);
             object[] objects =
@@ -217,7 +217,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
         
         protected virtual object[] EatTickParameters()
         {
-            int extraBrain = agentType == SimAgentTypes.Carnivore
+            int extraBrain = agentType == AnimalAgentTypes.Carnivore
                 ? GetBrainTypeKeyByValue(BrainType.Attack)
                 : GetBrainTypeKeyByValue(BrainType.Escape);
 

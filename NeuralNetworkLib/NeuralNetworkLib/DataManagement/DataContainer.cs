@@ -1,12 +1,14 @@
-﻿using NeuralNetworkLib.Agents.Flocking;
+﻿using NeuralNetworkLib.Agents.AnimalAgents;
+using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.SimAgents;
+using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.DataManagement;
 
 public struct NeuronInputCount
 {
-    public SimAgentTypes agentType;
+    public AnimalAgentTypes agentType;
     public BrainType brainType;
     public int inputCount;
     public int outputCount;
@@ -17,14 +19,14 @@ public class DataContainer
 {
     public static Sim2Graph graph;
 
-    public static Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>> Agents =
-        new Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>>();
+    public static Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>> Animals = new();
+    public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TCAgents = new();
 
-    public static FlockingManager flockingManager = new FlockingManager();
-    public static Dictionary<(BrainType, SimAgentTypes), NeuronInputCount> InputCountCache;
+    public static FlockingManager flockingManager = new();
+    public static Dictionary<(BrainType, AnimalAgentTypes), NeuronInputCount> InputCountCache;
     public static NeuronInputCount[] inputCounts;
-    public static Dictionary<int, BrainType> herbBrainTypes = new Dictionary<int, BrainType>();
-    public static Dictionary<int, BrainType> carnBrainTypes = new Dictionary<int, BrainType>();
+    public static Dictionary<int, BrainType> herbBrainTypes = new();
+    public static Dictionary<int, BrainType> carnBrainTypes = new();
 
 
     public static void Init()
@@ -44,32 +46,27 @@ public class DataContainer
         {
             new NeuronInputCount
             {
-                agentType = SimAgentTypes.Carnivore, brainType = BrainType.Eat, inputCount = 4, outputCount = 1,
-                hiddenLayersInputs = new[] { 1 }
-            },
-            new NeuronInputCount
-            {
-                agentType = SimAgentTypes.Carnivore, brainType = BrainType.Movement, inputCount = 7,
+                agentType = AnimalAgentTypes.Carnivore, brainType = BrainType.Movement, inputCount = 7,
                 outputCount = 3, hiddenLayersInputs = new[] { 3 }
             },
             new NeuronInputCount
             {
-                agentType = SimAgentTypes.Carnivore, brainType = BrainType.Attack, inputCount = 4,
+                agentType = AnimalAgentTypes.Carnivore, brainType = BrainType.Attack, inputCount = 4,
                 outputCount = 1, hiddenLayersInputs = new[] { 1 }
             },
             new NeuronInputCount
             {
-                agentType = SimAgentTypes.Herbivore, brainType = BrainType.Eat, inputCount = 4, outputCount = 1,
+                agentType = AnimalAgentTypes.Herbivore, brainType = BrainType.Eat, inputCount = 4, outputCount = 1,
                 hiddenLayersInputs = new[] { 1 }
             },
             new NeuronInputCount
             {
-                agentType = SimAgentTypes.Herbivore, brainType = BrainType.Movement, inputCount = 8,
+                agentType = AnimalAgentTypes.Herbivore, brainType = BrainType.Movement, inputCount = 8,
                 outputCount = 2, hiddenLayersInputs = new[] { 3 }
             },
             new NeuronInputCount
             {
-                agentType = SimAgentTypes.Herbivore, brainType = BrainType.Escape, inputCount = 4, outputCount = 1,
+                agentType = AnimalAgentTypes.Herbivore, brainType = BrainType.Escape, inputCount = 4, outputCount = 1,
                 hiddenLayersInputs = new[] { 1 }
             },
         };
@@ -109,12 +106,12 @@ public class DataContainer
         return nearestNode;
     }
 
-    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(SimAgentTypes entityType, IVector position)
+    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(AnimalAgentTypes entityType, IVector position)
     {
         AnimalAgent<IVector, ITransform<IVector>> nearestAgent = null;
         float minDistance = float.MaxValue;
 
-        foreach (AnimalAgent<IVector, ITransform<IVector>> agent in Agents.Values)
+        foreach (AnimalAgent<IVector, ITransform<IVector>> agent in Animals.Values)
         {
             if (agent.agentType != entityType) continue;
 
@@ -128,10 +125,55 @@ public class DataContainer
 
         return nearestAgent;
     }
+    
+    public static (uint, bool) GetNearestPrey(IVector position)
+    {
+        uint nearestAgent = 0;
+        bool isAnimal = true;
+        float minDistance = float.MaxValue;
+
+        foreach (var prey in Animals)
+        {
+            var agent = prey.Value;
+            if (agent.agentType != AnimalAgentTypes.Herbivore) continue;
+
+            float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());
+
+            if (distance > minDistance) continue;
+            minDistance = distance;
+            nearestAgent = prey.Key;
+        }
+        
+        foreach (var prey in TCAgents)
+        {
+            var agent = prey.Value;
+            if (agent.AgentType != AgentTypes.Cart && agent.CurrentFood > 0) continue;
+
+            float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());
+
+            if (distance > minDistance) continue;
+            minDistance = distance;
+            isAnimal = false;
+            nearestAgent = prey.Key;
+        }
+
+        return (nearestAgent, isAnimal);
+    }
+
+    public static IVector GetPosition(uint id, bool isAnimal)
+    {
+        return isAnimal ? Animals[id].CurrentNode.GetCoordinate() : TCAgents[id].CurrentNode.GetCoordinate();
+    }
+
+    public static void Attack(uint id, bool isAnimal)
+    {
+        Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>) Animals[id];
+        herbivore.Hp -= 1;
+    }
 
     public static List<ITransform<IVector>> GetBoidsInsideRadius(Boid<IVector, ITransform<IVector>> boid)
     {
-        List<ITransform<IVector>> insideRadiusBoids = new List<ITransform<IVector>>();
+        List<ITransform<IVector>> insideRadiusBoids = new();
         float detectionRadiusSquared = boid.detectionRadious * boid.detectionRadious;
         IVector boidPosition = boid.transform.position;
 
@@ -156,12 +198,12 @@ public class DataContainer
         return insideRadiusBoids;
     }
 
-    public static int GetBrainTypeKeyByValue(BrainType value, SimAgentTypes agentType)
+    public static int GetBrainTypeKeyByValue(BrainType value, AnimalAgentTypes agentType)
     {
         Dictionary<int, BrainType> brainTypes = agentType switch
         {
-            SimAgentTypes.Carnivore => carnBrainTypes,
-            SimAgentTypes.Herbivore => herbBrainTypes,
+            AnimalAgentTypes.Carnivore => carnBrainTypes,
+            AnimalAgentTypes.Herbivore => herbBrainTypes,
             _ => throw new ArgumentException("Invalid agent type")
         };
 
