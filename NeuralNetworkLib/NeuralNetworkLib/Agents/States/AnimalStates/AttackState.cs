@@ -1,8 +1,8 @@
-﻿using NeuralNetworkLib.Agents.SimAgents;
+﻿using NeuralNetworkLib.Agents.AnimalAgents;
 
-namespace NeuralNetworkLib.Agents.States.SimStates
+namespace NeuralNetworkLib.Agents.States.AnimalStates
 {
-    public class SimAttackState : State
+    public class AttackState : State
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
@@ -30,12 +30,6 @@ namespace NeuralNetworkLib.Agents.States.SimStates
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (outputBrain1[0] > 0.5f)
-                {
-                    OnFlag?.Invoke(Flags.OnEat);
-                    return;
-                }
-
                 if (outputBrain2[0] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnAttack);
