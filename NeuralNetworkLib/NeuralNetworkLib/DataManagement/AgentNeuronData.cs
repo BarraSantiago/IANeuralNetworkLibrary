@@ -4,6 +4,6 @@
     {
         public float[] NeuronWeights { get; set; }
         public BrainType BrainType;
-        public SimAgentTypes AgentType;
+        public AnimalAgentTypes AgentType;
     }
 }

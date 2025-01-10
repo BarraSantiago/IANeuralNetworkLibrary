@@ -1,4 +1,5 @@
 ﻿using NeuralNetworkLib.Agents.States.TCStates;
+using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Entities;
 using NeuralNetworkLib.Utils;
 using Pathfinder;
@@ -33,8 +34,33 @@ namespace NeuralNetworkLib.Agents.TCAgent
         Builder
     }
 
-    public class TcAgent
+    public class TcAgent<TVector, TTransform>
+        where TVector : IVector, IEquatable<TVector>
+        where TTransform : ITransform<IVector>, new()
     {
+        public virtual TTransform Transform
+        {
+            get => transform;
+            set
+            {
+                transform ??= new TTransform();
+                transform.position ??= new MyVector(0, 0);
+
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value), "Transform value cannot be null");
+                }
+
+                if (transform.position == null || value.position == null)
+                {
+                    throw new InvalidOperationException("Transform positions cannot be null");
+                }
+
+                transform.forward = (transform.position - value.position).Normalized();
+                transform = value;
+            }
+        }
+
         public static TownCenter TownCenter;
         public static bool Retreat;
         public SimNode<IVector> CurrentNode;
@@ -43,7 +69,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected FSM<Behaviours, Flags> Fsm;
         protected List<SimNode<IVector>> Path;
-        protected AgentTypes AgentType;
+        public AgentTypes AgentType;
 
         protected SimNode<IVector> TargetNode
         {
@@ -67,6 +93,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected const int FoodLimit = 15;
         protected int PathNodeId;
 
+        protected TTransform transform = new TTransform();
         private SimNode<IVector> targetNode;
 
         private void Update()
@@ -78,6 +105,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             Fsm = new FSM<Behaviours, Flags>();
 
+            // TODO make pathfinders with different movement costs
             Pathfinder = GameManager.MinerPathfinder;
 
             OnMove += Move;
@@ -101,7 +129,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected virtual void FsmBehaviours()
         {
-            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters, WaitEnterParameters, WaitExitParameters);
+            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
             Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
         }
 
@@ -159,17 +187,6 @@ namespace NeuralNetworkLib.Agents.TCAgent
             return objects;
         }
 
-        protected virtual object[] WaitEnterParameters()
-        {
-            return null;
-        }
-
-        protected virtual object[] WaitExitParameters()
-        {
-            return null;
-        }
-
-
         protected virtual void GetFoodTransitions()
         {
             return;
@@ -210,7 +227,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             NodeTerrain nodeTerrain = NodeTerrain.Empty)
         {
             IVector position = CurrentNode.GetCoordinate();
-            SimNode<IVector> target;
+            SimNode<MyVector> target = new SimNode<MyVector>();
 
             switch (nodeType)
             {
@@ -219,15 +236,14 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 case NodeType.Plains:
                     break;
                 default:
-                    target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find(nodeVoronoi =>
-                        nodeVoronoi.GetCoordinate() == position));
+                    target = Voronoi.GetMineCloser(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
                     break;
             }
 
             switch (nodeTerrain)
-            { 
+            {
                 case NodeTerrain.TownCenter:
-                target = TownCenter.position;
+                    target = TownCenter.position;
                     break;
             }
 
@@ -237,7 +253,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 return null;
             }
 
-            return GameManager.Graph.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
+            return DataContainer.graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
         }
     }
 }

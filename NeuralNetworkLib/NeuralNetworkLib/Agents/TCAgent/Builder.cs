@@ -3,7 +3,7 @@ using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.TCAgent
 {
-    public class Builder : TcAgent
+    public class Builder : TcAgent<IVector, ITransform<IVector>>
     {
         private Action onBuild;
         
@@ -37,16 +37,6 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             base.WalkTransitions();
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources);
-        }
-
-        protected override object[] WaitEnterParameters()
-        {
-            return new object[] { CurrentNode };
-        }
-
-        protected override object[] WaitExitParameters()
-        {
-            return new object[] { CurrentNode };
         }
 
         // TODO update this

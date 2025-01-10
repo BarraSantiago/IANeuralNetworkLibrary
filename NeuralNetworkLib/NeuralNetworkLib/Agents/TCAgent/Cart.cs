@@ -1,11 +1,12 @@
 using NeuralNetworkLib.Agents.States.TCStates;
+using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.TCAgent
 {
-    public class Cart : TcAgent
+    public class Cart : TcAgent<IVector, ITransform<IVector>>
     {
-        TcAgent _target;
+        private TcAgent<IVector, ITransform<IVector>> _target;
         private Action onGather;
         private Action onDeliver;
 
@@ -51,29 +52,23 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
-                   // TODO set target Node or agent
+                    // TODO set target Node or agent
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter);
-                });
+                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter); });
         }
 
         protected override void WalkTransitions()
         {
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter);
-                });
+                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter); });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
                     // TODO set target Node or agent
                 });
-            
+
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver);
             Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources);
         }
@@ -93,12 +88,14 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnHunger, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter;
+                    TargetNode = DataContainer.graph.NodesType[(int)TownCenter.position.GetCoordinate().X,
+                        (int)TownCenter.position.GetCoordinate().Y];
                 });
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter;
+                    TargetNode = DataContainer.graph.NodesType[(int)TownCenter.position.GetCoordinate().X,
+                        (int)TownCenter.position.GetCoordinate().Y];
                 });
         }
 
