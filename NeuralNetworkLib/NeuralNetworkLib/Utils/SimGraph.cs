@@ -25,7 +25,7 @@
 
             CreateGraph(x, y, cellSize);
 
-            //AddNeighbors(cellSize);
+            AddNeighbors(cellSize);
         }
 
         public abstract void CreateGraph(int x, int y, float cellSize);

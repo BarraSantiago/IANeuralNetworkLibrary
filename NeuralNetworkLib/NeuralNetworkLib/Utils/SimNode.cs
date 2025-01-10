@@ -1,6 +1,7 @@
 ﻿using NeuralNetworkLib.Utils;
 
-public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>, IEquatable<SimNode<IVector>> where Coordinate : IEquatable<Coordinate>
+public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>, IEquatable<SimNode<IVector>> 
+    where Coordinate : IEquatable<Coordinate>
 {
     public bool IsOccupied { get; set; }
     public NodeType NodeType { get; set; }

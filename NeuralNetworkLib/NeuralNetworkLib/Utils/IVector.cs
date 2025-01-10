@@ -87,7 +87,7 @@
         }
     }
 
-    public class MyVector : IVector, IEquatable<MyVector>
+    public class MyVector : IVector, IEquatable<MyVector>, IEquatable<IVector>
     {
         public float X { get; set; }
         public float Y { get; set; }

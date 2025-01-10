@@ -49,6 +49,26 @@
             });
         }
 
+        // TODO test this
+        public void LoadGraph(int[] nodeTypes, int[] nodeTerrains)
+        {
+            Parallel.For(0, CoordNodes.GetLength(0), parallelOptions, i =>
+            {
+                for (int j = 0; j < CoordNodes.GetLength(1); j++)
+                {
+                    SimCoordinate node = new SimCoordinate();
+                    node.SetCoordinate(i * CellSize, j * CellSize);
+                    CoordNodes[i, j] = node;
+
+                    SimNode<IVector> nodeType = new SimNode<IVector>();
+                    nodeType.SetCoordinate(new MyVector(i * CellSize, j * CellSize));
+                    nodeType.NodeType = (NodeType)nodeTypes[i * CoordNodes.GetLength(1) + j];
+                    nodeType.NodeTerrain = (NodeTerrain)nodeTerrains[i * CoordNodes.GetLength(1) + j];
+                    NodesType[i, j] = nodeType;
+                }
+            });
+        }
+        
         private NodeType GetNodeType(int type)
         {
             return type switch
