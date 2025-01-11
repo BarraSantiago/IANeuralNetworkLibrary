@@ -286,7 +286,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 }
             }
 
-            throw new KeyNotFoundException("The value is not present in the brainTypes dictionary.");
+            throw new KeyNotFoundException($"The BrainType value '{value}' is not present in the '{agentType}' brainTypes dictionary.");
         }
     }
 }

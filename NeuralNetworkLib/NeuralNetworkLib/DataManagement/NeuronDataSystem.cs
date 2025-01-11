@@ -11,7 +11,6 @@ namespace NeuralNetworkLib.DataManagement
     public enum BrainType
     {
         Movement,
-        ScavengerMovement,
         Eat,
         Attack,
         Escape,

@@ -61,20 +61,6 @@ namespace Tester
                     AgentType = SimAgentTypes.Herbivore,
                     BrainType = BrainType.Movement,
                     NeuronWeights = new List<float[]> { new float[] { 0.5f, 0.6f }, new float[] { 0.7f, 0.8f } }
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 3,
-                    AgentType = SimAgentTypes.Scavenger,
-                    BrainType = BrainType.ScavengerMovement,
-                    NeuronWeights = new List<float[]> { new float[] { 0.9f, 1.0f }, new float[] { 1.1f, 1.2f } }
-                },
-                new AgentNeuronData
-                {
-                    AgentId = 3,
-                    AgentType = SimAgentTypes.Scavenger,
-                    BrainType = BrainType.Eat,
-                    NeuronWeights = new List<float[]> { new float[] { 0.9f, 1.0f }, new float[] { 1.1f, 1.2f } }
                 }
             };
             

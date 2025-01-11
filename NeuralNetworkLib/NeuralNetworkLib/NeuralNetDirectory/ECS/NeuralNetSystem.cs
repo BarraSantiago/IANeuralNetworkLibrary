@@ -45,6 +45,12 @@ namespace NeuralNetworkLib.NeuralNetDirectory.ECS
                     NeuralNetComponent neuralNetwork = neuralNetworkComponents[entityId];
                     float[][] inputs = inputComponents[entityId].inputs;
                     float[] outputs = new float[3];
+                    
+                    if (i >= neuralNetwork.Layers.Count || i >= inputs.Length)
+                    {
+                        return; // Skip if index is out of bounds
+                    }
+                    
                     for (int j = 0; j < neuralNetwork.Layers[i].Count; j++)
                     {
                         outputs = Synapsis(neuralNetwork.Layers[i][j], inputs[i]);

@@ -43,9 +43,8 @@ public class DataContainer
         herbBrainTypes[1] = BrainType.Movement;
         herbBrainTypes[2] = BrainType.Escape;
 
-        carnBrainTypes[0] = BrainType.Eat;
-        carnBrainTypes[1] = BrainType.Movement;
-        carnBrainTypes[2] = BrainType.Attack;
+        carnBrainTypes[0] = BrainType.Movement;
+        carnBrainTypes[1] = BrainType.Attack;
 
         inputCounts = new[]
         {
@@ -85,7 +84,6 @@ public class DataContainer
 
     private static void InitPathfinder(ref AStarPath pathfinder, int mountainCost = 0, int sandCost = 0)
     {
-        if (pathfinder == null) throw new ArgumentNullException(nameof(pathfinder));
         const int normalCost = 100;
         const int maxModCost = 30;
         

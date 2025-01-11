@@ -56,7 +56,6 @@ namespace NeuralNetworkLib.NeuralNetDirectory
                     case BrainType.Escape:
                         HerbivoreEscapeFC(agentId);
                         break;
-                    case BrainType.ScavengerMovement:
                     case BrainType.Attack:
                     case BrainType.Flocking:
                     default:
@@ -127,7 +126,6 @@ namespace NeuralNetworkLib.NeuralNetDirectory
                     case BrainType.Movement:
                         CarnivoreMovementFC(agentId);
                         break;
-                    case BrainType.ScavengerMovement:
                     case BrainType.Escape:
                     case BrainType.Flocking:
                     default:

@@ -56,24 +56,6 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         
         protected override void FindFoodInputs()
         {
-            int brain = GetBrainTypeKeyByValue(BrainType.Eat);
-            int inputCount = GetInputCount(BrainType.Eat);
-            input[brain] = new float[inputCount];
-
-            input[brain][0] = Transform.position.X;
-            input[brain][1] = Transform.position.Y;
-            
-            IVector target = targetPosition;
-
-            if (target == null)
-            {
-                input[brain][2] = NoTarget;
-                input[brain][3] = NoTarget;
-                return;
-            }
-
-            input[brain][2] = target.X;
-            input[brain][3] = target.Y;
         }
 
 

@@ -7,12 +7,10 @@ namespace Tester.DataManagement
     {
         Carnivorous,
         Herbivore,
-        Scavenger
     }
     public enum BrainType
     {
         Movement,
-        ScavengerMovement,
         Eat,
         Attack,
         Escape,
