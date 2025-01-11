@@ -59,7 +59,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         public FSM<Behaviours, Flags> Fsm;
 
         protected int movement = 3;
-        protected NodeType foodTarget;
+        protected NodeTerrain foodTarget;
         public int FoodLimit { get; protected set; } = 5;
         public int Food { get; protected set; } = 0;
         protected Action OnMove;
@@ -144,25 +144,8 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         }
 
 
-        protected void FindFoodInputs()
+        protected virtual void FindFoodInputs()
         {
-            int brain = GetBrainTypeKeyByValue(BrainType.Eat);
-            int inputCount = GetInputCount(BrainType.Eat);
-            input[brain] = new float[inputCount];
-
-            input[brain][0] = Transform.position.X;
-            input[brain][1] = Transform.position.Y;
-            INode<IVector> target = GetTarget(foodTarget);
-
-            if (target == null)
-            {
-                input[brain][2] = NoTarget;
-                input[brain][3] = NoTarget;
-                return;
-            }
-
-            input[brain][2] = target.GetCoordinate().X;
-            input[brain][3] = target.GetCoordinate().Y;
         }
 
         protected virtual void MovementInputs()
@@ -281,12 +264,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
             return targetPos;
         }
-
-        public virtual INode<IVector> GetTarget(NodeType nodeType = NodeType.Empty)
-        {
-            return DataContainer.GetNearestNode(nodeType, transform.position);
-        }
-
+        
         protected int GetInputCount(BrainType brainType)
         {
             return InputCountCache.GetInputCount(agentType, brainType);

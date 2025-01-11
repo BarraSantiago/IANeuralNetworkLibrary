@@ -53,6 +53,29 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             MovementInputs();
             ExtraInputs();
         }
+        
+        protected override void FindFoodInputs()
+        {
+            int brain = GetBrainTypeKeyByValue(BrainType.Eat);
+            int inputCount = GetInputCount(BrainType.Eat);
+            input[brain] = new float[inputCount];
+
+            input[brain][0] = Transform.position.X;
+            input[brain][1] = Transform.position.Y;
+            
+            IVector target = targetPosition;
+
+            if (target == null)
+            {
+                input[brain][2] = NoTarget;
+                input[brain][3] = NoTarget;
+                return;
+            }
+
+            input[brain][2] = target.X;
+            input[brain][3] = target.Y;
+        }
+
 
         protected override void ExtraInputs()
         {
@@ -83,8 +106,6 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
 
-            INode<IVector> nodeTarget = GetTarget(foodTarget);
-
 
             if (target == null)
             {
@@ -97,18 +118,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 input[brain][3] = targetPosition.Y;
             }
 
-            if (nodeTarget == null)
-            {
-                input[brain][4] = NoTarget;
-                input[brain][5] = NoTarget;
-            }
-            else
-            {
-                input[brain][4] = nodeTarget.GetCoordinate().X;
-                input[brain][5] = nodeTarget.GetCoordinate().Y;
-            }
-
-            input[brain][6] = Food;
+            input[brain][4] = Food;
         }
 
         protected override void ExtraBehaviours()

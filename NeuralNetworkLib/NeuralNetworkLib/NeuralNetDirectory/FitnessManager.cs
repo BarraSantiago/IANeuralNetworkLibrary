@@ -170,21 +170,15 @@ namespace NeuralNetworkLib.NeuralNetDirectory
             const float punishment = 0.90f;
 
             AnimalAgent<TVector, TTransform> agent = _agents[agentId];
-            AnimalAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
-                DataContainer.GetNearestEntity(AnimalAgentTypes.Herbivore, agent.Transform.position);
-            INode<IVector> nearestCorpseNode = DataContainer.GetNearestNode(NodeType.Corpse, agent.Transform.position);
-
-            if (nearestHerbivoreNode?.CurrentNode?.GetCoordinate() == null) return;
-
-            IVector herbPosition = nearestHerbivoreNode.CurrentNode.GetCoordinate();
-            IVector corpsePosition = nearestCorpseNode?.GetCoordinate();
-
-            bool movingToHerb = IsMovingTowardsTarget(agentId, herbPosition);
-            bool movingToCorpse = corpsePosition != null && IsMovingTowardsTarget(agentId, corpsePosition);
+            (uint, bool) nearestPrey = DataContainer.GetNearestPrey(agent.Transform.position);
             
-            if (movingToHerb || movingToCorpse)
+            IVector herbPosition = DataContainer.GetPosition(nearestPrey.Item1, nearestPrey.Item2);
+
+            bool movingToPrey = IsMovingTowardsTarget(agentId, herbPosition);
+            
+            if (movingToPrey)
             {
-                float rewardMod = movingToHerb ? 1.15f : 0.9f;
+                float rewardMod = movingToPrey ? 1.15f : 0.9f;
                 
                 Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId),reward * rewardMod, BrainType.Movement);
             }

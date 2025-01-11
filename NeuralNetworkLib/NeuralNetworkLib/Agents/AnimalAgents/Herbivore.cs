@@ -21,11 +21,12 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         private int hp;
         private const int FoodDropped = 1;
         private const int InitialHp = 1;
-
+        private INode<IVector> FoodPosition;
+        
         public override void Init()
         {
             base.Init();
-            foodTarget = NodeType.Bush;
+            foodTarget = NodeTerrain.Stump;
 
             CalculateInputs();
 
@@ -36,6 +37,12 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         {
             base.Reset();
             hp = InitialHp;
+        }
+
+        public override void UpdateInputs()
+        {
+            FoodPosition = GetTarget(foodTarget);
+            base.UpdateInputs();
         }
 
         protected override void ExtraInputs()
@@ -60,6 +67,26 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             }
         }
 
+        protected override void FindFoodInputs()
+        {
+            int brain = GetBrainTypeKeyByValue(BrainType.Eat);
+            int inputCount = GetInputCount(BrainType.Eat);
+            input[brain] = new float[inputCount];
+
+            input[brain][0] = Transform.position.X;
+            input[brain][1] = Transform.position.Y;
+            
+            if (FoodPosition == null)
+            {
+                input[brain][2] = NoTarget;
+                input[brain][3] = NoTarget;
+                return;
+            }
+
+            input[brain][2] = FoodPosition.GetCoordinate().X;
+            input[brain][3] = FoodPosition.GetCoordinate().Y;
+        }
+
         protected override void MovementInputs()
         {
             int brain = GetBrainTypeKeyByValue(BrainType.Movement);
@@ -81,22 +108,27 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 input[brain][2] = target.CurrentNode.GetCoordinate().X;
                 input[brain][3] = target.CurrentNode.GetCoordinate().Y;
             }
-
-            INode<IVector> nodeTarget = GetTarget(foodTarget);
-            if (nodeTarget == null)
+            
+            if (FoodPosition == null)
             {
                 input[brain][4] = NoTarget;
                 input[brain][5] = NoTarget;
             }
             else
             {
-                input[brain][4] = nodeTarget.GetCoordinate().X;
-                input[brain][5] = nodeTarget.GetCoordinate().Y;
+                input[brain][4] = FoodPosition.GetCoordinate().X;
+                input[brain][5] = FoodPosition.GetCoordinate().Y;
             }
 
             input[brain][6] = Food;
             input[brain][7] = Hp;
         }
+        
+        public virtual INode<IVector> GetTarget(NodeTerrain nodeType = NodeTerrain.Stump)
+        {
+            return DataContainer.GetNearestNode(nodeType, transform.position);
+        }
+
 
         private void Die()
         {
