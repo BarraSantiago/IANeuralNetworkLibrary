@@ -38,20 +38,54 @@ namespace NeuralNetworkLib.Utils
                     nodeType.SetCoordinate(new MyVector(i * cellSize, j * cellSize));
                     NodeType type2 = GetNodeType(type);
                     nodeType.NodeType = type2;
-                    
+
                     nodeType.NodeTerrain = type2 switch
                     {
                         NodeType.Lake => NodeTerrain.Lake,
                         NodeType.Mountain => NodeTerrain.Empty,
                         _ => GetTerrain(nodeTerrain)
                     };
-                    
+
                     NodesType[i, j] = nodeType;
                 }
             });
         }
 
-        // TODO test this
+        public void LoadGraph(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException("The specified file does not exist.", filePath);
+            }
+
+            var json = File.ReadAllText(filePath);
+            List<NodeData>? nodeData = JsonConvert.DeserializeObject<List<NodeData>>(json);
+
+            if (nodeData == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize the node data.");
+            }
+
+            int index = 0;
+            for (int i = 0; i < CoordNodes.GetLength(0); i++)
+            {
+                for (int j = 0; j < CoordNodes.GetLength(1); j++)
+                {
+                    var node = new SimCoordinate();
+                    node.SetCoordinate(i * CellSize, j * CellSize);
+                    CoordNodes[i, j] = node;
+
+                    var nodeType = new SimNode<IVector>();
+                    nodeType.SetCoordinate(new MyVector(i * CellSize, j * CellSize));
+                    nodeType.NodeType = (NodeType)nodeData[index].NodeType;
+                    nodeType.NodeTerrain = (NodeTerrain)nodeData[index].NodeTerrain;
+                    NodesType[i, j] = nodeType;
+
+                    index++;
+                }
+            }
+        }
+
         public void LoadGraph(int[] nodeTypes, int[] nodeTerrains)
         {
             Parallel.For(0, CoordNodes.GetLength(0), parallelOptions, i =>
@@ -70,7 +104,7 @@ namespace NeuralNetworkLib.Utils
                 }
             });
         }
-        
+
         public void SaveGraph(string filePath)
         {
             var nodeData = new List<NodeData>();
@@ -94,7 +128,7 @@ namespace NeuralNetworkLib.Utils
             public int NodeType { get; set; }
             public int NodeTerrain { get; set; }
         }
-        
+
         private NodeType GetNodeType(int type)
         {
             return type switch
