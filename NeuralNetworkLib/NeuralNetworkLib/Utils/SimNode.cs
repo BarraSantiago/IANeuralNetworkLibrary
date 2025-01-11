@@ -1,6 +1,6 @@
 ﻿using NeuralNetworkLib.Utils;
 
-public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>, IEquatable<SimNode<IVector>> 
+public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>
     where Coordinate : IEquatable<Coordinate>
 {
     public bool isBlocked = false;
