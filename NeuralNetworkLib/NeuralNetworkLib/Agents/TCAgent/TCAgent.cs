@@ -105,8 +105,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             Fsm = new FSM<Behaviours, Flags>();
 
-            // TODO make pathfinders with different movement costs
-            Pathfinder = GameManager.MinerPathfinder;
+            Pathfinder = AgentType switch
+            {
+                AgentTypes.Gatherer => DataContainer.gathererPathfinder,
+                AgentTypes.Cart => DataContainer.cartPathfinder,
+                AgentTypes.Builder => DataContainer.builderPathfinder,
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
             OnMove += Move;
             OnWait += Wait;

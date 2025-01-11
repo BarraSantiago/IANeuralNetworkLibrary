@@ -3,10 +3,6 @@
     public enum NodeType
     {
         Empty,
-        Blocked,
-        Bush,
-        Corpse,
-        Carrion,
         Lake,
         Sand,
         Plains,

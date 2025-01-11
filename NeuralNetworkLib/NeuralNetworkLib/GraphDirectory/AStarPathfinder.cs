@@ -36,7 +36,8 @@ namespace Pathfinder
         
         protected override bool IsBlocked(NodeType node)
         {
-            return node.NodeType == NeuralNetworkLib.Utils.NodeType.Blocked;
+            
+            return node.IsBlocked();
         }
 
         protected override int MoveToNeighborCost(NodeType A, NodeType B)

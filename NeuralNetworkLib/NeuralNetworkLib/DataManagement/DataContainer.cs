@@ -3,8 +3,11 @@ using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.Utils;
+using Pathfinder;
 
 namespace NeuralNetworkLib.DataManagement;
+
+using AStarPath = AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate>;
 
 public struct NeuronInputCount
 {
@@ -27,17 +30,19 @@ public class DataContainer
     public static NeuronInputCount[] inputCounts;
     public static Dictionary<int, BrainType> herbBrainTypes = new();
     public static Dictionary<int, BrainType> carnBrainTypes = new();
-
+    public static AStarPath gathererPathfinder;
+    public static AStarPath builderPathfinder;
+    public static AStarPath cartPathfinder;
 
     public static void Init()
     {
         herbBrainTypes = new Dictionary<int, BrainType>();
         carnBrainTypes = new Dictionary<int, BrainType>();
-        
+
         herbBrainTypes[0] = BrainType.Eat;
         herbBrainTypes[1] = BrainType.Movement;
         herbBrainTypes[2] = BrainType.Escape;
-        
+
         carnBrainTypes[0] = BrainType.Eat;
         carnBrainTypes[1] = BrainType.Movement;
         carnBrainTypes[2] = BrainType.Attack;
@@ -46,7 +51,7 @@ public class DataContainer
         {
             new NeuronInputCount
             {
-                agentType = AnimalAgentTypes.Carnivore, brainType = BrainType.Movement, inputCount = 7,
+                agentType = AnimalAgentTypes.Carnivore, brainType = BrainType.Movement, inputCount = 5,
                 outputCount = 3, hiddenLayersInputs = new[] { 3 }
             },
             new NeuronInputCount
@@ -72,6 +77,41 @@ public class DataContainer
         };
 
         InputCountCache = inputCounts.ToDictionary(input => (input.brainType, input.agentType));
+
+        InitPathfinder(ref gathererPathfinder, 0, 0);
+        InitPathfinder(ref cartPathfinder, 50, 15);
+        InitPathfinder(ref builderPathfinder, 30, 0);
+    }
+
+    private static void InitPathfinder(ref AStarPath pathfinder, int mountainCost = 0, int sandCost = 0)
+    {
+        if (pathfinder == null) throw new ArgumentNullException(nameof(pathfinder));
+        const int normalCost = 100;
+        const int maxModCost = 30;
+        
+        foreach (SimNode<IVector> node in graph.NodesType)
+        {
+            node.SetCost(normalCost);
+            switch (node.NodeType)
+            {
+                case NodeType.Lake:
+                    node.SetCost(1000);
+                    node.isBlocked = true;
+                    break;
+                case NodeType.Mountain:
+                    node.SetCost(mountainCost);
+                    if(mountainCost > maxModCost) node.isBlocked = true;
+                    break;
+                case NodeType.Sand:
+                    node.SetCost(sandCost);
+                    if(sandCost > maxModCost) node.isBlocked = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        pathfinder = new AStarPath(graph.NodesType.Cast<SimNode<IVector>>().ToList());
     }
 
     public static INode<IVector> CoordinateToNode(IVector coordinate)
@@ -85,14 +125,14 @@ public class DataContainer
     }
 
 
-    public static INode<IVector> GetNearestNode(NodeType nodeType, IVector position)
+    public static INode<IVector> GetNearestNode(NodeTerrain nodeType, IVector position)
     {
         INode<IVector> nearestNode = null;
         float minDistance = float.MaxValue;
 
         foreach (SimNode<IVector> node in graph.NodesType)
         {
-            if (node.NodeType != nodeType) continue;
+            if (node.NodeTerrain != nodeType) continue;
 
             float distance = IVector.Distance(position, node.GetCoordinate());
 
@@ -106,7 +146,8 @@ public class DataContainer
         return nearestNode;
     }
 
-    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(AnimalAgentTypes entityType, IVector position)
+    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(AnimalAgentTypes entityType,
+        IVector position)
     {
         AnimalAgent<IVector, ITransform<IVector>> nearestAgent = null;
         float minDistance = float.MaxValue;
@@ -125,7 +166,7 @@ public class DataContainer
 
         return nearestAgent;
     }
-    
+
     public static (uint, bool) GetNearestPrey(IVector position)
     {
         uint nearestAgent = 0;
@@ -143,7 +184,7 @@ public class DataContainer
             minDistance = distance;
             nearestAgent = prey.Key;
         }
-        
+
         foreach (var prey in TCAgents)
         {
             var agent = prey.Value;
@@ -167,7 +208,7 @@ public class DataContainer
 
     public static void Attack(uint id, bool isAnimal)
     {
-        Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>) Animals[id];
+        Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)Animals[id];
         herbivore.Hp -= 1;
     }
 
