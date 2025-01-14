@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.Utils;
+﻿using NeuralNetworkLib.Agents.TCAgent;
+using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Entities;
 
@@ -21,14 +22,16 @@ public struct CreationCost
 
 public class TownCenter
 {
+    public SimNode<IVector> position;
+    public List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)> agentsResources; 
+    
     private int gold;
     private int wood;
     private int food;
     private int _initialCarts = 1;
     private int _initialBuilders = 1;
     private int _initialGatherer = 5;
-    public SimNode<MyVector> position;
-    int gathererCount = 5;
+    private int gathererCount = 5;
 
     public int Gold
     {

@@ -6,56 +6,62 @@ namespace NeuralNetworkLib.Agents.TCAgent
 {
     public class Cart : TcAgent<IVector, ITransform<IVector>>
     {
+        public ResourceType resourceCarrying;
         private TcAgent<IVector, ITransform<IVector>> _target;
         private Action onGather;
         private Action onDeliver;
+        private Action onReturnResource;
+        private bool returnResource;
 
         public override void Init()
         {
             base.Init();
+            CurrentFood = 0;
             AgentType = AgentTypes.Cart;
             Fsm.ForceTransition(Behaviours.GatherResources);
             onGather += Gather;
-            onDeliver += DeliverFood;
+            onDeliver += DeliverResource;
+            onReturnResource += ReturnResource;
         }
 
-        private void Gather()
-        {
-            CurrentFood++;
-        }
-
-        private void DeliverFood()
-        {
-            if (CurrentFood <= 0) return;
-
-            CurrentFood--;
-            _target.CurrentFood++;
-        }
 
         protected override void FsmBehaviours()
         {
-            base.FsmBehaviours();
-            Fsm.AddBehaviour<GetFoodState>(Behaviours.GatherResources, GetFoodTickParameters);
-            Fsm.AddBehaviour<DeliverFoodState>(Behaviours.Deliver, DeliverTickParameters);
+            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
+            Fsm.AddBehaviour<CartWalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
+            Fsm.AddBehaviour<GetResourcesState>(Behaviours.GatherResources, GatherTickParameters);
+            Fsm.AddBehaviour<DeliverResourceState>(Behaviours.Deliver, DeliverTickParameters);
+            Fsm.AddBehaviour<ReturnResourceState>(Behaviours.ReturnResources, ReturnTickParameters);
         }
 
         protected override void FsmTransitions()
         {
             base.FsmTransitions();
-            GetFoodTransitions();
+            GetResourcesTransitions();
             WalkTransitions();
             DeliverTransitions();
+            ReturnResourceTransition();
         }
 
-        protected override void GetFoodTransitions()
+        protected override void WaitTransitions()
         {
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
+            Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    // TODO set target Node or agent
+                    TargetNode = TownCenter.position;
                 });
+            Fsm.SetTransition(Behaviours.Wait, Flags.OnReturnResource, Behaviours.ReturnResources);
+
+        }
+
+        protected override void GetResourcesTransitions()
+        {
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk);
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter); });
+                () =>
+                {
+                    TargetNode = TownCenter.position;
+                });
         }
 
         protected override void WalkTransitions()
@@ -66,48 +72,175 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    // TODO set target Node or agent
+                    (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource =
+                        TownCenter.agentsResources.First(agent => agent.Item2 == resourceCarrying);
+                    if (agentResource.Item1 == null)
+                    {
+                        TargetNode = TownCenter.position;
+                        returnResource = true;
+                    }
+                    else
+                    {
+                        TownCenter.agentsResources.Remove(agentResource);
+                        _target = agentResource.Item1;
+                        resourceCarrying = agentResource.Item2;
+                        TargetNode = _target.CurrentNode;
+                    }
                 });
 
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver);
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetReach, Behaviours.Deliver);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources, () =>
+            {
+                (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.agentsResources[0];
+                TownCenter.agentsResources.Remove(agentResource);
+                _target = agentResource.Item1;
+                resourceCarrying = agentResource.Item2;
+                TargetNode = _target.CurrentNode;
+            });
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnReturnResource, Behaviours.ReturnResources);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait, () =>
+            {
+                returnResource = true;
+            });
+
         }
 
-        protected override object[] GetFoodTickParameters()
+        protected override object[] WalkTickParameters()
         {
-            return new object[] { CurrentFood, FoodLimit, onGather, Retreat };
+            object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, returnResource };
+            return objects;
         }
 
         protected override object[] GatherTickParameters()
         {
-            return new object[] { Retreat, CurrentFood, CurrentGold, ResourceLimit, onGather };
-        }
-
-        protected override void DeliverTransitions()
-        {
-            Fsm.SetTransition(Behaviours.Deliver, Flags.OnHunger, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = DataContainer.graph.NodesType[(int)TownCenter.position.GetCoordinate().X,
-                        (int)TownCenter.position.GetCoordinate().Y];
-                });
-            Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = DataContainer.graph.NodesType[(int)TownCenter.position.GetCoordinate().X,
-                        (int)TownCenter.position.GetCoordinate().Y];
-                });
+            return new object[]
+            {
+                CurrentGold, CurrentFood, CurrentWood,
+                resourceCarrying, ResourceLimit, onGather, Retreat
+            };
         }
 
         private object[] DeliverTickParameters()
         {
-            return new object[] { CurrentFood, onDeliver, Retreat };
+            return new object[]
+            {
+                CurrentFood, CurrentGold, CurrentWood, resourceCarrying, onDeliver, Retreat, CurrentNode,
+                _target.CurrentNode
+            };
+        }
+
+        private object[] ReturnTickParameters()
+        {
+            return new object[] { CurrentFood, CurrentGold, CurrentWood, onReturnResource, Retreat };
+        }
+        
+        protected override object[] WaitTickParameters()
+        {
+            object[] objects = { Retreat, CurrentNode, OnWait, returnResource };
+            return objects;
+        }
+        
+        protected override void DeliverTransitions()
+        {
+            Fsm.SetTransition(Behaviours.Deliver, Flags.OnHunger, Behaviours.Walk,
+                () => { TargetNode = TownCenter.position; });
+            Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
+                () => { TargetNode = TownCenter.position; });
+        }
+
+        private void ReturnResourceTransition()
+        {
+            Fsm.SetTransition(Behaviours.ReturnResources, Flags.OnHunger, Behaviours.GatherResources,
+                () =>
+                {
+                    returnResource = false;
+                    (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.agentsResources[0];
+                    TownCenter.agentsResources.Remove(agentResource);
+                    _target = agentResource.Item1;
+                    resourceCarrying = agentResource.Item2;
+                    TargetNode = _target.CurrentNode;
+                });
+            Fsm.SetTransition(Behaviours.ReturnResources, Flags.OnRetreat, Behaviours.Walk,
+                () => { TargetNode = TownCenter.position; });
         }
 
         protected SimNode<IVector> GetTarget()
         {
             // TODO get target
             return null;
+        }
+
+
+        private void ReturnResource()
+        {
+            switch (resourceCarrying)
+            {
+                case ResourceType.Food:
+                    if (CurrentFood <= 0) return;
+                    CurrentFood--;
+                    TownCenter.Food++;
+                    break;
+                case ResourceType.Gold:
+                    if (CurrentGold <= 0) return;
+                    CurrentGold--;
+                    TownCenter.Gold++;
+                    break;
+                case ResourceType.Wood:
+                    if (CurrentWood <= 0) return;
+                    CurrentWood--;
+                    TownCenter.Wood++;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void Gather()
+        {
+            switch (resourceCarrying)
+            {
+                case ResourceType.Food:
+                    if (TownCenter.Food <= 0) return;
+                    CurrentFood++;
+                    TownCenter.Food--;
+                    break;
+                case ResourceType.Gold:
+                    if (TownCenter.Gold <= 0) return;
+                    CurrentGold++;
+                    TownCenter.Gold--;
+                    break;
+                case ResourceType.Wood:
+                    if (TownCenter.Wood <= 0) return;
+                    CurrentWood++;
+                    TownCenter.Wood--;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void DeliverResource()
+        {
+            switch (resourceCarrying)
+            {
+                case ResourceType.Food:
+                    if (CurrentFood <= 0) return;
+                    CurrentFood--;
+                    _target.CurrentFood++;
+                    break;
+                case ResourceType.Gold:
+                    if (CurrentGold <= 0) return;
+                    CurrentGold--;
+                    _target.CurrentGold++;
+                    break;
+                case ResourceType.Wood:
+                    if (CurrentWood <= 0) return;
+                    CurrentWood--;
+                    _target.CurrentWood++;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }

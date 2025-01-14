@@ -4,6 +4,7 @@ using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.States.TCStates
 {
+    // Gatherer state that gathers resources from the map
     public class GatherResource : State
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
@@ -24,10 +25,29 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (retreat) OnFlag?.Invoke(Flags.OnRetreat);
-                if (food <= 0) OnFlag?.Invoke(Flags.OnHunger);
-                if (gold >= goldLimit) OnFlag?.Invoke(Flags.OnFull);
-                if(targetNode.Resource <= 0) OnFlag?.Invoke(Flags.OnTargetLost);
+                if (retreat)
+                {
+                    OnFlag?.Invoke(Flags.OnRetreat);
+                    return;
+                }
+
+                if (food <= 0)
+                {
+                    OnFlag?.Invoke(Flags.OnHunger);
+                    return;
+                }
+
+                if (gold >= goldLimit)
+                {
+                    OnFlag?.Invoke(Flags.OnFull);
+                    return;
+                }
+
+                if (targetNode.Resource <= 0)
+                {
+                    OnFlag?.Invoke(Flags.OnTargetLost);
+                    return;
+                }
             });
 
             return behaviours;

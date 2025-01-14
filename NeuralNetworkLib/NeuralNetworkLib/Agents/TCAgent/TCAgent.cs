@@ -15,7 +15,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
         OnRetreat,
         OnFull,
         OnGather,
-        OnWait
+        OnWait,
+        OnReturnResource
     }
 
     public enum Behaviours
@@ -23,8 +24,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
         Wait,
         Walk,
         GatherResources,
+        ReturnResources,
         Build,
-        Deliver
+        Deliver,
     }
 
     public enum AgentTypes
@@ -32,6 +34,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
         Gatherer,
         Cart,
         Builder
+    }
+    
+    public enum ResourceType
+    {
+        Gold,
+        Wood,
+        Food
     }
 
     public class TcAgent<TVector, TTransform>
@@ -86,8 +95,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected Action OnWait;
 
         public int CurrentFood = 3;
-        protected int CurrentGold = 0;
-        protected int CurrentWood = 0;
+        public int CurrentGold = 0;
+        public int CurrentWood = 0;
         protected int LastTimeEat = 0;
         protected const int ResourceLimit = 15;
         protected const int FoodLimit = 15;
@@ -127,7 +136,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             WalkTransitions();
             WaitTransitions();
             GatherTransitions();
-            GetFoodTransitions();
+            GetResourcesTransitions();
             DeliverTransitions();
         }
 
@@ -192,7 +201,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             return objects;
         }
 
-        protected virtual void GetFoodTransitions()
+        protected virtual void GetResourcesTransitions()
         {
             return;
         }
@@ -233,6 +242,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             IVector position = CurrentNode.GetCoordinate();
             SimNode<MyVector> target = new SimNode<MyVector>();
+            SimNode<IVector> target2 = new SimNode<IVector>();
 
             switch (nodeType)
             {
@@ -248,7 +258,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             switch (nodeTerrain)
             {
                 case NodeTerrain.TownCenter:
-                    target = TownCenter.position;
+                    target2 = TownCenter.position;
                     break;
             }
 

@@ -85,6 +85,21 @@
             float deltaY = a.Y - b.Y;
             return deltaX * deltaX + deltaY * deltaY;
         }
+
+        public bool Adyacent(IVector a)
+        {
+            if (a == null) return false;
+
+            float deltaX = Math.Abs(this.X - a.X);
+            float deltaY = Math.Abs(this.Y - a.Y);
+
+            return Approximately(deltaX, 1) && Approximately(deltaY, 1); 
+        }
+        
+        private bool Approximately(float a, float b)
+        {
+            return Math.Abs(a - b) < 1e-4f;
+        }
     }
 
     public class MyVector : IVector, IEquatable<MyVector>, IEquatable<IVector>

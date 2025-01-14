@@ -83,10 +83,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 TownCenter.Wood++;
             }
 
-            if (CurrentFood > 3)
+            if (CurrentFood < ResourceLimit && TownCenter.Food > 0)
             {
-                CurrentFood--;
-                TownCenter.Food++;
+                CurrentFood++;
+                TownCenter.Food--;
             }
         }
 

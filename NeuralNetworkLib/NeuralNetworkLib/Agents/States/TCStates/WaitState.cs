@@ -64,4 +64,46 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             return default;
         }
     }
+
+    public class CartWait : State
+    {
+        public override BehaviourActions GetTickBehaviour(params object[] parameters)
+        {
+            BehaviourActions behaviours = new BehaviourActions();
+
+            bool retreat = (bool)parameters[0];
+            SimNode<IVector> currentNode = (SimNode<IVector>)parameters[1];
+            Action OnWait = parameters[2] as Action;
+
+
+            behaviours.AddMultiThreadableBehaviours(0, () => { OnWait?.Invoke(); });
+
+            behaviours.SetTransitionBehaviour(() =>
+            {
+                if (retreat)
+                {
+                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter)
+                    {
+                        OnFlag?.Invoke(Flags.OnRetreat);
+                    }
+                    return;
+                }
+
+                OnFlag?.Invoke(Flags.OnReturnResource);
+                return;
+            });
+
+            return behaviours;
+        }
+
+        public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
+        {
+            return default;
+        }
+
+        public override BehaviourActions GetOnExitBehaviour(params object[] parameters)
+        {
+            return default;
+        }
+    }
 }
