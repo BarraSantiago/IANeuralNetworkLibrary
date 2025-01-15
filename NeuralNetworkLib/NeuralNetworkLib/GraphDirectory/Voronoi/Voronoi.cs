@@ -59,7 +59,7 @@ namespace Pathfinder.Voronoi
 
             foreach (TCoordinate? mine in pointsOfInterest)
             {
-                // Agrego las minas de oro como sectores
+                // Agrego los nodos como sectores
                 SimNode<TCoordinateType> node = new SimNode<TCoordinateType>();
                 node.SetCoordinate(mine.GetCoordinate());
                 sectors.Add(new Sector<TCoordinate, TCoordinateType>(node));
@@ -89,7 +89,7 @@ namespace Pathfinder.Voronoi
             }
         }
 
-        public SimNode<TCoordinateType> GetMineCloser(TCoordinate agentPosition)
+        public SimNode<TCoordinateType> GetClosestPointOfInterest(TCoordinate agentPosition)
         {
             // Calculo que mina esta mas cerca a x position
             return sectors != null ? (from sector in sectors 

@@ -67,7 +67,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void WalkTransitions()
         {
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter); });
+                () =>
+                {
+                    TargetNode = TownCenter.position;
+                });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>

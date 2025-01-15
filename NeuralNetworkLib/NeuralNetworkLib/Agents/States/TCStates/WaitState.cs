@@ -30,8 +30,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 }
 
                 if (currentNode.NodeType == NodeType.Empty || 
-                    ((currentNode.NodeTerrain == NodeTerrain.Mine || currentNode.NodeTerrain == NodeTerrain.Lake ||
-                currentNode.NodeTerrain == NodeTerrain.Tree) && currentNode.Resource <= 0))
+                    (currentNode.NodeTerrain is NodeTerrain.Mine or NodeTerrain.Lake or NodeTerrain.Tree 
+                     && currentNode.Resource <= 0))
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;

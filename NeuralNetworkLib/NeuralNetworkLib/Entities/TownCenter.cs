@@ -23,6 +23,7 @@ public struct CreationCost
 public class TownCenter
 {
     public SimNode<IVector> position;
+    public List<TcAgent<IVector, ITransform<IVector>>> agents;
     public List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)> agentsResources; 
     
     private int gold;
@@ -32,7 +33,14 @@ public class TownCenter
     private int _initialBuilders = 1;
     private int _initialGatherer = 5;
     private int gathererCount = 5;
-
+    private Dictionary<ResourceType, int> _gatherersPerResource = new()
+    {
+        {ResourceType.None, 0},
+        {ResourceType.Food, 0},
+        {ResourceType.Gold, 0},
+        {ResourceType.Wood, 0}
+    };
+    
     public int Gold
     {
         get => gold;
@@ -63,6 +71,8 @@ public class TownCenter
         wood = 0;
         food = 0;
     }
+
+    #region UnitSpawn
 
     public void ManageSpawning()
     {
@@ -101,6 +111,7 @@ public class TownCenter
         }
     }
 
+    // TODO Implement units spawning
     public void SpawnCart()
     {
         if (!HasEnoughResources(CartCost)) return;
@@ -121,7 +132,37 @@ public class TownCenter
         ReduceResources(GathererCost);
         // Spawn Gatherer
     }
+    
+    #endregion
 
+
+    public ResourceType GetResourceNeeded()
+    {
+        ResourceType resourceNeeded = ResourceType.None;
+
+        switch (_gatherersPerResource.OrderBy(x => x.Value).First().Key)
+        {
+            case ResourceType.Food:
+                resourceNeeded = ResourceType.Food;
+                _gatherersPerResource[ResourceType.Food]++;
+                break;
+            case ResourceType.Gold:
+                resourceNeeded = ResourceType.Gold;
+                _gatherersPerResource[ResourceType.Gold]++;
+                break;
+            case ResourceType.Wood:
+                resourceNeeded = ResourceType.Wood;
+                _gatherersPerResource[ResourceType.Wood]++;
+                break;
+            case ResourceType.None:
+                break;
+            default:
+                throw new Exception("TownCenter: GetResourceNeeded, resource type not found");
+        }
+        
+        return resourceNeeded;
+    }
+    
     public void ReduceResources(CreationCost cost)
     {
         gold -= cost.Gold;
@@ -132,5 +173,27 @@ public class TownCenter
     public bool HasEnoughResources(CreationCost cost)
     {
         return gold >= cost.Gold && wood >= cost.Wood && food >= cost.Food;
+    }
+
+    public ResourceType RemoveFromResource(ResourceType resourceGathering)
+    {
+        switch (resourceGathering)
+        {
+            case ResourceType.Food:
+                _gatherersPerResource[ResourceType.Food]--;
+                break;
+            case ResourceType.Gold:
+                _gatherersPerResource[ResourceType.Gold]--;
+                break;
+            case ResourceType.Wood:
+                _gatherersPerResource[ResourceType.Wood]--;
+                break;
+            case ResourceType.None:
+                break;
+            default:
+                throw new Exception("TownCenter: RemoveFromResource, resource type not found");
+        }
+
+        return ResourceType.None;
     }
 }

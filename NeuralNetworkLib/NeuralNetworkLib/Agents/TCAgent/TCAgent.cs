@@ -38,6 +38,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
     
     public enum ResourceType
     {
+        None,
         Gold,
         Wood,
         Food
@@ -70,7 +71,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             }
         }
 
-        public static TownCenter TownCenter;
+        public TownCenter TownCenter;
         public static bool Retreat;
         public SimNode<IVector> CurrentNode;
         public Voronoi<SimCoordinate, MyVector> Voronoi;
@@ -150,7 +151,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void GatherTransitions()
         {
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter); });
+                () =>
+                {
+                    TargetNode = TownCenter.position;
+                });
         }
 
 
@@ -164,10 +168,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void WalkTransitions()
         {
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter); });
-
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.Mine); });
+                () =>
+                {
+                    TargetNode = TownCenter.position;
+                });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait);
         }
@@ -187,11 +191,20 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void WaitTransitions()
         {
             Fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.Mine); });
+                () =>
+                {
+                    TargetNode = GetTarget(NodeTerrain.Mine);
+                });
             Fsm.SetTransition(Behaviours.Wait, Flags.OnTargetLost, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.Mine); });
+                () =>
+                {
+                    TargetNode = GetTarget(NodeTerrain.Mine);
+                });
             Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = GetTarget(NodeType.Empty, NodeTerrain.TownCenter); });
+                () =>
+                {
+                    TargetNode = TownCenter.position;
+                });
         }
 
 
@@ -224,7 +237,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 return;
             }
 
-            if (CurrentNode.GetCoordinate().Equals(TargetNode.GetCoordinate())) return;
+            if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate())) return;
 
             if (Path.Count <= 0) return;
             if (PathNodeId > Path.Count) PathNodeId = 0;
@@ -237,28 +250,50 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
         }
 
-        protected virtual SimNode<IVector> GetTarget(NodeType nodeType = NodeType.Empty,
-            NodeTerrain nodeTerrain = NodeTerrain.Empty)
+        protected virtual SimNode<IVector> GetTarget(NodeType nodeType = NodeType.Empty)
         {
             IVector position = CurrentNode.GetCoordinate();
-            SimNode<MyVector> target = new SimNode<MyVector>();
-            SimNode<IVector> target2 = new SimNode<IVector>();
+            INode<IVector> target = new SimNode<IVector>();
 
             switch (nodeType)
             {
                 case NodeType.Empty:
                     break;
                 case NodeType.Plains:
+                    target = DataContainer.GetNearestNode(nodeType, position);
                     break;
                 default:
-                    target = Voronoi.GetMineCloser(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
                     break;
             }
 
+            if (target == null)
+            {
+                // Debug.LogError("No mines with gold.");
+                return null;
+            }
+
+            return DataContainer.graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
+        }
+        
+        protected virtual SimNode<IVector> GetTarget(NodeTerrain nodeTerrain = NodeTerrain.Empty)
+        {
+            IVector position = CurrentNode.GetCoordinate();
+            SimNode<MyVector> target = new SimNode<MyVector>();
+
             switch (nodeTerrain)
             {
+                case NodeTerrain.Empty:
+                case NodeTerrain.Mine:
+                    target = new SimNode<MyVector>(Voronoi.GetClosestPointOfInterest(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]).GetCoordinate());
+                    break;
+                case NodeTerrain.Tree:
+                case NodeTerrain.Lake:
+                case NodeTerrain.Stump:
                 case NodeTerrain.TownCenter:
-                    target2 = TownCenter.position;
+                case NodeTerrain.Construction:
+                case NodeTerrain.WatchTower:
+                default:
+                    target = Voronoi.GetClosestPointOfInterest(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
                     break;
             }
 

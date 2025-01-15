@@ -122,15 +122,35 @@ public class DataContainer
         return graph.NodesType[(int)coordinate.X, (int)coordinate.Y];
     }
 
-
-    public static INode<IVector> GetNearestNode(NodeTerrain nodeType, IVector position)
+    public static INode<IVector> GetNearestNode(NodeType nodeType, IVector position)
     {
         INode<IVector> nearestNode = null;
         float minDistance = float.MaxValue;
 
         foreach (SimNode<IVector> node in graph.NodesType)
         {
-            if (node.NodeTerrain != nodeType) continue;
+            if (node.NodeType != nodeType) continue;
+
+            float distance = IVector.Distance(position, node.GetCoordinate());
+
+            if (minDistance < distance) continue;
+
+            minDistance = distance;
+
+            nearestNode = node;
+        }
+
+        return nearestNode;
+    }
+    
+    public static INode<IVector> GetNearestNode(NodeTerrain nodeTerrain, IVector position)
+    {
+        INode<IVector> nearestNode = null;
+        float minDistance = float.MaxValue;
+
+        foreach (SimNode<IVector> node in graph.NodesType)
+        {
+            if (node.NodeTerrain != nodeTerrain) continue;
 
             float distance = IVector.Distance(position, node.GetCoordinate());
 

@@ -2,6 +2,7 @@
 using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
+using Pathfinder.Voronoi;
 
 namespace NeuralNetworkLib.Agents.TCAgent
 {
@@ -10,19 +11,23 @@ namespace NeuralNetworkLib.Agents.TCAgent
         public static Action OnEmptyMine;
         public static Action OnEmptyLake;
         public static Action OnEmptyTree;
+        public ResourceType ResourceGathering = ResourceType.None;
 
-        private Action onMine;
         protected const int GoldPerFood = 3;
         protected const int FoodPerFood = 3;
         protected const int WoodPerFood = 5;
+        private Action onGather;
         private Stopwatch stopwatch;
+        private static Voronoi<SimCoordinate, MyVector> FoodVoronoi;
+        private static Voronoi<SimCoordinate, MyVector> WoodVoronoi;
+        private static Voronoi<SimCoordinate, MyVector> GoldVoronoi;
 
         public override void Init()
         {
             base.Init();
             AgentType = AgentTypes.Gatherer;
             Fsm.ForceTransition(Behaviours.Walk);
-            onMine += Gather;
+            onGather += Gather;
             stopwatch = new Stopwatch();
             stopwatch.Start();
         }
@@ -37,7 +42,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void FsmBehaviours()
         {
             base.FsmBehaviours();
-            Fsm.AddBehaviour<GatherResource>(Behaviours.GatherResources, GatherTickParameters);
+            Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters);
         }
 
         protected override void GatherTransitions()
@@ -48,21 +53,38 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = DataContainer.graph.NodesType[(int)TownCenter.position.GetCoordinate().X,
-                        (int)TownCenter.position.GetCoordinate().Y];
+                    ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
+                    TargetNode = TownCenter.position;
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
-                () => { TargetNode = GetTarget(); });
+                () =>
+                {
+                    ResourceGathering = TownCenter.GetResourceNeeded();
+                    TargetNode = GetTarget(ResourceGathering);
+                });
         }
 
         protected override object[] GatherTickParameters()
         {
-            return new object[] { Retreat, CurrentFood, CurrentGold, ResourceLimit, onMine, CurrentNode };
+            return new object[]
+            {
+                Retreat, CurrentFood, CurrentGold, CurrentWood, ResourceLimit, ResourceGathering, onGather, TargetNode
+            };
         }
-        
+
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
+                () =>
+                {
+                    TargetNode = GetTarget(ResourceGathering);
+
+                    if (TargetNode == null)
+                    {
+                        
+                    }
+                });
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources);
         }
 
@@ -105,6 +127,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 case NodeTerrain.Lake:
                     GatherFood();
                     break;
+                default:
+                    throw new Exception("Gatherer: Gather, resource type not found");
             }
         }
 
@@ -118,7 +142,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
             stopwatch.Restart();
 
-            if (CurrentNode.Resource <= 0) OnEmptyLake?.Invoke();
+            if (TargetNode.Resource <= 0) OnEmptyLake?.Invoke();
 
             if (LastTimeEat < FoodPerFood) return;
 
@@ -135,7 +159,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             CurrentNode.Resource--;
             stopwatch.Restart();
 
-            if (CurrentNode.Resource <= 0) OnEmptyTree?.Invoke();
+            if (TargetNode.Resource <= 0) OnEmptyTree?.Invoke();
 
             if (LastTimeEat < WoodPerFood) return;
 
@@ -152,12 +176,46 @@ namespace NeuralNetworkLib.Agents.TCAgent
             CurrentNode.Resource--;
             stopwatch.Restart();
 
-            if (CurrentNode.Resource <= 0) OnEmptyMine?.Invoke();
+            if (TargetNode.Resource <= 0) OnEmptyMine?.Invoke();
 
             if (LastTimeEat < GoldPerFood) return;
 
             CurrentFood--;
             LastTimeEat = 0;
+        }
+
+        protected SimNode<IVector> GetTarget(ResourceType resourceType = ResourceType.None)
+        {
+            IVector position = CurrentNode.GetCoordinate();
+            SimNode<MyVector> target = new SimNode<MyVector>();
+
+            switch (resourceType)
+            {
+                case ResourceType.None:
+                    break;
+                case ResourceType.Food:
+                    target = FoodVoronoi.GetClosestPointOfInterest(
+                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
+                    break;
+                case ResourceType.Gold:
+                    target = GoldVoronoi.GetClosestPointOfInterest(
+                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
+                    break;
+                case ResourceType.Wood:
+                    target = WoodVoronoi.GetClosestPointOfInterest(
+                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
+                    break;
+                default:
+                    break;
+            }
+
+            if (target == null)
+            {
+                // Debug.LogError("No resourceType available.");
+                return null;
+            }
+
+            return DataContainer.graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
         }
     }
 }
