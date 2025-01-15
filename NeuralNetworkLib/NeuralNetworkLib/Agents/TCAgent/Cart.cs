@@ -27,7 +27,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected override void FsmBehaviours()
         {
-            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
+            Fsm.AddBehaviour<CartWaitState>(Behaviours.Wait, WaitTickParameters);
             Fsm.AddBehaviour<CartWalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
             Fsm.AddBehaviour<GetResourcesState>(Behaviours.GatherResources, GatherTickParameters);
             Fsm.AddBehaviour<DeliverResourceState>(Behaviours.Deliver, DeliverTickParameters);
@@ -45,13 +45,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected override void WaitTransitions()
         {
-            Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = TownCenter.position;
-                });
+            base.WaitTransitions();
+            
             Fsm.SetTransition(Behaviours.Wait, Flags.OnReturnResource, Behaviours.ReturnResources);
-
         }
 
         protected override void GetResourcesTransitions()

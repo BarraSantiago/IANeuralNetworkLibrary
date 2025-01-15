@@ -41,13 +41,36 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected override void FsmBehaviours()
         {
-            base.FsmBehaviours();
-            Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters);
+            Fsm.AddBehaviour<GathererWait>(Behaviours.Wait, WaitTickParameters);
+            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
+            Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters, default, GatherExitParameters );
+        }
+
+        protected override void WaitTransitions()
+        {
+            base.WaitTransitions();
+            Fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
+                () =>
+                {
+                    if(CurrentNode.NodeTerrain == NodeTerrain.TownCenter)
+                    {
+                        ResourceGathering = TownCenter.GetResourceNeeded();
+                        TargetNode = GetTarget(ResourceGathering);
+                        return;
+                    }
+                    
+                    Fsm.ForceTransition(Behaviours.GatherResources);
+                });
         }
 
         protected override void GatherTransitions()
         {
-            base.GatherTransitions();
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
+                () =>
+                {
+                    ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
+                    TargetNode = TownCenter.position; 
+                });            
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait);
 
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
@@ -63,15 +86,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     TargetNode = GetTarget(ResourceGathering);
                 });
         }
-
-        protected override object[] GatherTickParameters()
-        {
-            return new object[]
-            {
-                Retreat, CurrentFood, CurrentGold, CurrentWood, ResourceLimit, ResourceGathering, onGather, TargetNode
-            };
-        }
-
+        
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
@@ -82,11 +97,35 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
                     if (TargetNode == null)
                     {
-                        
                     }
                 });
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
+                () =>
+                {
+                    adjacentNode = TargetNode.GetAdjacentNode();
+                    if (adjacentNode == null)
+                    {
+                        throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
+                    }
+                    adjacentNode.IsOccupied = true;
+                    CurrentNode = DataContainer.graph.NodesType[(int)adjacentNode.GetCoordinate().X, (int)adjacentNode.GetCoordinate().Y];
+                });
         }
+        
+        protected override object[] GatherTickParameters()
+        {
+            return new object[]
+            {
+                Retreat, CurrentFood, CurrentGold, CurrentWood, ResourceLimit, ResourceGathering, onGather, TargetNode
+            };
+        }
+        
+        protected object[] GatherExitParameters()
+        {
+            return new object[] { adjacentNode };
+        }
+
+        
 
         protected override void Wait()
         {

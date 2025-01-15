@@ -4,7 +4,6 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     where Coordinate : IEquatable<Coordinate>
 {
     public bool isBlocked = false;
-    public bool IsOccupied { get; set; }
     public NodeType NodeType { get; set; }
     public NodeTerrain NodeTerrain { get; set; }
     public int Resource { get; set; }
@@ -58,6 +57,8 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         return cost;
     }
 
+    public bool IsOccupied { get; set; }
+
     public void SetCost(int newCost)
     {
         cost = newCost;
@@ -91,6 +92,15 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         return Equals((SimNode<Coordinate>)obj);
     }
 
+    public INode<Coordinate> GetAdjacentNode()
+    {
+        foreach (INode<Coordinate>? neighbor in neighbors)
+        {
+            if (!neighbor.IsOccupied) return neighbor;
+        }
+        return null;
+    }
+    
     public override int GetHashCode()
     {
         return EqualityComparer<Coordinate>.Default.GetHashCode(coordinate);

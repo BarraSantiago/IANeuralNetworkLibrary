@@ -5,7 +5,7 @@
         where EnumFlag : Enum
     {
         private const int UNNASIGNED_TRANSITION = -1;
-        private readonly Dictionary<int, Func<object[]>> _behaviourOnEnterParameters;
+        private readonly Dictionary<int, Func<object[]>?> _behaviourOnEnterParameters;
         private readonly Dictionary<int, Func<object[]>> _behaviourOnExitParameters;
         private readonly Dictionary<int, State> _behaviours;
         private readonly Dictionary<int, Func<object[]>> _behaviourTickParameters;
@@ -29,7 +29,7 @@
                 _transitions[i, j] = (UNNASIGNED_TRANSITION, null);
 
             _behaviourTickParameters = new Dictionary<int, Func<object[]>>();
-            _behaviourOnEnterParameters = new Dictionary<int, Func<object[]>>();
+            _behaviourOnEnterParameters = new Dictionary<int, Func<object[]>?>();
             _behaviourOnExitParameters = new Dictionary<int, Func<object[]>>();
         }
 
@@ -50,7 +50,7 @@
         }
 
         public void AddBehaviour<T>(EnumState stateIndexEnum, Func<object[]> onTickParameters = null,
-            Func<object[]> onEnterParameters = null, Func<object[]> onExitParameters = null) where T : State, new()
+            Func<object[]>? onEnterParameters = null, Func<object[]> onExitParameters = null) where T : State, new()
         {
             int stateIndex = Convert.ToInt32(stateIndexEnum);
 

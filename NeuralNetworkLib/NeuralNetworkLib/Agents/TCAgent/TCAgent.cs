@@ -35,7 +35,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         Cart,
         Builder
     }
-    
+
     public enum ResourceType
     {
         None,
@@ -81,12 +81,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected List<SimNode<IVector>> Path;
         public AgentTypes AgentType;
 
-        protected SimNode<IVector> TargetNode
+        protected SimNode<IVector>? TargetNode
         {
             get => targetNode;
             set
             {
                 targetNode = value;
+                if (targetNode == null || targetNode.GetCoordinate() == null) return;
                 Path = Pathfinder.FindPath(CurrentNode, TargetNode);
                 PathNodeId = 0;
             }
@@ -105,6 +106,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected TTransform transform = new TTransform();
         private SimNode<IVector> targetNode;
+        protected INode<IVector>? adjacentNode;
 
         private void Update()
         {
@@ -131,7 +133,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
             FsmTransitions();
         }
 
-
+        protected virtual void FsmBehaviours()
+        {
+            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
+            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
+        }
+        
         protected virtual void FsmTransitions()
         {
             WalkTransitions();
@@ -141,20 +148,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
             DeliverTransitions();
         }
 
-
-        protected virtual void FsmBehaviours()
-        {
-            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
-        }
+        #region Transitions
 
         protected virtual void GatherTransitions()
         {
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = TownCenter.position;
-                });
+                () => { TargetNode = TownCenter.position; });
         }
 
 
@@ -164,17 +163,33 @@ namespace NeuralNetworkLib.Agents.TCAgent
             return objects;
         }
 
-
         protected virtual void WalkTransitions()
         {
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = TownCenter.position;
-                });
+                () => { TargetNode = TownCenter.position; });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait);
         }
+
+        protected virtual void WaitTransitions()
+        {
+            Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
+                () => { TargetNode = TownCenter.position; });
+        }
+
+        protected virtual void DeliverTransitions()
+        {
+            return;
+        }
+
+        protected virtual void GetResourcesTransitions()
+        {
+            return;
+        }
+
+        #endregion
+
+        #region Params
 
         protected virtual object[] WalkTickParameters()
         {
@@ -188,35 +203,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
             return objects;
         }
 
-        protected virtual void WaitTransitions()
-        {
-            Fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetTarget(NodeTerrain.Mine);
-                });
-            Fsm.SetTransition(Behaviours.Wait, Flags.OnTargetLost, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetTarget(NodeTerrain.Mine);
-                });
-            Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = TownCenter.position;
-                });
-        }
-
 
         protected virtual object[] WaitTickParameters()
         {
             object[] objects = { Retreat, CurrentFood, CurrentGold, CurrentNode, OnWait };
             return objects;
-        }
-
-        protected virtual void GetResourcesTransitions()
-        {
-            return;
         }
 
         protected virtual object[] GetFoodTickParameters()
@@ -225,10 +216,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             return objects;
         }
 
-        protected virtual void DeliverTransitions()
-        {
-            return;
-        }
+        #endregion
 
         protected virtual void Move()
         {
@@ -274,26 +262,31 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
             return DataContainer.graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
         }
-        
+
         protected virtual SimNode<IVector> GetTarget(NodeTerrain nodeTerrain = NodeTerrain.Empty)
         {
             IVector position = CurrentNode.GetCoordinate();
-            SimNode<MyVector> target = new SimNode<MyVector>();
+            INode<MyVector> target = new SimNode<MyVector>();
 
             switch (nodeTerrain)
             {
                 case NodeTerrain.Empty:
                 case NodeTerrain.Mine:
-                    target = new SimNode<MyVector>(Voronoi.GetClosestPointOfInterest(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]).GetCoordinate());
+                    target = new SimNode<MyVector>(Voronoi
+                        .GetClosestPointOfInterest(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y])
+                        .GetCoordinate());
                     break;
                 case NodeTerrain.Tree:
                 case NodeTerrain.Lake:
                 case NodeTerrain.Stump:
                 case NodeTerrain.TownCenter:
                 case NodeTerrain.Construction:
+                    target = (DataContainer.GetNearestNode(nodeTerrain, position));
+                    break;
                 case NodeTerrain.WatchTower:
                 default:
-                    target = Voronoi.GetClosestPointOfInterest(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
+                    target = Voronoi.GetClosestPointOfInterest(
+                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
                     break;
             }
 

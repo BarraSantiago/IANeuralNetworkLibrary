@@ -45,24 +45,24 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                             OnFlag?.Invoke(Flags.OnFull);
                             return;
                         }
-
                         break;
+                    
                     case ResourceType.Wood:
                         if (wood >= resourceLimit)
                         {
                             OnFlag?.Invoke(Flags.OnFull);
                             return;
                         }
-
                         break;
+                    
                     case ResourceType.Food:
                         if (food >= resourceLimit)
                         {
                             OnFlag?.Invoke(Flags.OnFull);
                             return;
                         }
-
                         break;
+                    
                     default:
                         throw new Exception("Gatherer: GatherResourceState, resource type not found");
                 }
@@ -85,7 +85,12 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
         public override BehaviourActions GetOnExitBehaviour(params object[] parameters)
         {
-            return default;
+            BehaviourActions behaviours = new BehaviourActions();
+
+            INode<IVector>? adjacentNode = (parameters[0]) as INode<IVector>;
+            behaviours.AddMultiThreadableBehaviours(0, () => { adjacentNode.IsOccupied = false; });
+
+            return behaviours;
         }
     }
 }

@@ -36,8 +36,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                // TODO change to be 1 node away from target
-                if (currentNode.GetCoordinate() != targetNode.GetCoordinate())
+                if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()))
                 {
                     return;
                 }
