@@ -82,7 +82,16 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
         public override BehaviourActions GetOnExitBehaviour(params object[] parameters)
         {
-            return default;
+            BehaviourActions behaviours = new BehaviourActions();
+
+            int? pathNodeId = (int?)(parameters[0]);
+            
+            behaviours.AddMultiThreadableBehaviours(0, () =>
+            {
+                pathNodeId = 0;
+            });
+            
+            return behaviours;
         }
     }
 

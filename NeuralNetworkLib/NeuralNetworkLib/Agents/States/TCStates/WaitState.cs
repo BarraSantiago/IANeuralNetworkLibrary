@@ -9,11 +9,15 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         {
             BehaviourActions behaviours = new BehaviourActions();
 
+            const int goldCost = 2;
+            const int woodCost = 4;
             bool retreat = (bool)parameters[0];
             int? food = Convert.ToInt32(parameters[1]);
             int? gold = Convert.ToInt32(parameters[2]);
-            SimNode<IVector> currentNode = (SimNode<IVector>)parameters[3];
-            Action OnWait = parameters[4] as Action;
+            int? wood = Convert.ToInt32(parameters[3]);
+            SimNode<IVector> currentNode = (SimNode<IVector>)parameters[4];
+            SimNode<IVector> targetNode = (SimNode<IVector>)parameters[5];
+            Action OnWait = parameters[6] as Action;
 
 
             behaviours.AddMultiThreadableBehaviours(0, () => { OnWait?.Invoke(); });
@@ -26,28 +30,22 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
                     }
+
                     return;
                 }
 
-                if (currentNode.NodeType == NodeType.Empty || 
-                    (currentNode.NodeTerrain is NodeTerrain.Mine or NodeTerrain.Lake or NodeTerrain.Tree 
-                     && currentNode.Resource <= 0))
+                if (food <= 0 || gold < goldCost || wood < woodCost)
+                {
+                    return;
+                }
+                
+                if (targetNode.NodeTerrain != NodeTerrain.Construction)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
                 }
 
-                if (food > 0 && currentNode.NodeTerrain == NodeTerrain.Mine 
-                    || currentNode.NodeTerrain == NodeTerrain.Lake 
-                    || currentNode.NodeTerrain == NodeTerrain.Tree)
-                {
-                    OnFlag?.Invoke(Flags.OnGather);
-                    return;
-                }
-
-                if (!(gold <= 0) || currentNode.NodeTerrain != NodeTerrain.TownCenter) return;
-                
-                OnFlag?.Invoke(Flags.OnGather);
+                OnFlag?.Invoke(Flags.OnBuild);
                 return;
             });
 
@@ -64,7 +62,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             return default;
         }
     }
-    public class GathererWait : State
+
+    public class GathererWaitState : State
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
@@ -85,6 +84,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
                     }
+
                     return;
                 }
 
@@ -127,6 +127,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
                     }
+
                     return;
                 }
 

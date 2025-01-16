@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.Agents.States.TCStates;
+﻿using System.Diagnostics;
+using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Entities;
 using NeuralNetworkLib.Utils;
@@ -15,6 +16,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         OnRetreat,
         OnFull,
         OnGather,
+        OnBuild,
         OnWait,
         OnReturnResource
     }
@@ -71,15 +73,28 @@ namespace NeuralNetworkLib.Agents.TCAgent
             }
         }
 
-        public TownCenter TownCenter;
+        public int CurrentFood = 3;
+        public int CurrentGold = 0;
+        public int CurrentWood = 0;
         public static bool Retreat;
-        public SimNode<IVector> CurrentNode;
+        public AgentTypes AgentType;
+        public TownCenter TownCenter;
+        public SimNode<IVector>? CurrentNode;
         public Voronoi<SimCoordinate, MyVector> Voronoi;
         public AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate> Pathfinder;
 
-        protected FSM<Behaviours, Flags> Fsm;
+        protected int speed = 6;
+        protected Action OnMove;
+        protected Action OnWait;
+        protected int LastTimeEat = 0;
+        protected const int ResourceLimit = 15;
+        protected const int FoodLimit = 15;
+        protected int? PathNodeId;
+        protected Stopwatch stopwatch;
+        protected TTransform transform = new TTransform();
+        protected INode<IVector>? adjacentNode;
         protected List<SimNode<IVector>> Path;
-        public AgentTypes AgentType;
+        protected FSM<Behaviours, Flags> Fsm;
 
         protected SimNode<IVector>? TargetNode
         {
@@ -93,20 +108,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             }
         }
 
-        protected Action OnMove;
-        protected Action OnWait;
-
-        public int CurrentFood = 3;
-        public int CurrentGold = 0;
-        public int CurrentWood = 0;
-        protected int LastTimeEat = 0;
-        protected const int ResourceLimit = 15;
-        protected const int FoodLimit = 15;
-        protected int PathNodeId;
-
-        protected TTransform transform = new TTransform();
         private SimNode<IVector> targetNode;
-        protected INode<IVector>? adjacentNode;
 
         private void Update()
         {
@@ -136,9 +138,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void FsmBehaviours()
         {
             Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
+            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters, WalkExitParameters);
         }
-        
+
         protected virtual void FsmTransitions()
         {
             WalkTransitions();
@@ -202,17 +204,16 @@ namespace NeuralNetworkLib.Agents.TCAgent
             object[] objects = { CurrentNode, TargetNode, Path, Pathfinder, AgentType };
             return objects;
         }
-
+        
+        protected virtual object[] WalkExitParameters()
+        {
+            object[] objects = { PathNodeId };
+            return objects;
+        }
 
         protected virtual object[] WaitTickParameters()
         {
             object[] objects = { Retreat, CurrentFood, CurrentGold, CurrentNode, OnWait };
-            return objects;
-        }
-
-        protected virtual object[] GetFoodTickParameters()
-        {
-            object[] objects = { CurrentFood, FoodLimit };
             return objects;
         }
 
@@ -228,75 +229,24 @@ namespace NeuralNetworkLib.Agents.TCAgent
             if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate())) return;
 
             if (Path.Count <= 0) return;
-            if (PathNodeId > Path.Count) PathNodeId = 0;
+            //if (PathNodeId >= Path.Count) PathNodeId = 0;
 
-            CurrentNode = Path[PathNodeId];
-            PathNodeId++;
+            double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+            
+            if(speed * elapsedSeconds < 1) return;
+            
+            int distanceToMove = (int)(speed * elapsedSeconds);
+
+            PathNodeId += distanceToMove;
+            PathNodeId = Math.Clamp((int)PathNodeId, 0, Path.Count - 1);
+
+            CurrentNode = Path[(int)PathNodeId];
+
+            stopwatch.Restart();
         }
 
         protected virtual void Wait()
         {
-        }
-
-        protected virtual SimNode<IVector> GetTarget(NodeType nodeType = NodeType.Empty)
-        {
-            IVector position = CurrentNode.GetCoordinate();
-            INode<IVector> target = new SimNode<IVector>();
-
-            switch (nodeType)
-            {
-                case NodeType.Empty:
-                    break;
-                case NodeType.Plains:
-                    target = DataContainer.GetNearestNode(nodeType, position);
-                    break;
-                default:
-                    break;
-            }
-
-            if (target == null)
-            {
-                // Debug.LogError("No mines with gold.");
-                return null;
-            }
-
-            return DataContainer.graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
-        }
-
-        protected virtual SimNode<IVector> GetTarget(NodeTerrain nodeTerrain = NodeTerrain.Empty)
-        {
-            IVector position = CurrentNode.GetCoordinate();
-            INode<MyVector> target = new SimNode<MyVector>();
-
-            switch (nodeTerrain)
-            {
-                case NodeTerrain.Empty:
-                case NodeTerrain.Mine:
-                    target = new SimNode<MyVector>(Voronoi
-                        .GetClosestPointOfInterest(DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y])
-                        .GetCoordinate());
-                    break;
-                case NodeTerrain.Tree:
-                case NodeTerrain.Lake:
-                case NodeTerrain.Stump:
-                case NodeTerrain.TownCenter:
-                case NodeTerrain.Construction:
-                    target = (DataContainer.GetNearestNode(nodeTerrain, position));
-                    break;
-                case NodeTerrain.WatchTower:
-                default:
-                    target = Voronoi.GetClosestPointOfInterest(
-                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
-                    break;
-            }
-
-            if (target == null)
-            {
-                // Debug.LogError("No mines with gold.");
-                return null;
-            }
-
-            return DataContainer.graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
         }
     }
 }
