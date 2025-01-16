@@ -17,7 +17,6 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected const int FoodPerFood = 3;
         protected const int WoodPerFood = 5;
         private Action onGather;
-        private Stopwatch stopwatch;
         private static Voronoi<SimCoordinate, MyVector> FoodVoronoi;
         private static Voronoi<SimCoordinate, MyVector> WoodVoronoi;
         private static Voronoi<SimCoordinate, MyVector> GoldVoronoi;
@@ -41,9 +40,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected override void FsmBehaviours()
         {
-            Fsm.AddBehaviour<GathererWait>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
-            Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters, default, GatherExitParameters );
+            Fsm.AddBehaviour<GathererWaitState>(Behaviours.Wait, WaitTickParameters);
+            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters, WalkExitParameters);
+            Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters, default,
+                GatherExitParameters);
         }
 
         protected override void WaitTransitions()
@@ -52,13 +52,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
                 () =>
                 {
-                    if(CurrentNode.NodeTerrain == NodeTerrain.TownCenter)
+                    if (CurrentNode.NodeTerrain == NodeTerrain.TownCenter)
                     {
                         ResourceGathering = TownCenter.GetResourceNeeded();
                         TargetNode = GetTarget(ResourceGathering);
                         return;
                     }
-                    
+
                     Fsm.ForceTransition(Behaviours.GatherResources);
                 });
         }
@@ -69,9 +69,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () =>
                 {
                     ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
-                    TargetNode = TownCenter.position; 
-                });            
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait);
+                    TargetNode = TownCenter.position;
+                });
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
+                () =>
+                {
+                    TownCenter.AskForResources(this, ResourceType.Food);
+                });
 
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
@@ -86,7 +90,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     TargetNode = GetTarget(ResourceGathering);
                 });
         }
-        
+
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
@@ -107,11 +111,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     {
                         throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
                     }
+
                     adjacentNode.IsOccupied = true;
-                    CurrentNode = DataContainer.graph.NodesType[(int)adjacentNode.GetCoordinate().X, (int)adjacentNode.GetCoordinate().Y];
+                    CurrentNode = DataContainer.graph.NodesType[(int)adjacentNode.GetCoordinate().X,
+                        (int)adjacentNode.GetCoordinate().Y];
                 });
         }
-        
+
         protected override object[] GatherTickParameters()
         {
             return new object[]
@@ -119,13 +125,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 Retreat, CurrentFood, CurrentGold, CurrentWood, ResourceLimit, ResourceGathering, onGather, TargetNode
             };
         }
-        
+
         protected object[] GatherExitParameters()
         {
             return new object[] { adjacentNode };
         }
 
-        
 
         protected override void Wait()
         {

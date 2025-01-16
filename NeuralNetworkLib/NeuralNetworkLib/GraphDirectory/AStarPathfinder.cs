@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using NeuralNetworkLib.Utils;
+﻿using NeuralNetworkLib.Utils;
 
 namespace Pathfinder
 {
@@ -52,12 +50,12 @@ namespace Pathfinder
 
         protected override bool NodesEquals(NodeType A, NodeType B)
         {
-            if (A == null || B == null)
+            if (A == null || B == null || A.GetCoordinate() == null || B.GetCoordinate() == null)
             {
                 return false;
             } 
             
-            return A.Equals(B);
+            return A.GetCoordinate().Equals(B.GetCoordinate());
         }
     }
 }

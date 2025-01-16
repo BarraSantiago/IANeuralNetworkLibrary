@@ -63,6 +63,15 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     {
         cost = newCost;
     }
+    
+    public void BuildWatchTower()
+    {
+        Resource++;
+        if(Resource >= 100)
+        {
+            NodeTerrain = NodeTerrain.WatchTower;
+        }
+    }
 
     public bool Equals(Coordinate other)
     {

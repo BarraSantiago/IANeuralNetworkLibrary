@@ -1,6 +1,5 @@
 ﻿using NeuralNetworkLib.Agents.AnimalAgents;
 using NeuralNetworkLib.Agents.Flocking;
-using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.Utils;
 using Pathfinder;
