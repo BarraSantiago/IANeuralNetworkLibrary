@@ -23,18 +23,26 @@ public struct CreationCost
 
 public class TownCenter
 {
-    public SimNode<IVector> position;
-    public List<TcAgent<IVector, ITransform<IVector>>> agents;
-    public List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)> agentsResources;
+    public SimNode<IVector> Position;
+    public List<TcAgent<IVector, ITransform<IVector>>> Agents;
+    public List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)> AgentsResources;
 
-    private int MaxWTDistance = 25;
-    private int gold;
-    private int wood;
-    private int food;
+    public int RefugeeCount
+    {
+        get => GetRefugeeCountAsync().Result;
+        set => _ = SetRefugeeCountAsync(value);
+    }
+
+    private const int AlarmDuration = 10;
+    private int _refugeeCount;
+    private int _maxWtDistance = 25;
+    private int _gold;
+    private int _wood;
+    private int _food;
     private int _initialCarts = 1;
     private int _initialBuilders = 1;
     private int _initialGatherer = 5;
-    private int gathererCount = 5;
+    private int _gathererCount = 5;
     private List<SimNode<IVector>> WatchTowerConstructions;
     private List<SimNode<IVector>> WatchTowerPositions;
 
@@ -48,20 +56,20 @@ public class TownCenter
 
     public int Gold
     {
-        get => gold;
-        set => gold = value;
+        get => _gold;
+        set => _gold = value;
     }
 
     public int Wood
     {
-        get => wood;
-        set => wood = value;
+        get => _wood;
+        set => _wood = value;
     }
 
     public int Food
     {
-        get => food;
-        set => food = value;
+        get => _food;
+        set => _food = value;
     }
 
     public CreationCost CartCost = new CreationCost { Gold = 20, Wood = 30, Food = 5 };
@@ -69,13 +77,18 @@ public class TownCenter
     public CreationCost GathererCost = new CreationCost { Gold = 5, Wood = 2, Food = 10 };
     public CreationCost WatchTowerCost = new CreationCost { Gold = 200, Wood = 400, Food = 0 };
     public CreationCost WatchTowerBuildCost = new CreationCost { Gold = 2, Wood = 4, Food = 0 };
-
-
-    public TownCenter()
+    
+    public TownCenter(SimNode<IVector> position)
     {
-        gold = 0;
-        wood = 0;
-        food = 0;
+        Position = position;
+        AgentsResources = new List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)>();
+        WatchTowerConstructions = new List<SimNode<IVector>>();
+        WatchTowerPositions = new List<SimNode<IVector>>();
+        GetWatchTowerConstruction();
+        SpawnInitialUnits();
+        _gold = 0;
+        _wood = 0;
+        _food = 0;
     }
 
     #region UnitSpawn
@@ -84,15 +97,15 @@ public class TownCenter
     {
         if (Gold < GathererCost.Gold || Wood < GathererCost.Wood || Food < GathererCost.Food) return;
 
-        if (gathererCount % 3 == 0 && !HasEnoughResources(BuilderCost.Sum(CartCost.Sum(GathererCost))))
+        if (_gathererCount % 3 == 0 && !HasEnoughResources(BuilderCost.Sum(CartCost.Sum(GathererCost))))
         {
             return;
         }
 
         SpawnGatherer();
-        gathererCount++;
+        _gathererCount++;
 
-        if (gathererCount % 3 == 0)
+        if (_gathererCount % 3 == 0)
         {
             SpawnBuilder();
             SpawnCart();
@@ -101,38 +114,39 @@ public class TownCenter
 
     public void SpawnInitialUnits()
     {
+        Agents = new List<TcAgent<IVector, ITransform<IVector>>>();
         for (int i = 0; i < _initialCarts; i++)
         {
-            // Spawn Cart
+            SpawnCart();
         }
 
         for (int i = 0; i < _initialBuilders; i++)
         {
-            // Spawn Builder
+            SpawnBuilder();
         }
 
         for (int i = 0; i < _initialGatherer; i++)
         {
-            // Spawn Gatherer
+            SpawnGatherer();
         }
     }
 
     // TODO Implement units spawning
-    public void SpawnCart()
+    private void SpawnCart()
     {
         if (!HasEnoughResources(CartCost)) return;
         ReduceResources(CartCost);
         // Spawn Cart
     }
 
-    public void SpawnBuilder()
+    private void SpawnBuilder()
     {
         if (!HasEnoughResources(BuilderCost)) return;
         ReduceResources(BuilderCost);
         // Spawn Builder
     }
 
-    public void SpawnGatherer()
+    private void SpawnGatherer()
     {
         if (!HasEnoughResources(GathererCost)) return;
         ReduceResources(GathererCost);
@@ -143,18 +157,17 @@ public class TownCenter
 
     public void AskForResources(TcAgent<IVector, ITransform<IVector>> agent, ResourceType resourceNeeded)
     {
-        agentsResources.Add((agent, resourceNeeded));
+        AgentsResources.Add((agent, resourceNeeded));
     }
 
 
     public INode<IVector> GetWatchTowerConstruction()
     {
-        if (WatchTowerConstructions.First().NodeTerrain == NodeTerrain.Construction)
+        const int maxTowerDistance = 5;
+        if (WatchTowerConstructions.First().NodeTerrain == NodeTerrain.Construction &&
+            WatchTowerConstructions.First().GetAdjacentNode() != null)
         {
-            if (WatchTowerConstructions.First().GetAdjacentNode() != null)
-            {
-                return WatchTowerConstructions.First().GetAdjacentNode();
-            }
+            return WatchTowerConstructions.First().GetAdjacentNode();
         }
 
         if (WatchTowerConstructions.First().NodeTerrain == NodeTerrain.WatchTower)
@@ -163,43 +176,44 @@ public class TownCenter
             WatchTowerConstructions.RemoveAt(0);
         }
 
-        IVector townCenterPosition = position.GetCoordinate();
+        IVector townCenterPosition = Position.GetCoordinate();
         SimNode<IVector> node = null;
 
-        for (int x = (int)townCenterPosition.X - MaxWTDistance; x <= (int)townCenterPosition.X + MaxWTDistance; x++)
+        for (int x = (int)townCenterPosition.X - _maxWtDistance; x <= (int)townCenterPosition.X + _maxWtDistance; x++)
         {
-            for (int y = (int)townCenterPosition.Y - MaxWTDistance; y <= (int)townCenterPosition.Y + MaxWTDistance; y++)
+            for (int y = (int)townCenterPosition.Y - _maxWtDistance;
+                 y <= (int)townCenterPosition.Y + _maxWtDistance;
+                 y++)
             {
-                if (x < 0 || y < 0 || x >= DataContainer.graph.MaxX || y >= DataContainer.graph.MaxY)
+                if (x < 0 || y < 0 || x >= DataContainer.Graph.MaxX || y >= DataContainer.Graph.MaxY)
                 {
                     continue;
                 }
 
-                node = DataContainer.graph.NodesType[x, y];
+                node = DataContainer.Graph.NodesType[x, y];
 
-                if (node.NodeType == NodeType.Plains && node.NodeTerrain != NodeTerrain.Construction &&
-                    node.NodeTerrain != NodeTerrain.WatchTower)
+                if (node.NodeType != NodeType.Plains || node.NodeTerrain == NodeTerrain.Construction ||
+                    node.NodeTerrain == NodeTerrain.WatchTower) continue;
+
+                bool isFarEnough = true;
+
+                foreach (var watchTower in WatchTowerPositions)
                 {
-                    bool isFarEnough = true;
+                    if (IVector.Distance(node.GetCoordinate(), watchTower.GetCoordinate()) >
+                        maxTowerDistance) continue;
+                    isFarEnough = false;
+                    break;
+                }
 
-                    foreach (var watchTower in WatchTowerPositions)
-                    {
-                        if (IVector.Distance(node.GetCoordinate(), watchTower.GetCoordinate()) <= 5)
-                        {
-                            isFarEnough = false;
-                            break;
-                        }
-                    }
-
-                    if (isFarEnough)
-                    {
-                        WatchTowerConstructions.Add(node);
-                        return node;
-                    }
+                if (isFarEnough)
+                {
+                    WatchTowerConstructions.Add(node);
+                    return node;
                 }
             }
         }
-        MaxWTDistance += 5;
+
+        _maxWtDistance += 5;
         return null;
     }
 
@@ -230,16 +244,16 @@ public class TownCenter
         return resourceNeeded;
     }
 
-    public void ReduceResources(CreationCost cost)
+    private void ReduceResources(CreationCost cost)
     {
-        gold -= cost.Gold;
-        wood -= cost.Wood;
-        food -= cost.Food;
+        _gold -= cost.Gold;
+        _wood -= cost.Wood;
+        _food -= cost.Food;
     }
 
-    public bool HasEnoughResources(CreationCost cost)
+    private bool HasEnoughResources(CreationCost cost)
     {
-        return gold >= cost.Gold && wood >= cost.Wood && food >= cost.Food;
+        return _gold >= cost.Gold && _wood >= cost.Wood && _food >= cost.Food;
     }
 
     public ResourceType RemoveFromResource(ResourceType resourceGathering)
@@ -262,5 +276,42 @@ public class TownCenter
         }
 
         return ResourceType.None;
+    }
+
+    public void SoundAlarm()
+    {
+        foreach (TcAgent<IVector, ITransform<IVector>>? agent in Agents)
+        {
+            agent.Retreat = true;
+        }
+    }
+
+    private void CallOffAlarm()
+    {
+        _refugeeCount = 0;
+        foreach (TcAgent<IVector, ITransform<IVector>>? agent in Agents)
+        {
+            agent.Retreat = false;
+        }
+    }
+
+    private Task<int> GetRefugeeCountAsync()
+    {
+        return Task.FromResult(_refugeeCount);
+    }
+
+    private async Task SetRefugeeCountAsync(int value)
+    {
+        _refugeeCount = value;
+        if (_refugeeCount >= Agents.Count)
+        {
+            await CallFunctionAfterDelay(CallOffAlarm, AlarmDuration);
+        }
+    }
+
+    private async Task CallFunctionAfterDelay(Action functionToCall, int delayInSeconds)
+    {
+        await Task.Delay(delayInSeconds * 1000);
+        functionToCall();
     }
 }

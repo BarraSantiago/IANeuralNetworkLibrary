@@ -41,7 +41,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
         private void BuildTransitions()
         {
             Fsm.SetTransition(Behaviours.Build, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = TownCenter.position; });
+                () =>
+                {
+                    TargetNode = TownCenter.Position; 
+                    TownCenter.RefugeeCount++;
+                });
             Fsm.SetTransition(Behaviours.Build, Flags.OnHunger, Behaviours.Wait, () =>
             {
                 if (CurrentFood <= 0)

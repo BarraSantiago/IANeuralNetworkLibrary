@@ -69,7 +69,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () =>
                 {
                     ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
-                    TargetNode = TownCenter.position;
+                    TargetNode = TownCenter.Position;
+                    TownCenter.RefugeeCount++;
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
                 () =>
@@ -81,7 +82,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () =>
                 {
                     ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
-                    TargetNode = TownCenter.position;
+                    TargetNode = TownCenter.Position;
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
@@ -113,7 +114,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     }
 
                     adjacentNode.IsOccupied = true;
-                    CurrentNode = DataContainer.graph.NodesType[(int)adjacentNode.GetCoordinate().X,
+                    CurrentNode = DataContainer.Graph.NodesType[(int)adjacentNode.GetCoordinate().X,
                         (int)adjacentNode.GetCoordinate().Y];
                 });
         }
@@ -239,15 +240,15 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     break;
                 case ResourceType.Food:
                     target = FoodVoronoi.GetClosestPointOfInterest(
-                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
+                        DataContainer.Graph.CoordNodes[(int)position.X, (int)position.Y]);
                     break;
                 case ResourceType.Gold:
                     target = GoldVoronoi.GetClosestPointOfInterest(
-                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
+                        DataContainer.Graph.CoordNodes[(int)position.X, (int)position.Y]);
                     break;
                 case ResourceType.Wood:
                     target = WoodVoronoi.GetClosestPointOfInterest(
-                        DataContainer.graph.CoordNodes[(int)position.X, (int)position.Y]);
+                        DataContainer.Graph.CoordNodes[(int)position.X, (int)position.Y]);
                     break;
                 default:
                     break;
@@ -259,7 +260,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 return null;
             }
 
-            return DataContainer.graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
+            return DataContainer.Graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
         }
     }
 }

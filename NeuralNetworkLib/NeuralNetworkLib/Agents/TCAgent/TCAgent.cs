@@ -76,12 +76,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
         public int CurrentFood = 3;
         public int CurrentGold = 0;
         public int CurrentWood = 0;
-        public static bool Retreat;
+        public bool Retreat;
         public AgentTypes AgentType;
         public TownCenter TownCenter;
-        public SimNode<IVector>? CurrentNode;
+        public SimNode<IVector> CurrentNode;
         public Voronoi<SimCoordinate, MyVector> Voronoi;
-        public AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate> Pathfinder;
+        public AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate>? Pathfinder;
 
         protected int speed = 6;
         protected Action OnMove;
@@ -96,7 +96,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected List<SimNode<IVector>> Path;
         protected FSM<Behaviours, Flags> Fsm;
 
-        protected SimNode<IVector>? TargetNode
+        protected SimNode<IVector> TargetNode
         {
             get => targetNode;
             set
@@ -121,9 +121,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
             Pathfinder = AgentType switch
             {
-                AgentTypes.Gatherer => DataContainer.gathererPathfinder,
-                AgentTypes.Cart => DataContainer.cartPathfinder,
-                AgentTypes.Builder => DataContainer.builderPathfinder,
+                AgentTypes.Gatherer => DataContainer.GathererPathfinder,
+                AgentTypes.Cart => DataContainer.CartPathfinder,
+                AgentTypes.Builder => DataContainer.BuilderPathfinder,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -155,7 +155,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void GatherTransitions()
         {
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = TownCenter.position; });
+                () =>
+                {
+                    TargetNode = TownCenter.Position;
+                    TownCenter.RefugeeCount++;
+                });
         }
 
 
@@ -168,7 +172,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void WalkTransitions()
         {
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = TownCenter.position; });
+                () =>
+                {
+                    TargetNode = TownCenter.Position; 
+                    TownCenter.RefugeeCount++;
+                });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait);
         }
@@ -176,7 +184,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void WaitTransitions()
         {
             Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
-                () => { TargetNode = TownCenter.position; });
+                () =>
+                {
+                    TargetNode = TownCenter.Position;
+                    TownCenter.RefugeeCount++;
+                });
         }
 
         protected virtual void DeliverTransitions()
