@@ -10,7 +10,7 @@ using AStarPath = AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate>;
 
 public struct NeuronInputCount
 {
-    public AnimalAgentTypes AgentType;
+    public AgentTypes AgentType;
     public BrainType BrainType;
     public int InputCount;
     public int OutputCount;
@@ -25,7 +25,7 @@ public class DataContainer
     public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TcAgents = new();
 
     public static FlockingManager FlockingManager = new();
-    public static Dictionary<(BrainType, AnimalAgentTypes), NeuronInputCount> InputCountCache;
+    public static Dictionary<(BrainType, AgentTypes), NeuronInputCount> InputCountCache;
     public static NeuronInputCount[] inputCounts;
     public static Dictionary<int, BrainType> HerbBrainTypes = new();
     public static Dictionary<int, BrainType> CarnBrainTypes = new();
@@ -49,27 +49,27 @@ public class DataContainer
         {
             new NeuronInputCount
             {
-                AgentType = AnimalAgentTypes.Carnivore, BrainType = BrainType.Movement, InputCount = 5,
+                AgentType = AgentTypes.Carnivore, BrainType = BrainType.Movement, InputCount = 5,
                 OutputCount = 3, HiddenLayersInputs = new[] { 3 }
             },
             new NeuronInputCount
             {
-                AgentType = AnimalAgentTypes.Carnivore, BrainType = BrainType.Attack, InputCount = 4,
+                AgentType = AgentTypes.Carnivore, BrainType = BrainType.Attack, InputCount = 4,
                 OutputCount = 1, HiddenLayersInputs = new[] { 1 }
             },
             new NeuronInputCount
             {
-                AgentType = AnimalAgentTypes.Herbivore, BrainType = BrainType.Eat, InputCount = 4, OutputCount = 1,
+                AgentType = AgentTypes.Herbivore, BrainType = BrainType.Eat, InputCount = 4, OutputCount = 1,
                 HiddenLayersInputs = new[] { 1 }
             },
             new NeuronInputCount
             {
-                AgentType = AnimalAgentTypes.Herbivore, BrainType = BrainType.Movement, InputCount = 8,
+                AgentType = AgentTypes.Herbivore, BrainType = BrainType.Movement, InputCount = 8,
                 OutputCount = 2, HiddenLayersInputs = new[] { 3 }
             },
             new NeuronInputCount
             {
-                AgentType = AnimalAgentTypes.Herbivore, BrainType = BrainType.Escape, InputCount = 4, OutputCount = 1,
+                AgentType = AgentTypes.Herbivore, BrainType = BrainType.Escape, InputCount = 4, OutputCount = 1,
                 HiddenLayersInputs = new[] { 1 }
             },
         };
@@ -163,7 +163,7 @@ public class DataContainer
         return nearestNode;
     }
 
-    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(AnimalAgentTypes entityType,
+    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(AgentTypes entityType,
         IVector position)
     {
         AnimalAgent<IVector, ITransform<IVector>> nearestAgent = null;
@@ -193,7 +193,7 @@ public class DataContainer
         foreach (var prey in Animals)
         {
             var agent = prey.Value;
-            if (agent.agentType != AnimalAgentTypes.Herbivore) continue;
+            if (agent.agentType != AgentTypes.Herbivore) continue;
 
             float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());
 
@@ -272,12 +272,12 @@ public class DataContainer
         return insideRadiusBoids;
     }
 
-    public static int GetBrainTypeKeyByValue(BrainType value, AnimalAgentTypes agentType)
+    public static int GetBrainTypeKeyByValue(BrainType value, AgentTypes agentType)
     {
         Dictionary<int, BrainType> brainTypes = agentType switch
         {
-            AnimalAgentTypes.Carnivore => CarnBrainTypes,
-            AnimalAgentTypes.Herbivore => HerbBrainTypes,
+            AgentTypes.Carnivore => CarnBrainTypes,
+            AgentTypes.Herbivore => HerbBrainTypes,
             _ => throw new ArgumentException("Invalid agent type")
         };
 

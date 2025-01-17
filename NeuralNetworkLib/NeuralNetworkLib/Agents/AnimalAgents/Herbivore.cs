@@ -52,7 +52,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
             AnimalAgent<IVector, ITransform<IVector>> target =
-                DataContainer.GetNearestEntity(AnimalAgentTypes.Carnivore, Transform.position);
+                DataContainer.GetNearestEntity(AgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
                 input[brain][2] = NoTarget;
@@ -95,7 +95,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             input[brain][1] = CurrentNode.GetCoordinate().Y;
 
             AnimalAgent<IVector, ITransform<IVector>> target =
-                DataContainer.GetNearestEntity(AnimalAgentTypes.Carnivore, Transform.position);
+                DataContainer.GetNearestEntity(AgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
                 input[brain][2] = NoTarget;

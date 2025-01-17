@@ -79,7 +79,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         {
         }
 
-        public AnimalAgent(AnimalAgentTypes agentType)
+        public AnimalAgent(AgentTypes agentType)
         {
             this.agentType = agentType;
         }
@@ -192,7 +192,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         protected virtual object[] WalkTickParameters()
         {
-            int extraBrain = agentType == AnimalAgentTypes.Carnivore
+            int extraBrain = agentType == AgentTypes.Carnivore
                 ? GetBrainTypeKeyByValue(BrainType.Attack)
                 : GetBrainTypeKeyByValue(BrainType.Escape);
             object[] objects =
@@ -205,7 +205,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         protected virtual object[] EatTickParameters()
         {
-            int extraBrain = agentType == AnimalAgentTypes.Carnivore
+            int extraBrain = agentType == AgentTypes.Carnivore
                 ? GetBrainTypeKeyByValue(BrainType.Attack)
                 : GetBrainTypeKeyByValue(BrainType.Escape);
 

@@ -2,10 +2,13 @@
 
 namespace NeuralNetworkLib.DataManagement
 {
-    public enum AnimalAgentTypes
+    public enum AgentTypes
     {
         Carnivore,
-        Herbivore
+        Herbivore,
+        Gatherer,
+        Cart,
+        Builder
     }
 
     public enum BrainType
@@ -45,11 +48,11 @@ namespace NeuralNetworkLib.DataManagement
             }
         }
 
-        public static Dictionary<AnimalAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> LoadLatestNeurons(
+        public static Dictionary<AgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> LoadLatestNeurons(
             string directoryPath)
         {
-            Dictionary<AnimalAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> agentsData =
-                new Dictionary<AnimalAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
+            Dictionary<AgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> agentsData =
+                new Dictionary<AgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
 
             string[] agentDirectories = Directory.Exists(directoryPath)
                 ? Directory.GetDirectories(directoryPath)
@@ -57,7 +60,7 @@ namespace NeuralNetworkLib.DataManagement
 
             foreach (string agentTypeDirectory in agentDirectories)
             {
-                AnimalAgentTypes agentType = Enum.Parse<AnimalAgentTypes>(Path.GetFileName(agentTypeDirectory));
+                AgentTypes agentType = Enum.Parse<AgentTypes>(Path.GetFileName(agentTypeDirectory));
                 agentsData[agentType] = new Dictionary<BrainType, List<AgentNeuronData>?>();
 
                 string[] brainDirectories = Directory.GetDirectories(agentTypeDirectory);
@@ -99,18 +102,18 @@ namespace NeuralNetworkLib.DataManagement
             return agentsData;
         }
 
-        public static Dictionary<AnimalAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> LoadSpecificNeurons(
+        public static Dictionary<AgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> LoadSpecificNeurons(
             string directoryPath, int specificGeneration)
         {
-            Dictionary<AnimalAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> agentsData =
-                new Dictionary<AnimalAgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
+            Dictionary<AgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>> agentsData =
+                new Dictionary<AgentTypes, Dictionary<BrainType, List<AgentNeuronData>?>>();
             string[] agentDirectories = Directory.Exists(directoryPath)
                 ? Directory.GetDirectories(directoryPath)
                 : Array.Empty<string>();
 
             foreach (string agentTypeDirectory in agentDirectories)
             {
-                AnimalAgentTypes agentType = Enum.Parse<AnimalAgentTypes>(Path.GetFileName(agentTypeDirectory));
+                AgentTypes agentType = Enum.Parse<AgentTypes>(Path.GetFileName(agentTypeDirectory));
                 agentsData[agentType] = new Dictionary<BrainType, List<AgentNeuronData>?>();
 
                 string[] brainDirectories = Directory.GetDirectories(agentTypeDirectory);

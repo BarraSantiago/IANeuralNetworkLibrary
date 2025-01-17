@@ -31,13 +31,6 @@ namespace NeuralNetworkLib.Agents.TCAgent
         Deliver,
     }
 
-    public enum AgentTypes
-    {
-        Gatherer,
-        Cart,
-        Builder
-    }
-
     public enum ResourceType
     {
         None,
