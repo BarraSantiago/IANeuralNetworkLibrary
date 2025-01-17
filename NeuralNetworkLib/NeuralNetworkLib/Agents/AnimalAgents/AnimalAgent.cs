@@ -55,7 +55,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         public static Action<AnimalAgent<TVector, TTransform>> OnDeath;
         public virtual bool CanReproduce => Food >= FoodLimit;
-        public AnimalAgentTypes agentType { get; set; }
+        public AgentTypes agentType { get; set; }
         public FSM<Behaviours, Flags> Fsm;
         public int FoodLimit { get; protected set; } = 5;
         public int Food { get; protected set; } = 0;
