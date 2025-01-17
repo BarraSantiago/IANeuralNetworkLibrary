@@ -14,7 +14,7 @@ namespace NeuralNetworkLib.Agents.SimAgents
             if (cache.TryGetValue(key, out int inputCount)) return inputCount;
             
             inputCount = DataContainer.inputCounts
-                .FirstOrDefault(input => input.agentType == agentType && input.brainType == brainType).inputCount;
+                .FirstOrDefault(input => input.AgentType == agentType && input.BrainType == brainType).InputCount;
             cache[key] = inputCount;
 
             return inputCount;

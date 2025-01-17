@@ -10,83 +10,83 @@ using AStarPath = AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate>;
 
 public struct NeuronInputCount
 {
-    public AnimalAgentTypes agentType;
-    public BrainType brainType;
-    public int inputCount;
-    public int outputCount;
-    public int[] hiddenLayersInputs;
+    public AnimalAgentTypes AgentType;
+    public BrainType BrainType;
+    public int InputCount;
+    public int OutputCount;
+    public int[] HiddenLayersInputs;
 }
 
 public class DataContainer
 {
-    public static Sim2Graph graph;
+    public static Sim2Graph Graph;
 
     public static Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>> Animals = new();
-    public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TCAgents = new();
+    public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TcAgents = new();
 
-    public static FlockingManager flockingManager = new();
+    public static FlockingManager FlockingManager = new();
     public static Dictionary<(BrainType, AnimalAgentTypes), NeuronInputCount> InputCountCache;
     public static NeuronInputCount[] inputCounts;
-    public static Dictionary<int, BrainType> herbBrainTypes = new();
-    public static Dictionary<int, BrainType> carnBrainTypes = new();
-    public static AStarPath gathererPathfinder;
-    public static AStarPath builderPathfinder;
-    public static AStarPath cartPathfinder;
+    public static Dictionary<int, BrainType> HerbBrainTypes = new();
+    public static Dictionary<int, BrainType> CarnBrainTypes = new();
+    public static AStarPath? GathererPathfinder;
+    public static AStarPath? BuilderPathfinder;
+    public static AStarPath? CartPathfinder;
 
     public static void Init()
     {
-        herbBrainTypes = new Dictionary<int, BrainType>();
-        carnBrainTypes = new Dictionary<int, BrainType>();
+        HerbBrainTypes = new Dictionary<int, BrainType>();
+        CarnBrainTypes = new Dictionary<int, BrainType>();
 
-        herbBrainTypes[0] = BrainType.Eat;
-        herbBrainTypes[1] = BrainType.Movement;
-        herbBrainTypes[2] = BrainType.Escape;
+        HerbBrainTypes[0] = BrainType.Eat;
+        HerbBrainTypes[1] = BrainType.Movement;
+        HerbBrainTypes[2] = BrainType.Escape;
 
-        carnBrainTypes[0] = BrainType.Movement;
-        carnBrainTypes[1] = BrainType.Attack;
+        CarnBrainTypes[0] = BrainType.Movement;
+        CarnBrainTypes[1] = BrainType.Attack;
 
         inputCounts = new[]
         {
             new NeuronInputCount
             {
-                agentType = AnimalAgentTypes.Carnivore, brainType = BrainType.Movement, inputCount = 5,
-                outputCount = 3, hiddenLayersInputs = new[] { 3 }
+                AgentType = AnimalAgentTypes.Carnivore, BrainType = BrainType.Movement, InputCount = 5,
+                OutputCount = 3, HiddenLayersInputs = new[] { 3 }
             },
             new NeuronInputCount
             {
-                agentType = AnimalAgentTypes.Carnivore, brainType = BrainType.Attack, inputCount = 4,
-                outputCount = 1, hiddenLayersInputs = new[] { 1 }
+                AgentType = AnimalAgentTypes.Carnivore, BrainType = BrainType.Attack, InputCount = 4,
+                OutputCount = 1, HiddenLayersInputs = new[] { 1 }
             },
             new NeuronInputCount
             {
-                agentType = AnimalAgentTypes.Herbivore, brainType = BrainType.Eat, inputCount = 4, outputCount = 1,
-                hiddenLayersInputs = new[] { 1 }
+                AgentType = AnimalAgentTypes.Herbivore, BrainType = BrainType.Eat, InputCount = 4, OutputCount = 1,
+                HiddenLayersInputs = new[] { 1 }
             },
             new NeuronInputCount
             {
-                agentType = AnimalAgentTypes.Herbivore, brainType = BrainType.Movement, inputCount = 8,
-                outputCount = 2, hiddenLayersInputs = new[] { 3 }
+                AgentType = AnimalAgentTypes.Herbivore, BrainType = BrainType.Movement, InputCount = 8,
+                OutputCount = 2, HiddenLayersInputs = new[] { 3 }
             },
             new NeuronInputCount
             {
-                agentType = AnimalAgentTypes.Herbivore, brainType = BrainType.Escape, inputCount = 4, outputCount = 1,
-                hiddenLayersInputs = new[] { 1 }
+                AgentType = AnimalAgentTypes.Herbivore, BrainType = BrainType.Escape, InputCount = 4, OutputCount = 1,
+                HiddenLayersInputs = new[] { 1 }
             },
         };
 
-        InputCountCache = inputCounts.ToDictionary(input => (input.brainType, input.agentType));
+        InputCountCache = inputCounts.ToDictionary(input => (brainType: input.BrainType, agentType: input.AgentType));
 
-        InitPathfinder(ref gathererPathfinder, 0, 0);
-        InitPathfinder(ref cartPathfinder, 50, 15);
-        InitPathfinder(ref builderPathfinder, 30, 0);
+        InitPathfinder(ref GathererPathfinder, 0, 0);
+        InitPathfinder(ref CartPathfinder, 50, 15);
+        InitPathfinder(ref BuilderPathfinder, 30, 0);
     }
 
-    private static void InitPathfinder(ref AStarPath pathfinder, int mountainCost = 0, int sandCost = 0)
+    private static void InitPathfinder(ref AStarPath? pathfinder, int mountainCost = 0, int sandCost = 0)
     {
         const int normalCost = 100;
         const int maxModCost = 30;
-        
-        foreach (SimNode<IVector> node in graph.NodesType)
+
+        foreach (SimNode<IVector> node in Graph.NodesType)
         {
             node.SetCost(normalCost);
             switch (node.NodeType)
@@ -97,28 +97,28 @@ public class DataContainer
                     break;
                 case NodeType.Mountain:
                     node.SetCost(mountainCost);
-                    if(mountainCost > maxModCost) node.isBlocked = true;
+                    if (mountainCost > maxModCost) node.isBlocked = true;
                     break;
                 case NodeType.Sand:
                     node.SetCost(sandCost);
-                    if(sandCost > maxModCost) node.isBlocked = true;
+                    if (sandCost > maxModCost) node.isBlocked = true;
                     break;
                 default:
                     break;
             }
         }
 
-        pathfinder = new AStarPath(graph.NodesType.Cast<SimNode<IVector>>().ToList());
+        pathfinder = new AStarPath(Graph.NodesType.Cast<SimNode<IVector>>().ToList());
     }
 
     public static INode<IVector> CoordinateToNode(IVector coordinate)
     {
-        if (coordinate.X < 0 || coordinate.Y < 0 || coordinate.X >= graph.MaxX || coordinate.Y >= graph.MaxY)
+        if (coordinate.X < 0 || coordinate.Y < 0 || coordinate.X >= Graph.MaxX || coordinate.Y >= Graph.MaxY)
         {
             return null;
         }
 
-        return graph.NodesType[(int)coordinate.X, (int)coordinate.Y];
+        return Graph.NodesType[(int)coordinate.X, (int)coordinate.Y];
     }
 
     public static INode<IVector> GetNearestNode(NodeType nodeType, IVector position)
@@ -126,7 +126,7 @@ public class DataContainer
         INode<IVector> nearestNode = null;
         float minDistance = float.MaxValue;
 
-        foreach (SimNode<IVector> node in graph.NodesType)
+        foreach (SimNode<IVector> node in Graph.NodesType)
         {
             if (node.NodeType != nodeType) continue;
 
@@ -141,13 +141,13 @@ public class DataContainer
 
         return nearestNode;
     }
-    
+
     public static INode<IVector> GetNearestNode(NodeTerrain nodeTerrain, IVector position)
     {
         INode<IVector> nearestNode = null;
         float minDistance = float.MaxValue;
 
-        foreach (SimNode<IVector> node in graph.NodesType)
+        foreach (SimNode<IVector> node in Graph.NodesType)
         {
             if (node.NodeTerrain != nodeTerrain) continue;
 
@@ -202,7 +202,7 @@ public class DataContainer
             nearestAgent = prey.Key;
         }
 
-        foreach (var prey in TCAgents)
+        foreach (var prey in TcAgents)
         {
             var agent = prey.Value;
             if (agent.AgentType != AgentTypes.Cart && agent.CurrentFood > 0) continue;
@@ -220,13 +220,22 @@ public class DataContainer
 
     public static IVector GetPosition(uint id, bool isAnimal)
     {
-        return isAnimal ? Animals[id].CurrentNode.GetCoordinate() : TCAgents[id].CurrentNode.GetCoordinate();
+        return isAnimal ? Animals[id].CurrentNode.GetCoordinate() : TcAgents[id].CurrentNode.GetCoordinate();
     }
 
     public static void Attack(uint id, bool isAnimal)
     {
-        Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)Animals[id];
-        herbivore.Hp -= 1;
+        if (isAnimal)
+        {
+            Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)Animals[id];
+            herbivore.Hp -= 1;
+        }
+        else
+        {
+            Cart? cart = (Cart)TcAgents[id];
+
+            cart.Attacked();
+        }
     }
 
     public static List<ITransform<IVector>> GetBoidsInsideRadius(Boid<IVector, ITransform<IVector>> boid)
@@ -260,8 +269,8 @@ public class DataContainer
     {
         Dictionary<int, BrainType> brainTypes = agentType switch
         {
-            AnimalAgentTypes.Carnivore => carnBrainTypes,
-            AnimalAgentTypes.Herbivore => herbBrainTypes,
+            AnimalAgentTypes.Carnivore => CarnBrainTypes,
+            AnimalAgentTypes.Herbivore => HerbBrainTypes,
             _ => throw new ArgumentException("Invalid agent type")
         };
 
