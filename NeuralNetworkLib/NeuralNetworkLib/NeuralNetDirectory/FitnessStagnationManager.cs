@@ -13,7 +13,10 @@ public class FitnessStagnationManager
 {
     // TODO in each epoch, fitness data should be updated
     private List<AgentFitnessData> fitnessData = new();
-    private const int GenerationsPerCheck = 150;
+    
+    // Esto deberia empezar a partir de 1000 generaciones y revisar si hubo avances comparando las primeras generaciones
+    // con las ultimas.
+    private const int GenerationsPerCheck = 100;
     private const double StagnationThreshold = 0.1;
 
 
@@ -34,7 +37,6 @@ public class FitnessStagnationManager
         });
     }
 
-    // TODO preguntar a Lean si esta bien
     public void AnalyzeData()
     {
         bool stagnation = false;
@@ -56,6 +58,7 @@ public class FitnessStagnationManager
                     oldLayers[j]++;
                 }
 
+                // Modificar esto teniendo en cuenta inputs y outputs de la red
                 oldLayers.Add(oldLayers[0]);
 
                 DataContainer.inputCounts[i].HiddenLayersInputs = oldLayers.ToArray();
