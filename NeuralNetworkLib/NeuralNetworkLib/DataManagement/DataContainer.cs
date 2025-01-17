@@ -228,13 +228,20 @@ public class DataContainer
         if (isAnimal)
         {
             Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)Animals[id];
-            herbivore.Hp -= 1;
+            
+            lock (herbivore)
+            {
+                herbivore.Hp -= 1;
+            }
         }
         else
         {
             Cart? cart = (Cart)TcAgents[id];
 
-            cart.Attacked();
+            lock (cart)
+            {
+                cart.Attacked();
+            }
         }
     }
 

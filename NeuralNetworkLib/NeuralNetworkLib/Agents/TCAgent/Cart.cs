@@ -57,7 +57,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position; 
+                    TargetNode = TownCenter.Position;
                     TownCenter.RefugeeCount++;
                 });
         }
@@ -67,7 +67,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position; 
+                    TargetNode = TownCenter.Position;
                     TownCenter.RefugeeCount++;
                 });
 
@@ -131,7 +131,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.ReturnResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position; 
+                    TargetNode = TownCenter.Position;
                     TownCenter.RefugeeCount++;
                 });
         }
@@ -179,79 +179,88 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         private void ReturnResource()
         {
-            switch (resourceCarrying)
+            lock (TownCenter)
             {
-                case ResourceType.Food:
-                    if (CurrentFood <= 0) return;
-                    CurrentFood--;
-                    TownCenter.Food++;
-                    break;
-                case ResourceType.Gold:
-                    if (CurrentGold <= 0) return;
-                    CurrentGold--;
-                    TownCenter.Gold++;
-                    break;
-                case ResourceType.Wood:
-                    if (CurrentWood <= 0) return;
-                    CurrentWood--;
-                    TownCenter.Wood++;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                switch (resourceCarrying)
+                {
+                    case ResourceType.Food:
+                        if (CurrentFood <= 0) return;
+                        CurrentFood--;
+                        TownCenter.Food++;
+                        break;
+                    case ResourceType.Gold:
+                        if (CurrentGold <= 0) return;
+                        CurrentGold--;
+                        TownCenter.Gold++;
+                        break;
+                    case ResourceType.Wood:
+                        if (CurrentWood <= 0) return;
+                        CurrentWood--;
+                        TownCenter.Wood++;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
         }
 
         private void Gather()
         {
-            switch (resourceCarrying)
+            lock (TownCenter)
             {
-                case ResourceType.Food:
-                    if (TownCenter.Food <= 0) return;
-                    CurrentFood++;
-                    TownCenter.Food--;
-                    break;
-                case ResourceType.Gold:
-                    if (TownCenter.Gold <= 0) return;
-                    CurrentGold++;
-                    TownCenter.Gold--;
-                    break;
-                case ResourceType.Wood:
-                    if (TownCenter.Wood <= 0) return;
-                    CurrentWood++;
-                    TownCenter.Wood--;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                switch (resourceCarrying)
+                {
+                    case ResourceType.Food:
+                        if (TownCenter.Food <= 0) return;
+                        CurrentFood++;
+                        TownCenter.Food--;
+                        break;
+                    case ResourceType.Gold:
+                        if (TownCenter.Gold <= 0) return;
+                        CurrentGold++;
+                        TownCenter.Gold--;
+                        break;
+                    case ResourceType.Wood:
+                        if (TownCenter.Wood <= 0) return;
+                        CurrentWood++;
+                        TownCenter.Wood--;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
         }
 
         private void DeliverResource()
         {
-            switch (resourceCarrying)
+            lock (_target)
             {
-                case ResourceType.Food:
-                    if (CurrentFood <= 0) return;
-                    CurrentFood--;
-                    _target.CurrentFood++;
-                    break;
-                case ResourceType.Gold:
-                    if (CurrentGold <= 0) return;
-                    CurrentGold--;
-                    _target.CurrentGold++;
-                    break;
-                case ResourceType.Wood:
-                    if (CurrentWood <= 0) return;
-                    CurrentWood--;
-                    _target.CurrentWood++;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                switch (resourceCarrying)
+                {
+                    case ResourceType.Food:
+                        if (CurrentFood <= 0) return;
+                        CurrentFood--;
+                        _target.CurrentFood++;
+                        break;
+                    case ResourceType.Gold:
+                        if (CurrentGold <= 0) return;
+                        CurrentGold--;
+                        _target.CurrentGold++;
+                        break;
+                    case ResourceType.Wood:
+                        if (CurrentWood <= 0) return;
+                        CurrentWood--;
+                        _target.CurrentWood++;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
         }
 
         public void Attacked()
         {
-            if(resourceCarrying != ResourceType.Food) return;
+            if (resourceCarrying != ResourceType.Food) return;
 
             CurrentFood = 0;
 

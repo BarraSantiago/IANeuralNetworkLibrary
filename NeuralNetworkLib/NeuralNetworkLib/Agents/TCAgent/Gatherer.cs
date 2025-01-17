@@ -46,6 +46,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 GatherExitParameters);
         }
 
+        #region Transition
+
         protected override void WaitTransitions()
         {
             base.WaitTransitions();
@@ -73,10 +75,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     TownCenter.RefugeeCount++;
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
-                () =>
-                {
-                    TownCenter.AskForResources(this, ResourceType.Food);
-                });
+                () => { TownCenter.AskForResources(this, ResourceType.Food); });
 
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
@@ -118,6 +117,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         (int)adjacentNode.GetCoordinate().Y];
                 });
         }
+
+        #endregion
+
 
         protected override object[] GatherTickParameters()
         {
@@ -183,7 +185,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
             CurrentFood++;
             LastTimeEat++;
-            CurrentNode.Resource--;
+
+            lock (TargetNode)
+            {
+                TargetNode.Resource--;
+            }
 
             stopwatch.Restart();
 
@@ -201,7 +207,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
             CurrentWood++;
             LastTimeEat++;
-            CurrentNode.Resource--;
+
+            lock (TargetNode)
+            {
+                TargetNode.Resource--;
+            }
+
             stopwatch.Restart();
 
             if (TargetNode.Resource <= 0) OnEmptyTree?.Invoke();
@@ -218,7 +229,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
             CurrentGold++;
             LastTimeEat++;
-            CurrentNode.Resource--;
+            
+            lock (TargetNode)
+            {
+                TargetNode.Resource--;
+            }
+
             stopwatch.Restart();
 
             if (TargetNode.Resource <= 0) OnEmptyMine?.Invoke();

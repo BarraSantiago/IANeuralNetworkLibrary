@@ -31,7 +31,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         }
 
         #region Transitions
-        
+
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
@@ -43,7 +43,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Build, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position; 
+                    TargetNode = TownCenter.Position;
                     TownCenter.RefugeeCount++;
                 });
             Fsm.SetTransition(Behaviours.Build, Flags.OnHunger, Behaviours.Wait, () =>
@@ -66,7 +66,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Build, Flags.OnTargetLost, Behaviours.Walk,
                 () => { TargetNode = (SimNode<IVector>?)TownCenter.GetWatchTowerConstruction(); });
         }
-        
+
         protected override void WaitTransitions()
         {
             base.WaitTransitions();
@@ -74,14 +74,15 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () => { TargetNode = (SimNode<IVector>?)TownCenter.GetWatchTowerConstruction(); });
             Fsm.SetTransition(Behaviours.Wait, Flags.OnBuild, Behaviours.Build);
         }
-        
+
         #endregion
 
-        
+
         protected object[] BuildTickParameters()
         {
             return new object[] { Retreat, CurrentFood, CurrentGold, CurrentWood, onBuild, TargetNode };
         }
+
         protected override object[] WaitTickParameters()
         {
             return new object[] { Retreat, CurrentFood, CurrentGold, CurrentWood, CurrentNode, TargetNode, OnWait };
@@ -98,7 +99,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
             CurrentGold -= TownCenter.WatchTowerBuildCost.Gold;
             CurrentWood -= TownCenter.WatchTowerBuildCost.Wood;
             CurrentFood--;
-            TargetNode.BuildWatchTower();
+
+            lock (TargetNode)
+            {
+                TargetNode.BuildWatchTower();
+            }
 
             stopwatch.Restart();
         }
