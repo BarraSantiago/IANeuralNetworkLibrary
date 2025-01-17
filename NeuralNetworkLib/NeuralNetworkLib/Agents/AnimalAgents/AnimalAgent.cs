@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.Agents.SimAgents;
+﻿using System.Diagnostics;
+using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Agents.States.AnimalStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
@@ -50,22 +51,24 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         }
 
         public virtual INode<IVector> CurrentNode =>
-            DataContainer.graph.NodesType[(int)Transform.position.X, (int)Transform.position.Y];
+            DataContainer.Graph.NodesType[(int)Transform.position.X, (int)Transform.position.Y];
 
         public static Action<AnimalAgent<TVector, TTransform>> OnDeath;
-        protected TTransform transform = new TTransform();
         public virtual bool CanReproduce => Food >= FoodLimit;
         public AnimalAgentTypes agentType { get; set; }
         public FSM<Behaviours, Flags> Fsm;
-
-        protected int movement = 3;
-        protected NodeTerrain foodTarget;
         public int FoodLimit { get; protected set; } = 5;
         public int Food { get; protected set; } = 0;
+
+
+        protected Stopwatch stopwatch = new Stopwatch();
+        protected NodeTerrain foodTarget;
+        protected int speed = 3;
         protected Action OnMove;
         protected Action OnEat;
         protected float dt;
         protected const int NoTarget = -1;
+        protected TTransform transform = new TTransform();
 
         Genome[] genomes;
         public float[][] output;
@@ -90,8 +93,10 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             {
                 NeuronInputCount inputsCount =
                     DataContainer.InputCountCache[(brain, agentType)];
-                output[GetBrainTypeKeyByValue(brain)] = new float[inputsCount.outputCount];
+                output[GetBrainTypeKeyByValue(brain)] = new float[inputsCount.OutputCount];
             }
+
+            stopwatch.Start();
 
             OnMove += Move;
             OnEat += Eat;
@@ -119,7 +124,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             {
                 BrainType brainType = brainTypes[i];
                 input[i] = new float[GetInputCount(brainType)];
-                int outputCount = DataContainer.InputCountCache[(brainType, agentType)].outputCount;
+                int outputCount = DataContainer.InputCountCache[(brainType, agentType)].OutputCount;
                 output[i] = new float[outputCount];
             }
         }
@@ -197,7 +202,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             };
             return objects;
         }
-        
+
         protected virtual object[] EatTickParameters()
         {
             int extraBrain = agentType == AnimalAgentTypes.Carnivore
@@ -221,50 +226,56 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             }
         }
 
+
         protected virtual void Move()
         {
             int brain = GetBrainTypeKeyByValue(BrainType.Movement);
 
+            double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+            if (speed*elapsedSeconds < 1) return;
+
             IVector currentPos = new MyVector(CurrentNode.GetCoordinate().X, CurrentNode.GetCoordinate().Y);
-            currentPos = CalculateNewPosition(currentPos, output[brain]);
+            currentPos = CalculateNewPosition(currentPos, output[brain], (float)elapsedSeconds);
 
-            if (!DataContainer.graph.IsWithinGraphBorders(currentPos))
+            if (!DataContainer.Graph.IsWithinGraphBorders(currentPos))
             {
-                if (currentPos.X <= DataContainer.graph.MinX)
+                if (currentPos.X <= DataContainer.Graph.MinX)
                 {
-                    currentPos.X = DataContainer.graph.MaxX - 1;
+                    currentPos.X = DataContainer.Graph.MaxX - 1;
                 }
 
-                if (currentPos.X >= DataContainer.graph.MaxX)
+                if (currentPos.X >= DataContainer.Graph.MaxX)
                 {
-                    currentPos.X = DataContainer.graph.MinX + 1;
+                    currentPos.X = DataContainer.Graph.MinX + 1;
                 }
 
-                if (currentPos.Y <= DataContainer.graph.MinY)
+                if (currentPos.Y <= DataContainer.Graph.MinY)
                 {
-                    currentPos.Y = DataContainer.graph.MaxY - 1;
+                    currentPos.Y = DataContainer.Graph.MaxY - 1;
                 }
 
-                if (currentPos.Y >= DataContainer.graph.MaxY)
+                if (currentPos.Y >= DataContainer.Graph.MaxY)
                 {
-                    currentPos.Y = DataContainer.graph.MinY + 1;
+                    currentPos.Y = DataContainer.Graph.MinY + 1;
                 }
             }
 
             INode<IVector> newPos = DataContainer.CoordinateToNode(currentPos);
             if (newPos != null) SetPosition(newPos.GetCoordinate());
+
+            stopwatch.Restart();
         }
 
-        private IVector CalculateNewPosition(IVector targetPos, float[] brainOutput)
+        private IVector CalculateNewPosition(IVector targetPos, float[] brainOutput, float time)
         {
             if (brainOutput.Length < 2) return default;
 
-            targetPos.X += movement * brainOutput[0];
-            targetPos.Y += movement * brainOutput[1];
+            targetPos.X += speed * time * brainOutput[0];
+            targetPos.Y += speed * time * brainOutput[1];
 
             return targetPos;
         }
-        
+
         protected int GetInputCount(BrainType brainType)
         {
             return InputCountCache.GetInputCount(agentType, brainType);
@@ -272,7 +283,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         public virtual void SetPosition(IVector position)
         {
-            if (!DataContainer.graph.IsWithinGraphBorders(position)) return;
+            if (!DataContainer.Graph.IsWithinGraphBorders(position)) return;
             Transform = (TTransform)new ITransform<IVector>(position);
         }
 
@@ -286,7 +297,8 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 }
             }
 
-            throw new KeyNotFoundException($"The BrainType value '{value}' is not present in the '{agentType}' brainTypes dictionary.");
+            throw new KeyNotFoundException(
+                $"The BrainType value '{value}' is not present in the '{agentType}' brainTypes dictionary.");
         }
     }
 }

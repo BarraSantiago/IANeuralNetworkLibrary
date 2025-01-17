@@ -19,17 +19,15 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         }
 
         private int hp;
-        private const int FoodDropped = 1;
         private const int InitialHp = 1;
         private INode<IVector> FoodPosition;
-        
+
         public override void Init()
         {
             base.Init();
             foodTarget = NodeTerrain.Stump;
-
             CalculateInputs();
-
+            speed = 10;
             hp = InitialHp;
         }
 
@@ -75,7 +73,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
             input[brain][0] = Transform.position.X;
             input[brain][1] = Transform.position.Y;
-            
+
             if (FoodPosition == null)
             {
                 input[brain][2] = NoTarget;
@@ -108,7 +106,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 input[brain][2] = target.CurrentNode.GetCoordinate().X;
                 input[brain][3] = target.CurrentNode.GetCoordinate().Y;
             }
-            
+
             if (FoodPosition == null)
             {
                 input[brain][4] = NoTarget;
@@ -123,12 +121,20 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             input[brain][6] = Food;
             input[brain][7] = Hp;
         }
-        
+
         public virtual INode<IVector> GetTarget(NodeTerrain nodeType = NodeTerrain.Stump)
         {
             return DataContainer.GetNearestNode(nodeType, transform.position);
         }
 
+        protected override void Eat()
+        {
+            const int EatCooldown = 3;
+            
+            if(stopwatch.Elapsed.TotalSeconds < EatCooldown) return;
+            
+            base.Eat();
+        }
 
         private void Die()
         {
@@ -137,7 +143,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         protected override void EatTransitions()
         {
-            Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat);
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat, () => stopwatch.Reset());
             Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk);
             Fsm.SetTransition(Behaviours.Eat, Flags.OnEscape, Behaviours.Walk);
             Fsm.SetTransition(Behaviours.Eat, Flags.OnAttack, Behaviours.Walk);
@@ -145,7 +151,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         protected override void WalkTransitions()
         {
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat, () => stopwatch.Reset());
             Fsm.SetTransition(Behaviours.Walk, Flags.OnEscape, Behaviours.Walk);
             Fsm.SetTransition(Behaviours.Walk, Flags.OnAttack, Behaviours.Walk);
             Fsm.SetTransition(Behaviours.Walk, Flags.OnSearchFood, Behaviours.Walk);

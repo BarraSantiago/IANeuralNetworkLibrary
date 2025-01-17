@@ -21,7 +21,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         {
             base.Init();
             FoodLimit = 1;
-            movement = 2;
+            speed = 5;
             HasAttacked = false;
             HasKilled = false;
 
@@ -53,11 +53,6 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             MovementInputs();
             ExtraInputs();
         }
-        
-        protected override void FindFoodInputs()
-        {
-        }
-
 
         protected override void ExtraInputs()
         {
@@ -112,10 +107,10 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         private object[] AttackTickParameters()
         {
-            if (output.Length < 3 || output[GetBrainTypeKeyByValue(BrainType.Movement)].Length < 2)
-            {
-                return Array.Empty<object>();
-            }
+            //if (output.Length < 3 || output[GetBrainTypeKeyByValue(BrainType.Movement)].Length < 2)
+            //{
+            //    return Array.Empty<object>();
+            //}
 
             object[] objects =
             {
