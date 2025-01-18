@@ -13,9 +13,9 @@ public class FitnessStagnationManager
 {
     // TODO in each epoch, fitness data should be updated
     private List<AgentFitnessData> fitnessData = new();
-    
-    // Esto deberia empezar a partir de 1000 generaciones y revisar si hubo avances comparando las primeras generaciones
-    // con las ultimas.
+
+    // TODO Esto deberia empezar a partir de 1000 generaciones y revisar si hubo avances comparando las primeras
+    // generaciones con las ultimas.
     private const int GenerationsPerCheck = 100;
     private const double StagnationThreshold = 0.1;
 
@@ -28,7 +28,7 @@ public class FitnessStagnationManager
             agentFitnessData.FitnessData.Add(averageFitness);
             return;
         }
-        
+
         fitnessData.Add(new AgentFitnessData
         {
             AgentType = agentType,
@@ -58,7 +58,7 @@ public class FitnessStagnationManager
                     oldLayers[j]++;
                 }
 
-                // Modificar esto teniendo en cuenta inputs y outputs de la red
+                // TODO Modificar esto teniendo en cuenta inputs y outputs de la red para modificar las hidden layers
                 oldLayers.Add(oldLayers[0]);
 
                 DataContainer.inputCounts[i].HiddenLayersInputs = oldLayers.ToArray();
@@ -68,13 +68,15 @@ public class FitnessStagnationManager
             }
         }
 
-        if (stagnation)
-        {
-            DataContainer.InputCountCache = DataContainer.inputCounts.ToDictionary(
-                input => (brainType: input.BrainType, agentType: input.AgentType));
+        if (!stagnation) return;
+        
+        DataContainer.InputCountCache = DataContainer.inputCounts.ToDictionary(
+            input => (brainType: input.BrainType, agentType: input.AgentType));
 
-            // TODO create save for new brain configuration
-        }
+        NeuronInputCount[] inputCounts = DataContainer.inputCounts;
+        const string filePath = "path/to/your/file.json";
+
+        NeuronInputCountManager.SaveNeuronInputCounts(inputCounts, filePath);
     }
 
     private bool CalculateStagnation(List<float> fitness)

@@ -33,6 +33,8 @@ public class DataContainer
     public static AStarPath? BuilderPathfinder;
     public static AStarPath? CartPathfinder;
 
+    private const string FilePath = "path/to/your/file.json";
+
     public static void Init()
     {
         HerbBrainTypes = new Dictionary<int, BrainType>();
@@ -45,40 +47,50 @@ public class DataContainer
         CarnBrainTypes[0] = BrainType.Movement;
         CarnBrainTypes[1] = BrainType.Attack;
 
-        inputCounts = new[]
-        {
-            new NeuronInputCount
-            {
-                AgentType = AgentTypes.Carnivore, BrainType = BrainType.Movement, InputCount = 5,
-                OutputCount = 3, HiddenLayersInputs = new[] { 3 }
-            },
-            new NeuronInputCount
-            {
-                AgentType = AgentTypes.Carnivore, BrainType = BrainType.Attack, InputCount = 4,
-                OutputCount = 1, HiddenLayersInputs = new[] { 1 }
-            },
-            new NeuronInputCount
-            {
-                AgentType = AgentTypes.Herbivore, BrainType = BrainType.Eat, InputCount = 4, OutputCount = 1,
-                HiddenLayersInputs = new[] { 1 }
-            },
-            new NeuronInputCount
-            {
-                AgentType = AgentTypes.Herbivore, BrainType = BrainType.Movement, InputCount = 8,
-                OutputCount = 2, HiddenLayersInputs = new[] { 3 }
-            },
-            new NeuronInputCount
-            {
-                AgentType = AgentTypes.Herbivore, BrainType = BrainType.Escape, InputCount = 4, OutputCount = 1,
-                HiddenLayersInputs = new[] { 1 }
-            },
-        };
+        LoadInputCount();
 
         InputCountCache = inputCounts.ToDictionary(input => (brainType: input.BrainType, agentType: input.AgentType));
 
         InitPathfinder(ref GathererPathfinder, 0, 0);
         InitPathfinder(ref CartPathfinder, 50, 15);
         InitPathfinder(ref BuilderPathfinder, 30, 0);
+    }
+
+    private static void LoadInputCount()
+    {
+        inputCounts = NeuronInputCountManager.LoadNeuronInputCounts(FilePath);
+
+        if (inputCounts == null || inputCounts.Length == 0)
+        {
+            inputCounts = new[]
+            {
+                new NeuronInputCount
+                {
+                    AgentType = AgentTypes.Carnivore, BrainType = BrainType.Movement, InputCount = 5,
+                    OutputCount = 3, HiddenLayersInputs = new[] { 3 }
+                },
+                new NeuronInputCount
+                {
+                    AgentType = AgentTypes.Carnivore, BrainType = BrainType.Attack, InputCount = 4,
+                    OutputCount = 1, HiddenLayersInputs = new[] { 1 }
+                },
+                new NeuronInputCount
+                {
+                    AgentType = AgentTypes.Herbivore, BrainType = BrainType.Eat, InputCount = 4, OutputCount = 1,
+                    HiddenLayersInputs = new[] { 1 }
+                },
+                new NeuronInputCount
+                {
+                    AgentType = AgentTypes.Herbivore, BrainType = BrainType.Movement, InputCount = 8,
+                    OutputCount = 2, HiddenLayersInputs = new[] { 3 }
+                },
+                new NeuronInputCount
+                {
+                    AgentType = AgentTypes.Herbivore, BrainType = BrainType.Escape, InputCount = 4, OutputCount = 1,
+                    HiddenLayersInputs = new[] { 1 }
+                },
+            };
+        }
     }
 
     private static void InitPathfinder(ref AStarPath? pathfinder, int mountainCost = 0, int sandCost = 0)
@@ -228,7 +240,7 @@ public class DataContainer
         if (isAnimal)
         {
             Herbivore<IVector, ITransform<IVector>> herbivore = (Herbivore<IVector, ITransform<IVector>>)Animals[id];
-            
+
             lock (herbivore)
             {
                 herbivore.Hp -= 1;
