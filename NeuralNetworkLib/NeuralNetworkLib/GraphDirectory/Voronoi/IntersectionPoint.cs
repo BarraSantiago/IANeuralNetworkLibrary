@@ -1,18 +1,17 @@
-namespace VoronoiDiagram
+namespace NeuralNetworkLib.GraphDirectory.Voronoi;
+
+public class IntersectionPoint<TCoordinate> 
+    where TCoordinate : IEquatable<TCoordinate>
 {
-    public class IntersectionPoint<TCoordinate> 
-        where TCoordinate : IEquatable<TCoordinate>
+    private TCoordinate position;
+    private float angle;
+
+    public TCoordinate Position { get => position; }
+    public float Angle { get => angle; set => angle = value; }
+
+    public IntersectionPoint(TCoordinate position)
     {
-        private TCoordinate position;
-        private float angle;
-
-        public TCoordinate Position { get => position; }
-        public float Angle { get => angle; set => angle = value; }
-
-        public IntersectionPoint(TCoordinate position)
-        {
-            this.position = position;
-            angle = 0f;
-        }
+        this.position = position;
+        angle = 0f;
     }
 }

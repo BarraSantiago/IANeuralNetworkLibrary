@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.DataManagement;
+using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
-using Pathfinder.Voronoi;
 
 namespace NeuralNetworkLib.Agents.TCAgent
 {
