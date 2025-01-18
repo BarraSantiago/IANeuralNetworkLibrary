@@ -11,13 +11,13 @@ public class Sector<TCoordinate, TCoordinateType>
     private List<TCoordinate> points;
     private static TCoordinate _wrongPoint;
     public TCoordinate MapDimensions { get; set; }
-    public SimNode<TCoordinateType> Mine { get; }
+    public SimNode<TCoordinateType> PointOfInterest { get; }
 
-    public Sector(SimNode<TCoordinateType> mine)
+    public Sector(SimNode<TCoordinateType> pointOfInterest)
     {
         _wrongPoint = new TCoordinate();
         _wrongPoint.SetCoordinate(-1, -1);
-        this.Mine = mine;
+        this.PointOfInterest = pointOfInterest;
     }
 
     #region SEGMENTS
@@ -28,7 +28,7 @@ public class Sector<TCoordinate, TCoordinateType>
         foreach (Limit<TCoordinate, TCoordinateType>? limit in limits)
         {
             TCoordinate origin = new TCoordinate();
-            origin.SetCoordinate(Mine.GetCoordinate()); // Obtengo la posicion de la mina
+            origin.SetCoordinate(PointOfInterest.GetCoordinate()); // Obtengo la posicion de la mina
             TCoordinate final = limit.GetMapLimitPosition(origin); // Obtengo la posicion final del segmento
             segments.Add(new Segment<TCoordinate, TCoordinateType>(origin, final));
         }
@@ -102,9 +102,10 @@ public class Sector<TCoordinate, TCoordinateType>
         SetPointsInSector();
     }
 
-        
+
     // Calculo la interseccion entre 2 segmentos definidos por 4 puntos
-    private TCoordinate GetIntersection(Segment<TCoordinate, TCoordinateType> seg1, Segment<TCoordinate, TCoordinateType> seg2)
+    private TCoordinate GetIntersection(Segment<TCoordinate, TCoordinateType> seg1,
+        Segment<TCoordinate, TCoordinateType> seg2)
     {
         TCoordinate intersection = new TCoordinate();
         intersection.Zero();
@@ -160,7 +161,7 @@ public class Sector<TCoordinate, TCoordinateType>
     {
         return Math.Abs(a - b) < 1e-6f;
     }
-        
+
     private bool CheckIfHaveAnotherPositionCloser(TCoordinate intersectionPoint, TCoordinate pointEnd,
         float maxDistance)
     {
@@ -169,7 +170,7 @@ public class Sector<TCoordinate, TCoordinateType>
 
     private void SortIntersections()
     {
-        List<IntersectionPoint<TCoordinate>> intersectionPoints = 
+        List<IntersectionPoint<TCoordinate>> intersectionPoints =
             intersections.Select(coord => new IntersectionPoint<TCoordinate>(coord)).ToList();
 
         // Calculo los valores maximos y minimos de X e Y de las intersecciones para determinar el punto central (centroide)
@@ -277,17 +278,85 @@ public class Sector<TCoordinate, TCoordinateType>
         return nodesInSector;
     }
 
-    public int CalculateTotalWeight(List<SimNode<TCoordinate>> nodesInSector)
+    public int CalculateTotalWeight(List<SimNode<TCoordinate>> allNodes)
     {
         int totalWeight = 0;
-
-        foreach (SimNode<TCoordinate> node in nodesInSector)
+        foreach (SimNode<TCoordinate> node in allNodes)
         {
-            // TODO totalWeight += node.GetPathNodeCost();
-            totalWeight += 1;
+            if (CheckPointInSector(node.GetCoordinate()))
+            {
+                totalWeight += node.GetCost();
+            }
         }
 
         return totalWeight;
+    }
+
+    public void AdjustSectorByWeight(Sector<TCoordinate, TCoordinateType> neighbor, List<SimNode<TCoordinate>> allNodes)
+    {
+        // 1. Calculate both sectors' weights
+        int myWeight = CalculateTotalWeight(allNodes);
+        int neighborWeight = neighbor.CalculateTotalWeight(allNodes);
+
+        // If I'm not heavier, do nothing
+        if (myWeight <= neighborWeight) return;
+
+        // 2. Find a candidate node in *this* sector that is "closest" to the neighbor's site
+        SimNode<TCoordinate> candidateNode = null;
+        float bestDistance = float.MaxValue;
+
+        // Get all nodes actually inside this sector
+        List<SimNode<TCoordinate>> myNodes = new List<SimNode<TCoordinate>>();
+        foreach (var node in allNodes)
+        {
+            // Check if the node is in *this* sector
+            if (CheckPointInSector(node.GetCoordinate()))
+            {
+                myNodes.Add(node);
+            }
+        }
+
+        // Among those nodes, pick the one that is physically closest to neighbor's site
+        foreach (var node in myNodes)
+        {
+            // Distance from node to neighbor's site
+            float distToNeighbor = ((TCoordinate)node.GetCoordinate())
+                .Distance(neighbor.PointOfInterest.GetCoordinate());
+
+            if (distToNeighbor < bestDistance)
+            {
+                bestDistance = distToNeighbor;
+                candidateNode = node;
+            }
+        }
+
+        // If we found no candidate, exit
+        if (candidateNode == null) return;
+
+        // ------------------------------------------------------------------
+        // 3. Naive "boundary shift": 
+        //    Remove the segment from *this* sector that goes to neighbor's site,
+        //    add that same segment to neighbor's sector, then recompute geometry.
+        // ------------------------------------------------------------------
+
+        // Create coordinates for the sites
+        TCoordinate origin = new TCoordinate();
+        origin.SetCoordinate(this.PointOfInterest.GetCoordinate());
+
+        TCoordinate neighborSite = new TCoordinate();
+        neighborSite.SetCoordinate(neighbor.PointOfInterest.GetCoordinate());
+
+        // Remove the segment (origin -> neighbor's site) from *this* sector, if it exists:
+        segments.RemoveAll(seg =>
+            seg.Origin.Equals(origin) &&
+            seg.Final.Equals(neighborSite));
+
+        // Now add that segment to neighbor's sector
+        neighbor.AddSegment(origin, neighborSite);
+
+        // Recompute intersections for both sectors to update their polygons
+        this.SetIntersections();
+        neighbor.SetIntersections();
     }
 
     public TCoordinate[] PointsToDraw()
