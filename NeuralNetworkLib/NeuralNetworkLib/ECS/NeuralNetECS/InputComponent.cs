@@ -1,4 +1,4 @@
-﻿using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
+﻿using NeuralNetworkLib.ECS.Patron;
 
 namespace NeuralNetworkLib.ECS.NeuralNetECS
 {

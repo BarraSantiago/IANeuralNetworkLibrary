@@ -1,9 +1,7 @@
 ﻿using NeuralNetworkLib.Agents.AnimalAgents;
-using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.ECS.NeuralNetECS;
-using NeuralNetworkLib.NeuralNetDirectory.ECS;
-using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
+using NeuralNetworkLib.ECS.Patron;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.NeuralNetDirectory

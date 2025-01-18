@@ -1,4 +1,4 @@
-﻿using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
+﻿using NeuralNetworkLib.ECS.Patron;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.ECS.FlockingECS;
@@ -20,6 +20,8 @@ public class ACSSystem : ECSSystem
     {
         boidConfigComponents = null;
         queriedEntities = null;
+        transformComponents = null;
+        ACSComponents = null;
     }
 
     protected override void PreExecute(float deltaTime)
