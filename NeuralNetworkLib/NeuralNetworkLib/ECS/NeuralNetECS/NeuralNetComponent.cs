@@ -1,7 +1,7 @@
 ﻿using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 
-namespace NeuralNetworkLib.NeuralNetDirectory.ECS
+namespace NeuralNetworkLib.ECS.NeuralNetECS
 {
     public class NeuralNetComponent : EcsComponent
     {

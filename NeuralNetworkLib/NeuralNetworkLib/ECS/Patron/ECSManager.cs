@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using NeuralNetworkLib.ECS.NeuralNetECS;
 
 namespace NeuralNetworkLib.NeuralNetDirectory.ECS.Patron
 {

@@ -1,7 +1,8 @@
-﻿using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
+﻿using NeuralNetworkLib.NeuralNetDirectory.ECS;
+using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 
-namespace NeuralNetworkLib.NeuralNetDirectory.ECS
+namespace NeuralNetworkLib.ECS.NeuralNetECS
 {
     public sealed class NeuralNetSystem : ECSSystem
     {

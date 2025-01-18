@@ -320,7 +320,7 @@ public class Sector<TCoordinate, TCoordinateType>
         foreach (var node in myNodes)
         {
             // Distance from node to neighbor's site
-            float distToNeighbor = ((TCoordinate)node.GetCoordinate())
+            float distToNeighbor = node.GetCoordinate()
                 .Distance(neighbor.PointOfInterest.GetCoordinate());
 
             if (distToNeighbor < bestDistance)
@@ -341,7 +341,7 @@ public class Sector<TCoordinate, TCoordinateType>
 
         // Create coordinates for the sites
         TCoordinate origin = new TCoordinate();
-        origin.SetCoordinate(this.PointOfInterest.GetCoordinate());
+        origin.SetCoordinate(PointOfInterest.GetCoordinate());
 
         TCoordinate neighborSite = new TCoordinate();
         neighborSite.SetCoordinate(neighbor.PointOfInterest.GetCoordinate());
@@ -355,7 +355,7 @@ public class Sector<TCoordinate, TCoordinateType>
         neighbor.AddSegment(origin, neighborSite);
 
         // Recompute intersections for both sectors to update their polygons
-        this.SetIntersections();
+        SetIntersections();
         neighbor.SetIntersections();
     }
 

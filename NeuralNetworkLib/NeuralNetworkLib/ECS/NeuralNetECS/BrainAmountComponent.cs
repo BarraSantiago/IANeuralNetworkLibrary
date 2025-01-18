@@ -1,6 +1,6 @@
 ﻿using NeuralNetworkLib.NeuralNetDirectory.ECS.Patron;
 
-namespace NeuralNetworkLib.NeuralNetDirectory.ECS;
+namespace NeuralNetworkLib.ECS.NeuralNetECS;
 
 public class BrainAmountComponent : EcsComponent
 {
