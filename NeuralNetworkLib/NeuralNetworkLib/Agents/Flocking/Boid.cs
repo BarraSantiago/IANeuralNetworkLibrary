@@ -11,7 +11,6 @@ namespace NeuralNetworkLib.Agents.Flocking
         public float cohesionOffset;
         public float separationOffset;
         public float directionOffset;
-        public IVector target = new MyVector();
         public TTransform transform = new TTransform();
 
         private Func<Boid<TVector, TTransform>, TVector> alignment;
