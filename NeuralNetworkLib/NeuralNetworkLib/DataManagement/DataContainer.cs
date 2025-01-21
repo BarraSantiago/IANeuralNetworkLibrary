@@ -1,12 +1,14 @@
-﻿using NeuralNetworkLib.Agents.AnimalAgents;
+﻿using System.Collections.Concurrent;
+using NeuralNetworkLib.Agents.AnimalAgents;
 using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.TCAgent;
+using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
 using Pathfinder;
 
 namespace NeuralNetworkLib.DataManagement;
 
-using AStarPath = AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate>;
+using AStarPath = AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>;
 
 public struct NeuronInputCount
 {
@@ -32,8 +34,15 @@ public class DataContainer
     public static AStarPath? GathererPathfinder;
     public static AStarPath? BuilderPathfinder;
     public static AStarPath? CartPathfinder;
+    public static Voronoi<CoordinateNode, MyVector>[] Voronois;
+    public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi;
 
     private const string FilePath = "path/to/your/file.json";
+
+    private static ParallelOptions parallelOptions = new ParallelOptions
+    {
+        MaxDegreeOfParallelism = 32
+    };
 
     public static void Init()
     {
@@ -54,7 +63,9 @@ public class DataContainer
         InitPathfinder(ref GathererPathfinder, 0, 0);
         InitPathfinder(ref CartPathfinder, 50, 15);
         InitPathfinder(ref BuilderPathfinder, 30, 0);
+        InitVoronois();
     }
+
 
     private static void LoadInputCount()
     {
@@ -108,11 +119,11 @@ public class DataContainer
                     node.isBlocked = true;
                     break;
                 case NodeType.Mountain:
-                    node.SetCost(mountainCost);
+                    node.SetCost(node.GetCost() + mountainCost);
                     if (mountainCost > maxModCost) node.isBlocked = true;
                     break;
                 case NodeType.Sand:
-                    node.SetCost(sandCost);
+                    node.SetCost(node.GetCost() + sandCost);
                     if (sandCost > maxModCost) node.isBlocked = true;
                     break;
                 default:
@@ -121,6 +132,55 @@ public class DataContainer
         }
 
         pathfinder = new AStarPath(Graph.NodesType.Cast<SimNode<IVector>>().ToList());
+    }
+
+
+    private static void InitVoronois()
+    {
+        Voronois = new Voronoi<CoordinateNode, MyVector>[Enum.GetValues(typeof(NodeTerrain)).Length];
+
+        foreach (NodeTerrain terrain in Enum.GetValues(typeof(NodeTerrain)))
+        {
+            if (terrain is NodeTerrain.Construction or NodeTerrain.WatchTower) continue;
+
+            Voronois[(int)terrain] = new Voronoi<CoordinateNode, MyVector>();
+            Voronois[(int)terrain].Init(new CoordinateNode(), Graph.MapSize, Sim2Graph.CellSize);
+            
+            UpdateVoronoi(terrain);
+        }
+    }
+
+
+    private static void UpdateVoronoi(NodeTerrain terrain)
+    {
+        ConcurrentBag<CoordinateNode> pointsOfInterest = new ConcurrentBag<CoordinateNode>();
+
+        List<SimNode<IVector>> nodesList = Graph.NodesType.Cast<SimNode<IVector>>().ToList();
+
+        Parallel.ForEach(nodesList, parallelOptions, simNode =>
+        {
+            if (terrain == NodeTerrain.TownCenter)
+            {
+                if (simNode.NodeTerrain == terrain || simNode.NodeTerrain == NodeTerrain.WatchTower)
+                {
+                    lock (pointsOfInterest)
+                    {
+                        pointsOfInterest.Add(Graph.CoordNodes[(int)simNode.GetCoordinate().X,
+                            (int)simNode.GetCoordinate().Y]);
+                    }
+                }
+            }
+            else if (simNode.NodeTerrain == terrain)
+            {
+                lock (pointsOfInterest)
+                {
+                    pointsOfInterest.Add(Graph.CoordNodes[(int)simNode.GetCoordinate().X,
+                        (int)simNode.GetCoordinate().Y]);
+                }
+            }
+        });
+
+        Voronois[(int)terrain].SetVoronoi(pointsOfInterest.ToList());
     }
 
     public static INode<IVector> CoordinateToNode(IVector coordinate)
@@ -255,33 +315,6 @@ public class DataContainer
                 cart.Attacked();
             }
         }
-    }
-
-    public static List<ITransform<IVector>> GetBoidsInsideRadius(Boid<IVector, ITransform<IVector>> boid)
-    {
-        List<ITransform<IVector>> insideRadiusBoids = new();
-        float detectionRadiusSquared = boid.detectionRadious * boid.detectionRadious;
-        IVector boidPosition = boid.transform.position;
-
-        // TODO Fix boid search
-        /*Parallel.ForEach(Scavengers.Values, scavenger =>
-        {
-            if (scavenger?.Transform.position == null || boid == scavenger.boid)
-            {
-                return;
-            }
-
-            IVector scavengerPosition = scavenger.Transform.position;
-            float distanceSquared = IVector.DistanceSquared(boidPosition, scavengerPosition);
-
-            if (distanceSquared > detectionRadiusSquared) return;
-            lock (insideRadiusBoids)
-            {
-                insideRadiusBoids.Add(scavenger.boid.transform);
-            }
-        });*/
-
-        return insideRadiusBoids;
     }
 
     public static int GetBrainTypeKeyByValue(BrainType value, AgentTypes agentType)

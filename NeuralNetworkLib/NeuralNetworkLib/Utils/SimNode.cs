@@ -1,16 +1,37 @@
-﻿using NeuralNetworkLib.Utils;
+﻿using NeuralNetworkLib.DataManagement;
+
+namespace NeuralNetworkLib.Utils;
 
 public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>
     where Coordinate : IEquatable<Coordinate>
 {
     public bool isBlocked = false;
     public NodeType NodeType { get; set; }
+
     public NodeTerrain NodeTerrain { get; set; }
-    public int Resource { get; set; }
+
+    public int Resource
+    {
+        get => _resource;
+        set
+        {
+            if (value <= _resource && value <= 0)
+            {
+                var terrain = NodeTerrain;
+                NodeTerrain = NodeTerrain.Empty;
+                DataContainer.OnUpdateVoronoi?.Invoke(terrain == NodeTerrain.WatchTower
+                    ? NodeTerrain.TownCenter : terrain);
+                DataContainer.OnUpdateVoronoi?.Invoke(NodeTerrain);
+            }
+
+            _resource = value;
+        }
+    }
 
     private int cost;
     private Coordinate coordinate;
     private ICollection<INode<Coordinate>> neighbors;
+    private int _resource;
 
     public SimNode()
     {
@@ -63,11 +84,11 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     {
         cost = newCost;
     }
-    
+
     public void BuildWatchTower()
     {
         Resource++;
-        if(Resource >= 100)
+        if (Resource >= 100)
         {
             NodeTerrain = NodeTerrain.WatchTower;
         }
@@ -107,9 +128,10 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         {
             if (!neighbor.IsOccupied) return neighbor;
         }
+
         return null;
     }
-    
+
     public override int GetHashCode()
     {
         return EqualityComparer<Coordinate>.Default.GetHashCode(coordinate);

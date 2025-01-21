@@ -58,7 +58,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
         }
@@ -68,7 +68,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
 
@@ -112,7 +112,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
         }
@@ -132,7 +132,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.ReturnResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
         }

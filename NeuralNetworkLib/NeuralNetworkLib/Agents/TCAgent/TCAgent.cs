@@ -73,8 +73,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         public AgentTypes AgentType;
         public TownCenter TownCenter;
         public SimNode<IVector> CurrentNode;
-        public Voronoi<SimCoordinate, MyVector> Voronoi;
-        public AStarPathfinder<SimNode<IVector>, IVector, SimCoordinate>? Pathfinder;
+        public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
 
         protected int speed = 6;
         protected Action OnMove;
@@ -88,6 +87,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected INode<IVector>? adjacentNode;
         protected List<SimNode<IVector>> Path;
         protected FSM<Behaviours, Flags> Fsm;
+        protected static Voronoi<CoordinateNode, MyVector> alarmVoronoi;
 
         protected SimNode<IVector> TargetNode
         {
@@ -111,6 +111,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
         public virtual void Init()
         {
             Fsm = new FSM<Behaviours, Flags>();
+            stopwatch = new Stopwatch();
+
+            alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
 
             Pathfinder = AgentType switch
             {
@@ -150,7 +153,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
         }
@@ -167,7 +170,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position; 
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
 
@@ -179,7 +182,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
         }
@@ -209,7 +212,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             object[] objects = { CurrentNode, TargetNode, Path, Pathfinder, AgentType };
             return objects;
         }
-        
+
         protected virtual object[] WalkExitParameters()
         {
             object[] objects = { PathNodeId };
@@ -237,9 +240,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
             //if (PathNodeId >= Path.Count) PathNodeId = 0;
 
             double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-            
-            if(speed * elapsedSeconds < 1) return;
-            
+
+            if (speed * elapsedSeconds < 1) return;
+
             int distanceToMove = (int)(speed * elapsedSeconds);
 
             PathNodeId += distanceToMove;
@@ -248,6 +251,14 @@ namespace NeuralNetworkLib.Agents.TCAgent
             CurrentNode = Path[(int)PathNodeId];
 
             stopwatch.Restart();
+        }
+
+        protected SimNode<IVector> GetRetreatNode()
+        {
+            SimNode<MyVector> node = alarmVoronoi.GetClosestPointOfInterest(
+                DataContainer.Graph.CoordNodes[(int)CurrentNode.GetCoordinate().X,
+                    (int)CurrentNode.GetCoordinate().Y]);
+            return DataContainer.Graph.NodesType[(int)node.GetCoordinate().X, (int)node.GetCoordinate().Y];
         }
 
         protected virtual void Wait()

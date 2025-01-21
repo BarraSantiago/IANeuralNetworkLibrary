@@ -1,5 +1,6 @@
 ﻿using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.DataManagement;
+using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.TCAgent
@@ -7,10 +8,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
     public class Builder : TcAgent<IVector, ITransform<IVector>>
     {
         private Action onBuild;
+        private static Voronoi<CoordinateNode, MyVector> plainsVoronoi;
 
         public override void Init()
         {
             base.Init();
+            plainsVoronoi = DataContainer.Voronois[(int)NodeTerrain.Empty];
             AgentType = AgentTypes.Gatherer;
             Fsm.ForceTransition(Behaviours.Walk);
             onBuild += Build;
@@ -44,7 +47,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Build, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
             Fsm.SetTransition(Behaviours.Build, Flags.OnHunger, Behaviours.Wait, () =>

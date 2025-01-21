@@ -17,13 +17,17 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected const int FoodPerFood = 3;
         protected const int WoodPerFood = 5;
         private Action onGather;
-        private static Voronoi<SimCoordinate, MyVector> FoodVoronoi;
-        private static Voronoi<SimCoordinate, MyVector> WoodVoronoi;
-        private static Voronoi<SimCoordinate, MyVector> GoldVoronoi;
+        private static Voronoi<CoordinateNode, MyVector> FoodVoronoi;
+        private static Voronoi<CoordinateNode, MyVector> WoodVoronoi;
+        private static Voronoi<CoordinateNode, MyVector> GoldVoronoi;
 
         public override void Init()
         {
             base.Init();
+            FoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Lake];
+            WoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Tree];
+            GoldVoronoi = DataContainer.Voronois[(int)NodeTerrain.Mine];
+            
             AgentType = AgentTypes.Gatherer;
             Fsm.ForceTransition(Behaviours.Walk);
             onGather += Gather;
@@ -71,7 +75,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () =>
                 {
                     ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
-                    TargetNode = TownCenter.Position;
+                    TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
