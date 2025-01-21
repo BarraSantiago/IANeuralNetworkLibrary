@@ -14,9 +14,9 @@ namespace NeuralNetworkLib.Utils
         public int MinY => 0;
         public int MaxY => CoordNodes.GetLength(1);
         public float CellSize2 => CellSize;
-        
+
         public CoordinateNode MapSize => _mapSize;
-        
+
         private CoordinateNode _mapSize = new CoordinateNode();
 
         public Sim2Graph(int x, int y, float cellSize) : base(x, y, cellSize)
@@ -47,8 +47,8 @@ namespace NeuralNetworkLib.Utils
                     nodeType.NodeTerrain = type2 switch
                     {
                         NodeType.Lake => NodeTerrain.Lake,
-                        NodeType.Mountain => NodeTerrain.Empty,
-                        _ => GetTerrain(nodeTerrain)
+                        NodeType.Plains => GetTerrain(nodeTerrain),
+                        _ => NodeTerrain.Empty,
                     };
 
                     NodesType[i, j] = nodeType;
