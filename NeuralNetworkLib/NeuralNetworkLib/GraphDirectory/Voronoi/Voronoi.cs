@@ -54,7 +54,7 @@ public class Voronoi<TCoordinate, TCoordinateType>
         limits.Add(new Limit<TCoordinate, TCoordinateType>(coordinateLeft, Direction.Left));
     }
 
-    public void SetVoronoi(List<TCoordinate> pointsOfInterest, List<int> weights)
+    public void SetVoronoi(List<TCoordinate> pointsOfInterest)
     {
         sectors.Clear();
         if (pointsOfInterest.Count <= 0) return;
