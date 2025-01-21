@@ -19,7 +19,7 @@
         void Perpendicular();
     }
 
-    public class SimCoordinate : ICoordinate<IVector>, IEquatable<SimCoordinate>, ICoordinate<MyVector>
+    public class CoordinateNode : ICoordinate<IVector>, IEquatable<CoordinateNode>, ICoordinate<MyVector>
     {
         public IVector coordinate = new MyVector();
         private int weight;
@@ -131,7 +131,7 @@
             coordinate = new MyVector(-coordinate.Y, coordinate.X);
         }
 
-        public bool Equals(SimCoordinate other)
+        public bool Equals(CoordinateNode other)
         {
             const float epsilon = 0.0001f;
             return other != null && Math.Abs(coordinate.X - other.GetCoordinate().X) < epsilon &&

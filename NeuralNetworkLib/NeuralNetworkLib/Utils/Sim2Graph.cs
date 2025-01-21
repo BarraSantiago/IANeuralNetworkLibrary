@@ -2,7 +2,7 @@
 
 namespace NeuralNetworkLib.Utils
 {
-    public class Sim2Graph : SimGraph<SimNode<IVector>, SimCoordinate, IVector>
+    public class Sim2Graph : SimGraph<SimNode<IVector>, CoordinateNode, IVector>
     {
         private readonly ParallelOptions parallelOptions = new ParallelOptions
         {
@@ -13,6 +13,11 @@ namespace NeuralNetworkLib.Utils
         public int MaxX => CoordNodes.GetLength(0);
         public int MinY => 0;
         public int MaxY => CoordNodes.GetLength(1);
+        public float CellSize2 => CellSize;
+        
+        public CoordinateNode MapSize => _mapSize;
+        
+        private CoordinateNode _mapSize = new CoordinateNode();
 
         public Sim2Graph(int x, int y, float cellSize) : base(x, y, cellSize)
         {
@@ -20,8 +25,8 @@ namespace NeuralNetworkLib.Utils
 
         public override void CreateGraph(int x, int y, float cellSize)
         {
-            CoordNodes = new SimCoordinate[x, y];
-
+            CoordNodes = new CoordinateNode[x, y];
+            _mapSize.SetCoordinate(x, y);
             Parallel.For(0, x, parallelOptions, i =>
             {
                 for (int j = 0; j < y; j++)
@@ -30,7 +35,7 @@ namespace NeuralNetworkLib.Utils
                     int nodeTerrain = random.Next(0, 100);
                     int type = random.Next(0, 100);
 
-                    SimCoordinate node = new SimCoordinate();
+                    CoordinateNode node = new CoordinateNode();
                     node.SetCoordinate(i * cellSize, j * cellSize);
                     CoordNodes[i, j] = node;
 
@@ -71,7 +76,7 @@ namespace NeuralNetworkLib.Utils
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
-                    var node = new SimCoordinate();
+                    var node = new CoordinateNode();
                     node.SetCoordinate(i * CellSize, j * CellSize);
                     CoordNodes[i, j] = node;
 
@@ -92,7 +97,7 @@ namespace NeuralNetworkLib.Utils
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
-                    SimCoordinate node = new SimCoordinate();
+                    CoordinateNode node = new CoordinateNode();
                     node.SetCoordinate(i * CellSize, j * CellSize);
                     CoordNodes[i, j] = node;
 

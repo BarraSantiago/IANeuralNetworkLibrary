@@ -68,8 +68,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             SimNode<IVector> currentNode = parameters[0] as SimNode<IVector>;
             SimNode<IVector> targetNode = parameters[1] as SimNode<IVector>;
             List<SimNode<IVector>> path = (List<SimNode<IVector>>)parameters[2];
-            Pathfinder<SimNode<IVector>, IVector, SimCoordinate> pathfinder =
-                parameters[3] as Pathfinder<SimNode<IVector>, IVector, SimCoordinate>;
+            Pathfinder<SimNode<IVector>, IVector, CoordinateNode> pathfinder =
+                parameters[3] as Pathfinder<SimNode<IVector>, IVector, CoordinateNode>;
 
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
