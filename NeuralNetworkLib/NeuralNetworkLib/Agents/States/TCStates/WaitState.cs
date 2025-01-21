@@ -26,7 +26,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             {
                 if (retreat)
                 {
-                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter)
+                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter &&
+                        currentNode.NodeTerrain != NodeTerrain.WatchTower)
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
                     }
@@ -38,7 +39,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 {
                     return;
                 }
-                
+
                 if (targetNode.NodeTerrain != NodeTerrain.Construction)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
@@ -80,10 +81,11 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             {
                 if (retreat)
                 {
-                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter)
+                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter &&
+                        currentNode.NodeTerrain != NodeTerrain.WatchTower)
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
-                    }
+                    }   
 
                     return;
                 }
@@ -123,7 +125,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             {
                 if (retreat)
                 {
-                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter)
+                    if (currentNode.NodeTerrain != NodeTerrain.TownCenter &&
+                        currentNode.NodeTerrain != NodeTerrain.WatchTower)
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
                     }
