@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.Utils;
+﻿using NeuralNetworkLib.GraphDirectory;
+using NeuralNetworkLib.Utils;
 
 namespace Pathfinder
 {

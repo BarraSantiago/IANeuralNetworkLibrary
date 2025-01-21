@@ -50,7 +50,7 @@ public class BoidRadarSystem : ECSSystem
 
             IVector boidPosition = transformComponents[boidId].Transform.position;
 
-            foreach (var nearBoidId in queriedEntities)
+            foreach (uint nearBoidId in queriedEntities)
             {
                 if (transformComponents[nearBoidId].Transform.position == null || boidId == nearBoidId)
                 {

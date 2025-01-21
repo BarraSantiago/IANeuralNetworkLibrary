@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using NeuralNetworkLib.Agents.TCAgent;
+using NeuralNetworkLib.GraphDirectory;
 using NeuralNetworkLib.Utils;
 using Pathfinder;
 

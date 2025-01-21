@@ -63,7 +63,7 @@ namespace NeuralNetworkLib.Utils
                 throw new FileNotFoundException("The specified file does not exist.", filePath);
             }
 
-            var json = File.ReadAllText(filePath);
+            string json = File.ReadAllText(filePath);
             List<NodeData>? nodeData = JsonConvert.DeserializeObject<List<NodeData>>(json);
 
             if (nodeData == null)
@@ -76,11 +76,11 @@ namespace NeuralNetworkLib.Utils
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
-                    var node = new CoordinateNode();
+                    CoordinateNode node = new CoordinateNode();
                     node.SetCoordinate(i * CellSize, j * CellSize);
                     CoordNodes[i, j] = node;
 
-                    var nodeType = new SimNode<IVector>();
+                    SimNode<IVector> nodeType = new SimNode<IVector>();
                     nodeType.SetCoordinate(new MyVector(i * CellSize, j * CellSize));
                     nodeType.NodeType = (NodeType)nodeData[index].NodeType;
                     nodeType.NodeTerrain = (NodeTerrain)nodeData[index].NodeTerrain;
@@ -112,19 +112,19 @@ namespace NeuralNetworkLib.Utils
 
         public void SaveGraph(string filePath)
         {
-            var nodeData = new List<NodeData>();
+            List<NodeData> nodeData = new List<NodeData>();
 
             for (int i = 0; i < CoordNodes.GetLength(0); i++)
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
-                    var nodeType = (int)NodesType[i, j].NodeType;
-                    var nodeTerrain = (int)NodesType[i, j].NodeTerrain;
+                    int nodeType = (int)NodesType[i, j].NodeType;
+                    int nodeTerrain = (int)NodesType[i, j].NodeTerrain;
                     nodeData.Add(new NodeData { NodeType = nodeType, NodeTerrain = nodeTerrain });
                 }
             }
 
-            var json = JsonConvert.SerializeObject(nodeData, Formatting.Indented);
+            string json = JsonConvert.SerializeObject(nodeData, Formatting.Indented);
             File.WriteAllText(filePath, json);
         }
 

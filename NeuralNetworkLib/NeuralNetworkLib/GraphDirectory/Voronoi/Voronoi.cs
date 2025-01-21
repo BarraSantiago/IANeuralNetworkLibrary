@@ -94,12 +94,12 @@ public class Voronoi<TCoordinate, TCoordinateType>
         for (int i = 0; i < 7; i++)
         {
             bool balanced = true;
-            foreach (var sector in sectors)
+            foreach (Sector<TCoordinate, TCoordinateType>? sector in sectors)
             {
                 int totalWeight = sector.CalculateTotalWeight(GetAllNodes());
-                var neighbors = GetNeighboringSectors(sector);
+                List<Sector<TCoordinate, TCoordinateType>> neighbors = GetNeighboringSectors(sector);
 
-                foreach (var neighbor in neighbors)
+                foreach (Sector<TCoordinate, TCoordinateType>? neighbor in neighbors)
                 {
                     int neighborWeight = neighbor.CalculateTotalWeight(GetAllNodes());
                     if (totalWeight <= neighborWeight) continue;
@@ -118,7 +118,7 @@ public class Voronoi<TCoordinate, TCoordinateType>
     {
         List<Sector<TCoordinate, TCoordinateType>> neighbors = new List<Sector<TCoordinate, TCoordinateType>>();
 
-        foreach (var otherSector in sectors)
+        foreach (Sector<TCoordinate, TCoordinateType>? otherSector in sectors)
         {
             if (otherSector == sector) continue;
 
@@ -134,9 +134,9 @@ public class Voronoi<TCoordinate, TCoordinateType>
     private bool AreSectorsNeighbors(Sector<TCoordinate, TCoordinateType> sector1,
         Sector<TCoordinate, TCoordinateType> sector2)
     {
-        foreach (var point1 in sector1.PointsToDraw())
+        foreach (TCoordinate point1 in sector1.PointsToDraw())
         {
-            foreach (var point2 in sector2.PointsToDraw())
+            foreach (TCoordinate point2 in sector2.PointsToDraw())
             {
                 if (Approximately(point1.GetX(), point2.GetX()) && Approximately(point1.GetY(), point2.GetY()))
                 {
@@ -152,9 +152,9 @@ public class Voronoi<TCoordinate, TCoordinateType>
     {
         List<SimNode<TCoordinate>> allNodesInSectors = new List<SimNode<TCoordinate>>();
 
-        foreach (var sector in sectors)
+        foreach (Sector<TCoordinate, TCoordinateType>? sector in sectors)
         {
-            foreach (var node in DataContainer.Graph.NodesType)
+            foreach (SimNode<IVector> node in DataContainer.Graph.NodesType)
             {
                 if (!sector.CheckPointInSector((TCoordinate)node.GetCoordinate())) continue;
                 allNodesInSectors.Add(node as SimNode<TCoordinate> ??

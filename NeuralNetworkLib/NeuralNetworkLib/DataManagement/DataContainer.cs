@@ -262,9 +262,9 @@ public class DataContainer
         bool isAnimal = true;
         float minDistance = float.MaxValue;
 
-        foreach (var prey in Animals)
+        foreach (KeyValuePair<uint, AnimalAgent<IVector, ITransform<IVector>>> prey in Animals)
         {
-            var agent = prey.Value;
+            AnimalAgent<IVector, ITransform<IVector>>? agent = prey.Value;
             if (agent.agentType != AgentTypes.Herbivore) continue;
 
             float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());
@@ -274,9 +274,9 @@ public class DataContainer
             nearestAgent = prey.Key;
         }
 
-        foreach (var prey in TcAgents)
+        foreach (KeyValuePair<uint, TcAgent<IVector, ITransform<IVector>>> prey in TcAgents)
         {
-            var agent = prey.Value;
+            TcAgent<IVector, ITransform<IVector>>? agent = prey.Value;
             if (agent.AgentType != AgentTypes.Cart && agent.CurrentFood > 0) continue;
 
             float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());

@@ -1,91 +1,90 @@
 using NeuralNetworkLib.Utils;
 
-namespace Pathfinder
+namespace NeuralNetworkLib.GraphDirectory;
+
+public abstract class Pathfinder<TNodeType, TCoordinateType, TCoordinate>
+    where TNodeType : INode<TCoordinateType>
+    where TCoordinateType : IEquatable<TCoordinateType>
+    where TCoordinate : ICoordinate<TCoordinateType>, new()
 {
-    public abstract class Pathfinder<TNodeType, TCoordinateType, TCoordinate>
-        where TNodeType : INode<TCoordinateType>
-        where TCoordinateType : IEquatable<TCoordinateType>
-        where TCoordinate : ICoordinate<TCoordinateType>, new()
+    protected ICollection<TNodeType> Graph;
+
+    public List<TNodeType> FindPath(TNodeType startNode, TNodeType destinationNode)
     {
-        protected ICollection<TNodeType> Graph;
+        Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)> nodes = 
+            Graph.ToDictionary(key => key, _ => (Parent: default(TNodeType), AcumulativeCost: 0, Heuristic: 0));
 
-        public List<TNodeType> FindPath(TNodeType startNode, TNodeType destinationNode)
-        {
-            Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)> nodes = 
-                Graph.ToDictionary(key => key, _ => (Parent: default(TNodeType), AcumulativeCost: 0, Heuristic: 0));
+        TCoordinate startCoor = new TCoordinate();
+        startCoor.SetCoordinate(startNode.GetCoordinate());
 
-            var startCoor = new TCoordinate();
-            startCoor.SetCoordinate(startNode.GetCoordinate());
-
-            var openList = new List<TNodeType> { startNode };
-            var closedList = new List<TNodeType>();
+        List<TNodeType> openList = new List<TNodeType> { startNode };
+        List<TNodeType> closedList = new List<TNodeType>();
             
-            while (openList.Count > 0)
+        while (openList.Count > 0)
+        {
+            TNodeType? currentNode = openList.OrderBy(node => nodes[node].AcumulativeCost + nodes[node].Heuristic).First();
+            openList.Remove(currentNode);
+            closedList.Add(currentNode);
+
+            if (NodesEquals(currentNode, destinationNode))
             {
-                var currentNode = openList.OrderBy(node => nodes[node].AcumulativeCost + nodes[node].Heuristic).First();
-                openList.Remove(currentNode);
-                closedList.Add(currentNode);
-
-                if (NodesEquals(currentNode, destinationNode))
-                {
-                    return GeneratePath(startNode, destinationNode);
-                }
-
-                foreach (TNodeType neighbor in GetNeighbors(currentNode))
-                {
-                    if (!nodes.ContainsKey(neighbor) || IsBlocked(neighbor) || closedList.Contains(neighbor))
-                    {
-                        continue;
-                    }
-
-                    var aproxAcumulativeCost = nodes[currentNode].AcumulativeCost 
-                                               + MoveToNeighborCost(currentNode, neighbor);
-
-                    if (openList.Contains(neighbor) && aproxAcumulativeCost >= nodes[neighbor].AcumulativeCost) continue;
-
-                    TCoordinate neighborCoor = new TCoordinate();
-                    neighborCoor.SetCoordinate(neighbor.GetCoordinate());
-
-                    nodes[neighbor] = (currentNode, aproxAcumulativeCost, Distance(neighborCoor, startCoor));
-
-                    if (!openList.Contains(neighbor))
-                    {
-                        openList.Add(neighbor);
-                    }
-                }
+                return GeneratePath(startNode, destinationNode);
             }
 
-            return null;
-
-            List<TNodeType> GeneratePath(TNodeType startNode, TNodeType goalNode)
+            foreach (TNodeType neighbor in GetNeighbors(currentNode))
             {
-                List<TNodeType> path = new List<TNodeType>();
-                TNodeType currentNode = goalNode;
-
-                while (!NodesEquals(currentNode, startNode))
+                if (!nodes.ContainsKey(neighbor) || IsBlocked(neighbor) || closedList.Contains(neighbor))
                 {
-                    path.Add(currentNode);
-
-                    foreach (var node in nodes.Keys.ToList().Where(node => NodesEquals(currentNode, node)))
-                    {
-                        currentNode = nodes[node].Parent;
-                        break;
-                    }
+                    continue;
                 }
 
-                path.Reverse();
-                return path;
+                int aproxAcumulativeCost = nodes[currentNode].AcumulativeCost 
+                                           + MoveToNeighborCost(currentNode, neighbor);
+
+                if (openList.Contains(neighbor) && aproxAcumulativeCost >= nodes[neighbor].AcumulativeCost) continue;
+
+                TCoordinate neighborCoor = new TCoordinate();
+                neighborCoor.SetCoordinate(neighbor.GetCoordinate());
+
+                nodes[neighbor] = (currentNode, aproxAcumulativeCost, Distance(neighborCoor, startCoor));
+
+                if (!openList.Contains(neighbor))
+                {
+                    openList.Add(neighbor);
+                }
             }
         }
 
-        protected abstract ICollection<INode<TCoordinateType>> GetNeighbors(TNodeType node);
+        return null;
 
-        protected abstract int Distance(TCoordinate tCoordinate, TCoordinate coordinate);
+        List<TNodeType> GeneratePath(TNodeType startNode, TNodeType goalNode)
+        {
+            List<TNodeType> path = new List<TNodeType>();
+            TNodeType currentNode = goalNode;
 
-        protected abstract bool NodesEquals(TNodeType A, TNodeType B);
+            while (!NodesEquals(currentNode, startNode))
+            {
+                path.Add(currentNode);
 
-        protected abstract int MoveToNeighborCost(TNodeType A, TNodeType B);
+                foreach (TNodeType? node in nodes.Keys.ToList().Where(node => NodesEquals(currentNode, node)))
+                {
+                    currentNode = nodes[node].Parent;
+                    break;
+                }
+            }
 
-        protected abstract bool IsBlocked(TNodeType node);
+            path.Reverse();
+            return path;
+        }
     }
+
+    protected abstract ICollection<INode<TCoordinateType>> GetNeighbors(TNodeType node);
+
+    protected abstract int Distance(TCoordinate tCoordinate, TCoordinate coordinate);
+
+    protected abstract bool NodesEquals(TNodeType A, TNodeType B);
+
+    protected abstract int MoveToNeighborCost(TNodeType A, TNodeType B);
+
+    protected abstract bool IsBlocked(TNodeType node);
 }

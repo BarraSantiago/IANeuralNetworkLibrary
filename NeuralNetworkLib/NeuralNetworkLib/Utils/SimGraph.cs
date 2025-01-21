@@ -38,7 +38,7 @@
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
-                    var neighbors = new List<INode<TCoordinateType>>();
+                    List<INode<TCoordinateType>> neighbors = new List<INode<TCoordinateType>>();
 
                     for (int k = 0; k < CoordNodes.GetLength(0); k++)
                     {

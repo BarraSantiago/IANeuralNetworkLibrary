@@ -17,7 +17,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         {
             if (value <= _resource && value <= 0)
             {
-                var terrain = NodeTerrain;
+                NodeTerrain terrain = NodeTerrain;
                 NodeTerrain = NodeTerrain.Empty;
                 DataContainer.OnUpdateVoronoi?.Invoke(terrain == NodeTerrain.WatchTower
                     ? NodeTerrain.TownCenter : terrain);
