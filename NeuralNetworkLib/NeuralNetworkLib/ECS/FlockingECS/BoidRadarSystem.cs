@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.ECS.Patron;
+﻿using System.Collections.Concurrent;
+using NeuralNetworkLib.ECS.Patron;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.ECS.FlockingECS;
@@ -26,7 +27,7 @@ public class BoidRadarSystem : ECSSystem
 
     protected override void PreExecute(float deltaTime)
     {
-        boidConfigComponents ??= ECSManager.GetEntitiesWhitFlagTypes(new []{FlagType.Cart});
+        boidConfigComponents ??= ECSManager.GetComponents<BoidConfigComponent>();
         queriedEntities ??= ECSManager.GetEntitiesWithComponentTypes(typeof(BoidConfigComponent),
             typeof(TransformComponent), typeof(ACSComponent));
         transformComponents ??= ECSManager.GetComponents<TransformComponent>();
@@ -35,33 +36,41 @@ public class BoidRadarSystem : ECSSystem
 
     protected override void Execute(float deltaTime)
     {
-        List<ITransform<IVector>> insideRadiusBoids = new();
-        float detectionRadiusSquared = boid.detectionRadious * boid.detectionRadious;
-        IVector boidPosition = boid.transform.position;
-
-        // TODO Fix boid search
-        /*Parallel.ForEach(Scavengers.Values, scavenger =>
+        if (boidConfigComponents == null || transformComponents == null)
         {
-            if (scavenger?.Transform.position == null || boid == scavenger.boid)
+            return;
+        }
+
+        Parallel.ForEach(queriedEntities, parallelOptions, boidId =>
+        {
+            ConcurrentBag<ITransform<IVector>> boidsInsideRadius = new();
+
+            float detectionRadiusSquared = boidConfigComponents[boidId].detectionRadious *
+                                           boidConfigComponents[boidId].detectionRadious;
+
+            IVector boidPosition = transformComponents[boidId].Transform.position;
+
+            foreach (var nearBoidId in queriedEntities)
             {
-                return;
+                if (transformComponents[nearBoidId].Transform.position == null || boidId == nearBoidId)
+                {
+                    continue;
+                }
+
+                IVector nearBoidPosition = transformComponents[nearBoidId].Transform.position;
+                float distanceSquared = IVector.DistanceSquared(boidPosition, nearBoidPosition);
+
+                if (distanceSquared <= detectionRadiusSquared)
+                {
+                    boidsInsideRadius.Add(transformComponents[nearBoidId].Transform);
+                }
             }
 
-            IVector scavengerPosition = scavenger.Transform.position;
-            float distanceSquared = IVector.DistanceSquared(boidPosition, scavengerPosition);
-
-            if (distanceSquared > detectionRadiusSquared) return;
-            lock (insideRadiusBoids)
-            {
-                insideRadiusBoids.Add(scavenger.boid.transform);
-            }
-        });*/
-
-        return insideRadiusBoids;
+            transformComponents[boidId].NearBoids = boidsInsideRadius.ToList();
+        });
     }
 
     protected override void PostExecute(float deltaTime)
     {
-        throw new NotImplementedException();
     }
 }
