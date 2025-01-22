@@ -19,12 +19,17 @@ namespace NeuralNetworkLib.Utils
 
         private CoordinateNode _mapSize = new CoordinateNode();
 
+        private const int MaxTerrains = 20;
+        private int mines = 0;
+        private int trees = 0;
+        private int lakes = 0;
         public Sim2Graph(int x, int y, float cellSize) : base(x, y, cellSize)
         {
         }
 
         public override void CreateGraph(int x, int y, float cellSize)
         {
+            
             CoordNodes = new CoordinateNode[x, y];
             _mapSize.SetCoordinate(x, y);
             Parallel.For(0, x, parallelOptions, i =>
@@ -72,7 +77,7 @@ namespace NeuralNetworkLib.Utils
             }
 
             int index = 0;
-            for (int i = 0; i < CoordNodes.GetLength(0); i++)
+            Parallel.For(0, CoordNodes.GetLength(0), parallelOptions, i =>
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
@@ -88,7 +93,7 @@ namespace NeuralNetworkLib.Utils
 
                     index++;
                 }
-            }
+            });
         }
 
         public void LoadGraph(int[] nodeTypes, int[] nodeTerrains)
@@ -114,7 +119,7 @@ namespace NeuralNetworkLib.Utils
         {
             List<NodeData> nodeData = new List<NodeData>();
 
-            for (int i = 0; i < CoordNodes.GetLength(0); i++)
+            Parallel.For(0, CoordNodes.GetLength(0), parallelOptions, i =>
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
@@ -122,7 +127,7 @@ namespace NeuralNetworkLib.Utils
                     int nodeTerrain = (int)NodesType[i, j].NodeTerrain;
                     nodeData.Add(new NodeData { NodeType = nodeType, NodeTerrain = nodeTerrain });
                 }
-            }
+            });
 
             string json = JsonConvert.SerializeObject(nodeData, Formatting.Indented);
             File.WriteAllText(filePath, json);
@@ -136,7 +141,7 @@ namespace NeuralNetworkLib.Utils
 
         private NodeType GetNodeType(int type)
         {
-            return type switch
+            NodeType nodeType =  type switch
             {
                 < 50 => NodeType.Plains,
                 < 60 => NodeType.Mountain,
@@ -144,6 +149,8 @@ namespace NeuralNetworkLib.Utils
                 < 100 => NodeType.Lake,
                 _ => NodeType.Plains
             };
+
+            return nodeType;
         }
 
         private NodeTerrain GetTerrain(int nodeTerrain)

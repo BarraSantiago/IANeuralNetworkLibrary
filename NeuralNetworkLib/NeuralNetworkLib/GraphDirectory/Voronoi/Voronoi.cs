@@ -59,28 +59,33 @@ public class Voronoi<TCoordinate, TCoordinateType>
         sectors.Clear();
         if (pointsOfInterest.Count <= 0) return;
 
-        for (int i = 0; i < pointsOfInterest.Count; i++)
+        Parallel.ForEach(pointsOfInterest, point =>
         {
             SimNode<TCoordinateType> node = new SimNode<TCoordinateType>();
-            node.SetCoordinate(pointsOfInterest[i].GetCoordinate());
-            sectors.Add(new Sector<TCoordinate, TCoordinateType>(node));
-            sectors[^1].MapDimensions = _mapSize;
-        }
+            node.SetCoordinate(point.GetCoordinate());
+            var sector = new Sector<TCoordinate, TCoordinateType>(node)
+            {
+                MapDimensions = _mapSize
+            };
+            lock (sectors)
+            {
+                sectors.Add(sector);
+            }
+        });
 
-        foreach (Sector<TCoordinate, TCoordinateType> sector in sectors)
-        {
-            sector.AddSegmentLimits(limits);
-        }
+        Parallel.ForEach(sectors, sector => { sector.AddSegmentLimits(limits); });
 
-        for (int i = 0; i < pointsOfInterest.Count; i++)
+        Parallel.For(0, pointsOfInterest.Count, i =>
         {
             for (int j = 0; j < pointsOfInterest.Count; j++)
             {
                 if (i == j) continue;
+                // TODO fix this
                 sectors[i].AddSegment(pointsOfInterest[i], pointsOfInterest[j]);
             }
-        }
+        });
 
+        // TODO fix this
         foreach (Sector<TCoordinate, TCoordinateType> sector in sectors)
         {
             sector.SetIntersections();

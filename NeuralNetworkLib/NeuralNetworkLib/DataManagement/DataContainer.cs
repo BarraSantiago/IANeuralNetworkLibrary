@@ -28,7 +28,7 @@ public class DataContainer
 
     public static FlockingManager FlockingManager = new();
     public static Dictionary<(BrainType, AgentTypes), NeuronInputCount> InputCountCache;
-    public static NeuronInputCount[] inputCounts;
+    public static NeuronInputCount[]? inputCounts;
     public static Dictionary<int, BrainType> HerbBrainTypes = new();
     public static Dictionary<int, BrainType> CarnBrainTypes = new();
     public static AStarPath? GathererPathfinder;
@@ -159,15 +159,16 @@ public class DataContainer
 
         Parallel.ForEach(nodesList, parallelOptions, simNode =>
         {
+            if (terrain == NodeTerrain.Empty) return;
+            
             if (terrain == NodeTerrain.TownCenter)
             {
-                if (simNode.NodeTerrain == terrain || simNode.NodeTerrain == NodeTerrain.WatchTower)
+                if (simNode.NodeTerrain != terrain && simNode.NodeTerrain != NodeTerrain.WatchTower) return;
+                
+                lock (pointsOfInterest)
                 {
-                    lock (pointsOfInterest)
-                    {
-                        pointsOfInterest.Add(Graph.CoordNodes[(int)simNode.GetCoordinate().X,
-                            (int)simNode.GetCoordinate().Y]);
-                    }
+                    pointsOfInterest.Add(Graph.CoordNodes[(int)simNode.GetCoordinate().X,
+                        (int)simNode.GetCoordinate().Y]);
                 }
             }
             else if (simNode.NodeTerrain == terrain)

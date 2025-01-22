@@ -73,7 +73,7 @@ public class FitnessStagnationManager
         DataContainer.InputCountCache = DataContainer.inputCounts.ToDictionary(
             input => (brainType: input.BrainType, agentType: input.AgentType));
 
-        NeuronInputCount[] inputCounts = DataContainer.inputCounts;
+        NeuronInputCount[]? inputCounts = DataContainer.inputCounts;
         const string filePath = "path/to/your/file.json";
 
         NeuronInputCountManager.SaveNeuronInputCounts(inputCounts, filePath);
