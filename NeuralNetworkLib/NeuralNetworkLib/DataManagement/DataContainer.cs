@@ -144,7 +144,9 @@ public class DataContainer
             if (terrain is NodeTerrain.Construction or NodeTerrain.WatchTower) continue;
 
             Voronois[(int)terrain] = new Voronoi<CoordinateNode, MyVector>();
-            Voronois[(int)terrain].Init(new CoordinateNode(), Graph.MapSize, Sim2Graph.CellSize);
+            List<CoordinateNode> nodes = new List<CoordinateNode>();
+            nodes.AddRange(Graph.CoordNodes.Cast<CoordinateNode>());
+            Voronois[(int)terrain].Init(new CoordinateNode(), Graph.MapSize, Sim2Graph.CellSize, nodes);
             
             UpdateVoronoi(terrain);
         }

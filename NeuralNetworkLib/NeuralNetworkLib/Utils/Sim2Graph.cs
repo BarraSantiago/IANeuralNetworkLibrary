@@ -23,13 +23,13 @@ namespace NeuralNetworkLib.Utils
         private int mines = 0;
         private int trees = 0;
         private int lakes = 0;
+
         public Sim2Graph(int x, int y, float cellSize) : base(x, y, cellSize)
         {
         }
 
         public override void CreateGraph(int x, int y, float cellSize)
         {
-            
             CoordNodes = new CoordinateNode[x, y];
             _mapSize.SetCoordinate(x, y);
             Parallel.For(0, x, parallelOptions, i =>
@@ -141,7 +141,7 @@ namespace NeuralNetworkLib.Utils
 
         private NodeType GetNodeType(int type)
         {
-            NodeType nodeType =  type switch
+            NodeType nodeType = type switch
             {
                 < 50 => NodeType.Plains,
                 < 60 => NodeType.Mountain,
@@ -149,19 +149,38 @@ namespace NeuralNetworkLib.Utils
                 < 100 => NodeType.Lake,
                 _ => NodeType.Plains
             };
+            if (nodeType != NodeType.Lake) return nodeType;
 
+            lakes++;
+            if (lakes > MaxTerrains) nodeType = NodeType.Plains;
             return nodeType;
         }
 
         private NodeTerrain GetTerrain(int nodeTerrain)
         {
-            return nodeTerrain switch
+            NodeTerrain terrain = nodeTerrain switch
             {
                 < 60 => NodeTerrain.Empty,
                 < 80 => NodeTerrain.Mine,
                 < 100 => NodeTerrain.Tree,
                 _ => NodeTerrain.Empty
             };
+
+            switch (terrain)
+            {
+                case NodeTerrain.Mine:
+                    mines++;
+                    if (mines > MaxTerrains) terrain = NodeTerrain.Empty;
+                    break;
+                case NodeTerrain.Tree:
+                    trees++;
+                    if (trees > MaxTerrains) terrain = NodeTerrain.Empty;
+                    break;
+                default:
+                    break;
+            }
+
+            return terrain;
         }
 
         public bool IsWithinGraphBorders(IVector position)

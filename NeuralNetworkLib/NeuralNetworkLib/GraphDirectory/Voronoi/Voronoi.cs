@@ -9,17 +9,19 @@ public class Voronoi<TCoordinate, TCoordinateType>
 {
     private readonly List<Limit<TCoordinate, TCoordinateType>> limits = new();
     private readonly List<Sector<TCoordinate, TCoordinateType>> sectors = new();
+    private static List<TCoordinate> _allNodes = new();
+    private List<SimNode<TCoordinate>> _nodesInSector = new();
     private TCoordinate _origin = new TCoordinate();
     private TCoordinate _mapSize = new TCoordinate();
     private float _cellSize;
     private int targetCapacity;
 
-    public void Init(TCoordinate origin, TCoordinate mapSize, float cellSize)
+    public void Init(TCoordinate origin, TCoordinate mapSize, float cellSize, List<TCoordinate> allNodes)
     {
         _origin.SetCoordinate(origin.GetCoordinate());
         _mapSize.SetCoordinate(mapSize.GetCoordinate());
         _cellSize = cellSize;
-
+        _allNodes = allNodes;
         InitLimits();
     }
 
@@ -155,19 +157,20 @@ public class Voronoi<TCoordinate, TCoordinateType>
 
     private List<SimNode<TCoordinate>> GetAllNodes()
     {
-        List<SimNode<TCoordinate>> allNodesInSectors = new List<SimNode<TCoordinate>>();
+        if (_nodesInSector != null) return _nodesInSector;
+        _nodesInSector = new List<SimNode<TCoordinate>>();
 
         foreach (Sector<TCoordinate, TCoordinateType>? sector in sectors)
         {
-            foreach (SimNode<IVector> node in DataContainer.Graph.NodesType)
+            foreach (var node in _allNodes)
             {
-                if (!sector.CheckPointInSector((TCoordinate)node.GetCoordinate())) continue;
-                allNodesInSectors.Add(node as SimNode<TCoordinate> ??
-                                      throw new InvalidOperationException("Node is not SimNode"));
+                if (!sector.CheckPointInSector(node)) continue;
+                SimNode<TCoordinate> newNode = new SimNode<TCoordinate>(node);
+                _nodesInSector.Add(newNode);
             }
         }
 
-        return allNodesInSectors;
+        return _nodesInSector;
     }
 
     public SimNode<TCoordinateType> GetClosestPointOfInterest(TCoordinate agentPosition)
