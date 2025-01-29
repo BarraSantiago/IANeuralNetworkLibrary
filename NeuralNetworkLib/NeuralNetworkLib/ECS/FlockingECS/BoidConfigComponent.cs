@@ -4,7 +4,16 @@ namespace NeuralNetworkLib.ECS.FlockingECS;
 
 public class BoidConfigComponent : EcsComponent
 {
-    public float detectionRadious = 6.0f;
+    public BoidConfigComponent(float detectionRadius, float alignmentOffset, float cohesionOffset,
+        float separationOffset, float directionOffset)
+    {
+        this.detectionRadius = detectionRadius;
+        this.alignmentOffset = alignmentOffset;
+        this.cohesionOffset = cohesionOffset;
+        this.separationOffset = separationOffset;
+        this.directionOffset = directionOffset;
+    }
+    public float detectionRadius = 6.0f;
     public float alignmentOffset;
     public float cohesionOffset;
     public float separationOffset;

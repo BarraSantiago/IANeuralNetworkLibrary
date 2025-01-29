@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using NeuralNetworkLib.ECS.FlockingECS;
 using NeuralNetworkLib.ECS.NeuralNetECS;
 
 namespace NeuralNetworkLib.ECS.Patron;
@@ -24,6 +25,11 @@ public static class ECSManager
         //        systems.TryAdd(classType, Activator.CreateInstance(classType) as ECSSystem);
 
         systems.TryAdd(typeof(NeuralNetSystem), Activator.CreateInstance(typeof(NeuralNetSystem)) as ECSSystem);
+        systems.TryAdd(typeof(BoidRadarSystem), Activator.CreateInstance(typeof(BoidRadarSystem)) as ECSSystem);
+        systems.TryAdd(typeof(AlignmentSystem), Activator.CreateInstance(typeof(AlignmentSystem)) as ECSSystem);
+        systems.TryAdd(typeof(CohesionSystem),  Activator.CreateInstance(typeof(CohesionSystem)) as ECSSystem);
+        systems.TryAdd(typeof(SeparationSystem),Activator.CreateInstance(typeof(SeparationSystem)) as ECSSystem);
+        systems.TryAdd(typeof(ACSSystem),       Activator.CreateInstance(typeof(ACSSystem)) as ECSSystem);
             
         foreach (KeyValuePair<Type, ECSSystem> system in systems) system.Value.Initialize();
 

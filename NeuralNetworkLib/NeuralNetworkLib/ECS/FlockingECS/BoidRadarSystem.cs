@@ -45,8 +45,8 @@ public class BoidRadarSystem : ECSSystem
         {
             ConcurrentBag<ITransform<IVector>> boidsInsideRadius = new();
 
-            float detectionRadiusSquared = boidConfigComponents[boidId].detectionRadious *
-                                           boidConfigComponents[boidId].detectionRadious;
+            float detectionRadiusSquared = boidConfigComponents[boidId].detectionRadius *
+                                           boidConfigComponents[boidId].detectionRadius;
 
             IVector boidPosition = transformComponents[boidId].Transform.position;
 

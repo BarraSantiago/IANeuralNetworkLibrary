@@ -23,6 +23,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         public override void Init()
         {
+            AgentType = AgentTypes.Gatherer;
             base.Init();
             FoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Lake];
             WoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Tree];

@@ -15,6 +15,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         public override void Init()
         {
+            AgentType = AgentTypes.Cart;
             base.Init();
             CurrentFood = 0;
             AgentType = AgentTypes.Cart;

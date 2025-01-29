@@ -66,6 +66,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
             }
         }
 
+        public TVector AcsVector;
+
         public int CurrentFood = 3;
         public int CurrentGold = 0;
         public int CurrentWood = 0;
@@ -112,7 +114,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             Fsm = new FSM<Behaviours, Flags>();
             stopwatch = new Stopwatch();
-
+            Transform.position = TownCenter.Position.GetCoordinate();
             alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
 
             Pathfinder = AgentType switch

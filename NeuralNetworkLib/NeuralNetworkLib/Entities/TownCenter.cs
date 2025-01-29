@@ -26,6 +26,7 @@ public class TownCenter
     public SimNode<IVector> Position;
     public List<TcAgent<IVector, ITransform<IVector>>> Agents;
     public List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)> AgentsResources;
+    public Action<int, TownCenter, AgentTypes> OnSpawnUnit;
 
     public int RefugeeCount
     {
@@ -39,12 +40,12 @@ public class TownCenter
     private int _gold;
     private int _wood;
     private int _food;
-    private int _initialCarts = 1;
-    private int _initialBuilders = 1;
-    private int _initialGatherer = 5;
+    public int InitialCarts = 1;
+    public int InitialBuilders = 1;
+    public int InitialGatherer = 5;
     private int _gathererCount = 5;
-    private List<SimNode<IVector>> WatchTowerConstructions;
-    private List<SimNode<IVector>> WatchTowerPositions;
+    private List<SimNode<IVector>> WatchTowerConstructions = new List<SimNode<IVector>>();
+    private List<SimNode<IVector>> WatchTowerPositions = new List<SimNode<IVector>>();
 
     private Dictionary<ResourceType, int> _gatherersPerResource = new()
     {
@@ -77,7 +78,7 @@ public class TownCenter
     public CreationCost GathererCost = new CreationCost { Gold = 5, Wood = 2, Food = 10 };
     public CreationCost WatchTowerCost = new CreationCost { Gold = 200, Wood = 400, Food = 0 };
     public CreationCost WatchTowerBuildCost = new CreationCost { Gold = 2, Wood = 4, Food = 0 };
-    
+
     public TownCenter(SimNode<IVector> position)
     {
         Position = position;
@@ -85,7 +86,6 @@ public class TownCenter
         WatchTowerConstructions = new List<SimNode<IVector>>();
         WatchTowerPositions = new List<SimNode<IVector>>();
         GetWatchTowerConstruction();
-        SpawnInitialUnits();
         _gold = 0;
         _wood = 0;
         _food = 0;
@@ -112,45 +112,26 @@ public class TownCenter
         }
     }
 
-    public void SpawnInitialUnits()
-    {
-        Agents = new List<TcAgent<IVector, ITransform<IVector>>>();
-        for (int i = 0; i < _initialCarts; i++)
-        {
-            SpawnCart();
-        }
-
-        for (int i = 0; i < _initialBuilders; i++)
-        {
-            SpawnBuilder();
-        }
-
-        for (int i = 0; i < _initialGatherer; i++)
-        {
-            SpawnGatherer();
-        }
-    }
-
     // TODO Implement units spawning
     private void SpawnCart()
     {
         if (!HasEnoughResources(CartCost)) return;
         ReduceResources(CartCost);
-        // Spawn Cart
+        OnSpawnUnit?.Invoke(1, this, AgentTypes.Cart);
     }
 
     private void SpawnBuilder()
     {
         if (!HasEnoughResources(BuilderCost)) return;
         ReduceResources(BuilderCost);
-        // Spawn Builder
+        OnSpawnUnit?.Invoke(1, this, AgentTypes.Builder);
     }
 
     private void SpawnGatherer()
     {
         if (!HasEnoughResources(GathererCost)) return;
         ReduceResources(GathererCost);
-        // Spawn Gatherer
+        OnSpawnUnit?.Invoke(1, this, AgentTypes.Gatherer);
     }
 
     #endregion
@@ -164,16 +145,18 @@ public class TownCenter
     public INode<IVector> GetWatchTowerConstruction()
     {
         const int maxTowerDistance = 5;
-        if (WatchTowerConstructions.First().NodeTerrain == NodeTerrain.Construction &&
-            WatchTowerConstructions.First().GetAdjacentNode() != null)
+        if (WatchTowerConstructions.Count > 0)
         {
-            return WatchTowerConstructions.First().GetAdjacentNode();
-        }
-
-        if (WatchTowerConstructions.First().NodeTerrain == NodeTerrain.WatchTower)
-        {
-            WatchTowerPositions.Add(WatchTowerConstructions.First());
-            WatchTowerConstructions.RemoveAt(0);
+            switch (WatchTowerConstructions.First().NodeTerrain)
+            {
+                case NodeTerrain.Construction when
+                    WatchTowerConstructions.First().GetAdjacentNode() != null:
+                    return WatchTowerConstructions.First().GetAdjacentNode();
+                case NodeTerrain.WatchTower:
+                    WatchTowerPositions.Add(WatchTowerConstructions.First());
+                    WatchTowerConstructions.RemoveAt(0);
+                    break;
+            }
         }
 
         IVector townCenterPosition = Position.GetCoordinate();

@@ -12,6 +12,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         public override void Init()
         {
+            AgentType = AgentTypes.Builder;
             base.Init();
             plainsVoronoi = DataContainer.Voronois[(int)NodeTerrain.Empty];
             AgentType = AgentTypes.Gatherer;

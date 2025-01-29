@@ -141,7 +141,7 @@ public class DataContainer
 
         foreach (NodeTerrain terrain in Enum.GetValues(typeof(NodeTerrain)))
         {
-            if (terrain is NodeTerrain.Construction or NodeTerrain.WatchTower) continue;
+            if (terrain is NodeTerrain.Construction or NodeTerrain.WatchTower or NodeTerrain.Empty) continue;
 
             Voronois[(int)terrain] = new Voronoi<CoordinateNode, MyVector>();
             List<CoordinateNode> nodes = new List<CoordinateNode>();
