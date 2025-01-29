@@ -251,7 +251,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
             PathNodeId = Math.Clamp((int)PathNodeId, 0, Path.Count - 1);
 
             CurrentNode = Path[(int)PathNodeId];
-
+            Transform.position = CurrentNode.GetCoordinate();
+            Transform.position += AcsVector;
             stopwatch.Restart();
         }
 
