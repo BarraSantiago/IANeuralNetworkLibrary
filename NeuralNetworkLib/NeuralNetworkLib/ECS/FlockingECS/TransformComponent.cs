@@ -6,6 +6,6 @@ namespace NeuralNetworkLib.ECS.FlockingECS;
 public class TransformComponent : EcsComponent
 {
     public ITransform<IVector> Transform = new ITransform<IVector>();
-    public List<ITransform<IVector>> NearBoids;
+    public List<ITransform<IVector>> NearBoids = new List<ITransform<IVector>>();
 
 }

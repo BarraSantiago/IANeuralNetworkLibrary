@@ -45,8 +45,10 @@
         public void ForceTransition(Enum state)
         {
             ExecuteBehaviour(GetCurrentStateOnExitBehaviours);
+            ExecuteBehaviour(GetCurrentStateOnExitBehaviours, true);
             _currentState = Convert.ToInt32(state);
             ExecuteBehaviour(GetCurrentStateOnEnterBehaviours);
+            ExecuteBehaviour(GetCurrentStateOnEnterBehaviours, true);
         }
 
         public void AddBehaviour<T>(EnumState stateIndexEnum, Func<object[]> onTickParameters = null,
@@ -75,6 +77,7 @@
             if (_transitions[_currentState, Convert.ToInt32(flag)].destinationInState == UNNASIGNED_TRANSITION) return;
 
             ExecuteBehaviour(GetCurrentStateOnExitBehaviours);
+            ExecuteBehaviour(GetCurrentStateOnExitBehaviours, true);
 
             _transitions[_currentState, Convert.ToInt32(flag)].onTransition?.Invoke();
 
@@ -83,6 +86,7 @@
             _currentState = _transitions[_currentState, Convert.ToInt32(flag)].destinationInState;
 
             ExecuteBehaviour(GetCurrentStateOnEnterBehaviours);
+            ExecuteBehaviour(GetCurrentStateOnEnterBehaviours,true);
         }
 
 
@@ -91,6 +95,7 @@
             if (!_behaviours.ContainsKey(_currentState)) return;
 
             ExecuteBehaviour(GetCurrentStateTickBehaviours);
+            ExecuteBehaviour(GetCurrentStateTickBehaviours,true);
         }
 
 
@@ -100,20 +105,21 @@
 
             int executionOrder = 0;
 
-            while ((behaviourActions.MainThreadBehaviour != null && behaviourActions.MainThreadBehaviour.Count > 0) ||
-                   (behaviourActions.MultiThreadablesBehaviour != null &&
-                    behaviourActions.MultiThreadablesBehaviour.Count > 0))
+            if (multi)
             {
-                if (multi)
+                while (behaviourActions.MultiThreadablesBehaviour is { Count: > 0 })
                 {
                     ExecuteMultiThreadBehaviours(behaviourActions, executionOrder);
+                    executionOrder++;
                 }
-                else
+            }
+            else
+            {
+                while (behaviourActions.MainThreadBehaviour is { Count: > 0 })
                 {
                     ExecuteMainThreadBehaviours(behaviourActions, executionOrder);
+                    executionOrder++;
                 }
-
-                executionOrder++;
             }
 
             behaviourActions.TransitionBehaviour?.Invoke();
@@ -148,7 +154,9 @@
         public int GetMultiThreadCount()
         {
             BehaviourActions currentStateBehaviours = GetCurrentStateTickBehaviours;
-            return currentStateBehaviours.MultiThreadablesBehaviour == null ? 0 : currentStateBehaviours.MultiThreadablesBehaviour.Count;
+            return currentStateBehaviours.MultiThreadablesBehaviour == null
+                ? 0
+                : currentStateBehaviours.MultiThreadablesBehaviour.Count;
         }
 
         public void ExecuteMainThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)

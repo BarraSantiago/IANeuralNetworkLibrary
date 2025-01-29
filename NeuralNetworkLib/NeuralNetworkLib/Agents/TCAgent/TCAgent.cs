@@ -73,6 +73,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         public int CurrentWood = 0;
         public bool Retreat;
         public AgentTypes AgentType;
+        public FSM<Behaviours, Flags> Fsm;
         public TownCenter TownCenter;
         public SimNode<IVector> CurrentNode;
         public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
@@ -88,7 +89,6 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected TTransform transform = new TTransform();
         protected INode<IVector>? adjacentNode;
         protected List<SimNode<IVector>> Path;
-        protected FSM<Behaviours, Flags> Fsm;
         protected static Voronoi<CoordinateNode, MyVector> alarmVoronoi;
 
         protected SimNode<IVector> TargetNode

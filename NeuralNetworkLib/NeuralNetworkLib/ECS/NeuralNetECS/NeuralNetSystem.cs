@@ -23,6 +23,7 @@ namespace NeuralNetworkLib.ECS.NeuralNetECS
             outputComponents = null;
             inputComponents = null;
             queriedEntities = null;
+            brainAmountComponents = null;
         }
 
         protected override void PreExecute(float deltaTime)
