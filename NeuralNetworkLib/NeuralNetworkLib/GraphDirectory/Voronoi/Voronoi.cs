@@ -93,7 +93,7 @@ public class Voronoi<TCoordinate, TCoordinateType>
             sector.SetIntersections();
         }
 
-        BalanceSectorsByWeight();
+        //BalanceSectorsByWeight();
     }
 
     private void BalanceSectorsByWeight()

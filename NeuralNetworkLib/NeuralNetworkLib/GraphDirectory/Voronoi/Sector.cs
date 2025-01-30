@@ -11,7 +11,7 @@ public class Sector<TCoordinate, TCoordinateType>
     private List<TCoordinate> points;
     private static TCoordinate _wrongPoint;
     public TCoordinate MapDimensions { get; set; }
-    public SimNode<TCoordinateType> PointOfInterest { get; }
+    public SimNode<TCoordinateType> PointOfInterest { get; private set; }
 
     public Sector(SimNode<TCoordinateType> pointOfInterest)
     {
@@ -27,9 +27,19 @@ public class Sector<TCoordinate, TCoordinateType>
         // Calculo los segmentos con los limites del mapa
         foreach (Limit<TCoordinate, TCoordinateType>? limit in limits)
         {
+            TCoordinate coordCopy1 = new TCoordinate();
+            coordCopy1.SetCoordinate(PointOfInterest.GetCoordinate());
+            TCoordinate coordCopy2 = new TCoordinate();
+            coordCopy2.SetX(coordCopy1.GetX());
+            coordCopy2.SetY(coordCopy1.GetY());
+            TCoordinate coordCopy3 = new TCoordinate();
+            coordCopy3.SetX(coordCopy1.GetX());
+            coordCopy3.SetY(coordCopy1.GetY());
+            
             TCoordinate origin = new TCoordinate();
-            origin.SetCoordinate(PointOfInterest.GetCoordinate()); // Obtengo la posicion de la mina
-            TCoordinate final = limit.GetMapLimitPosition(origin); // Obtengo la posicion final del segmento
+            origin.SetCoordinate(coordCopy2.GetCoordinate()); // Obtengo la posicion de la mina
+           
+            TCoordinate final = limit.GetMapLimitPosition(coordCopy3); // Obtengo la posicion final del segmento
             segments.Add(new Segment<TCoordinate, TCoordinateType>(origin, final));
         }
     }
@@ -112,12 +122,14 @@ public class Sector<TCoordinate, TCoordinateType>
 
         TCoordinate p1 = seg1.Mediatrix;
         TCoordinate p2 = new TCoordinate();
-        p2.SetCoordinate(seg1.Mediatrix.GetCoordinate());
+        p2.SetX(seg1.Mediatrix.GetX());
+        p2.SetY(seg1.Mediatrix.GetY());
         p2.Add(seg1.Direction.Multiply(MapDimensions.GetMagnitude()));
 
         TCoordinate p3 = seg2.Mediatrix;
         TCoordinate p4 = new TCoordinate();
-        p4.SetCoordinate(seg2.Mediatrix.GetCoordinate());
+        p4.SetX(seg2.Mediatrix.GetX());
+        p4.SetY(seg2.Mediatrix.GetY());
         p4.Add(seg2.Direction.Multiply(MapDimensions.GetMagnitude()));
 
         // Chequeo si los dos segmentos son paralelos, si es asi no hay interseccion
@@ -153,6 +165,10 @@ public class Sector<TCoordinate, TCoordinateType>
                  (p1.GetY() - p2.GetY()) * (p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX())) /
                 ((p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
                  (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX())));
+
+            intersection.SetX(Math.Max(0, Math.Min(intersection.GetX(), MapDimensions.GetX())));
+            intersection.SetY(Math.Max(0, Math.Min(intersection.GetY(), MapDimensions.GetY())));
+
             return intersection;
         }
     }
@@ -256,7 +272,7 @@ public class Sector<TCoordinate, TCoordinateType>
                               (position.GetY() - point.GetY()) * (previousX - point.GetX()) /
                               (previousY - point.GetY());
 
-            // Si ambas condiciones son verdaderas, el punto está fuera del polígono
+            // Si ambas condiciones son verdaderas, el punto está fuera del poligono
             inside ^= condition1 && condition2;
         }
 
@@ -294,32 +310,31 @@ public class Sector<TCoordinate, TCoordinateType>
 
     public void AdjustSectorByWeight(Sector<TCoordinate, TCoordinateType> neighbor, List<SimNode<TCoordinate>> allNodes)
     {
-        // 1. Calculate both sectors' weights
+        // Calculate both sectors weights
         int myWeight = CalculateTotalWeight(allNodes);
         int neighborWeight = neighbor.CalculateTotalWeight(allNodes);
 
-        // If I'm not heavier, do nothing
         if (myWeight <= neighborWeight) return;
 
-        // 2. Find a candidate node in *this* sector that is "closest" to the neighbor's site
+        // Find a candidate node in this sector that is closest to the neighbor site
         SimNode<TCoordinate> candidateNode = null;
         float bestDistance = float.MaxValue;
 
-        // Get all nodes actually inside this sector
+        // Get all nodes inside this sector
         List<SimNode<TCoordinate>> myNodes = new List<SimNode<TCoordinate>>();
         foreach (var node in allNodes)
         {
-            // Check if the node is in *this* sector
+            // Check if the node is in the sector
             if (CheckPointInSector(node.GetCoordinate()))
             {
                 myNodes.Add(node);
             }
         }
 
-        // Among those nodes, pick the one that is physically closest to neighbor's site
+        // pick the node that is closest to neighbor site
         foreach (var node in myNodes)
         {
-            // Distance from node to neighbor's site
+            // Distance from node to neighbor site
             float distToNeighbor = node.GetCoordinate()
                 .Distance(neighbor.PointOfInterest.GetCoordinate());
 
@@ -330,14 +345,11 @@ public class Sector<TCoordinate, TCoordinateType>
             }
         }
 
-        // If we found no candidate, exit
         if (candidateNode == null) return;
 
-        // ------------------------------------------------------------------
-        // 3. Naive "boundary shift": 
-        //    Remove the segment from *this* sector that goes to neighbor's site,
-        //    add that same segment to neighbor's sector, then recompute geometry.
-        // ------------------------------------------------------------------
+        
+        // Remove the segment from this sector that goes to neighbor site, add that same segment to neighbor sector,
+        // then recompute geometry.
 
         // Create coordinates for the sites
         TCoordinate origin = new TCoordinate();
@@ -346,15 +358,15 @@ public class Sector<TCoordinate, TCoordinateType>
         TCoordinate neighborSite = new TCoordinate();
         neighborSite.SetCoordinate(neighbor.PointOfInterest.GetCoordinate());
 
-        // Remove the segment (origin -> neighbor's site) from *this* sector, if it exists:
+        // Remove the segment from this sector, if it exists
         segments.RemoveAll(seg =>
             seg.Origin.Equals(origin) &&
             seg.Final.Equals(neighborSite));
 
-        // Now add that segment to neighbor's sector
+        // Now add that segment to neighbor sector
         neighbor.AddSegment(origin, neighborSite);
 
-        // Recompute intersections for both sectors to update their polygons
+        // check intersections for both sectors to update them
         SetIntersections();
         neighbor.SetIntersections();
     }

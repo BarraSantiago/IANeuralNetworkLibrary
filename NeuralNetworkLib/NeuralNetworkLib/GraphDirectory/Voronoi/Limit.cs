@@ -25,14 +25,17 @@ public class Limit<TCoordinate, TCoordinateType>
 
     public TCoordinate GetMapLimitPosition(TCoordinate position)
     {
-        // Calculo de la distancia al limite:
-        // 1. Calculo la distancia entre "position" y el origen del límite
-        // 2. Tomo el valor absoluto para asegurarme de tener una distancia positiva
-        // 3. Multiplico esta distancia por 2 para extender el límite más allá de la distancia original
+        // Create a copy of the origin to avoid modifying the original object
+        TCoordinate originCopy = new TCoordinate();
+        originCopy.SetX(origin.GetX());
+        originCopy.SetY(origin.GetY());
+    
+        // Calculate the distance to the limit
         TCoordinate distance = new TCoordinate();
-        distance.SetCoordinate(Math.Abs(position.GetX() - origin.GetX()) * 2f, Math.Abs(position.GetY() - origin.GetY()) * 2f);
+        distance.SetCoordinate(Math.Abs(position.GetX() - originCopy.GetX()) * 2f, Math.Abs(position.GetY() - originCopy.GetY()) * 2f);
         TCoordinate limit = new TCoordinate();
-        limit.SetCoordinate(position.GetCoordinate());
+        limit.SetX(position.GetX());
+        limit.SetY(position.GetY());
 
         switch (direction)
         {
