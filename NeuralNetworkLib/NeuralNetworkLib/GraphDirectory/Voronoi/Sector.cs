@@ -35,10 +35,10 @@ public class Sector<TCoordinate, TCoordinateType>
             TCoordinate coordCopy3 = new TCoordinate();
             coordCopy3.SetX(coordCopy1.GetX());
             coordCopy3.SetY(coordCopy1.GetY());
-            
+
             TCoordinate origin = new TCoordinate();
             origin.SetCoordinate(coordCopy2.GetCoordinate()); // Obtengo la posicion de la mina
-           
+
             TCoordinate final = limit.GetMapLimitPosition(coordCopy3); // Obtengo la posicion final del segmento
             segments.Add(new Segment<TCoordinate, TCoordinateType>(origin, final));
         }
@@ -117,60 +117,60 @@ public class Sector<TCoordinate, TCoordinateType>
     private TCoordinate GetIntersection(Segment<TCoordinate, TCoordinateType> seg1,
         Segment<TCoordinate, TCoordinateType> seg2)
     {
-        TCoordinate intersection = new TCoordinate();
-        intersection.Zero();
+        // We'll construct effectively "infinite" lines by using a very large multiplier.
+        float largeFactor = 1e6f; // You can make this bigger if your coordinates are large
 
-        TCoordinate p1 = seg1.Mediatrix;
+        // 1) Build line 1 as mediatrix +/- direction*largeFactor
+        TCoordinate p1 = new TCoordinate();
+        p1.SetCoordinate(
+            seg1.Mediatrix.GetX() - seg1.Direction.GetX() * largeFactor,
+            seg1.Mediatrix.GetY() - seg1.Direction.GetY() * largeFactor
+        );
+
         TCoordinate p2 = new TCoordinate();
-        p2.SetX(seg1.Mediatrix.GetX());
-        p2.SetY(seg1.Mediatrix.GetY());
-        p2.Add(seg1.Direction.Multiply(MapDimensions.GetMagnitude()));
+        p2.SetCoordinate(
+            seg1.Mediatrix.GetX() + seg1.Direction.GetX() * largeFactor,
+            seg1.Mediatrix.GetY() + seg1.Direction.GetY() * largeFactor
+        );
 
-        TCoordinate p3 = seg2.Mediatrix;
+        // 2) Build line 2 as mediatrix +/- direction*largeFactor
+        TCoordinate p3 = new TCoordinate();
+        p3.SetCoordinate(
+            seg2.Mediatrix.GetX() - seg2.Direction.GetX() * largeFactor,
+            seg2.Mediatrix.GetY() - seg2.Direction.GetY() * largeFactor
+        );
+
         TCoordinate p4 = new TCoordinate();
-        p4.SetX(seg2.Mediatrix.GetX());
-        p4.SetY(seg2.Mediatrix.GetY());
-        p4.Add(seg2.Direction.Multiply(MapDimensions.GetMagnitude()));
+        p4.SetCoordinate(
+            seg2.Mediatrix.GetX() + seg2.Direction.GetX() * largeFactor,
+            seg2.Mediatrix.GetY() + seg2.Direction.GetY() * largeFactor
+        );
 
-        // Chequeo si los dos segmentos son paralelos, si es asi no hay interseccion
-        if (Approximately((p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
-                          (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX()), 0))
+        // 3) Standard line-intersection math (for infinite lines).
+        float denominator = (p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
+                            (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX());
+
+        if (Approximately(denominator, 0f))
         {
+            // Lines are parallel or nearly parallel
             return _wrongPoint;
         }
-        else
-        {
-            // Para calcular las coordenadas de la interseccion uso la formula de interseccion de dos lineas en el plano:
-            /*
-               1.Ecuaciones de lineas en el plano:                             Ax + By = C1      y      Ax + By = C2
-               2. Calculo el determinante principal (D):                               D = A1 * B2 - A2 * B1
-               3. Calcula el determinante x (Dx):                                      Dx = C1 * B2 - C2 * B1
-               4. Calcula el determinante y (Dy):                                      Dy = A1 * C2 - A2 * C1
-               5. Calcula las coordenadas del punto de intersección (x, y):      x = Dx / D      y      y = Dy / D
 
-               A1 = p1.x - p2.x
-               B1 = p1.y - p2.y
-               A2 = p3.x - p4.x
-               B2 = p3.y - p4.y
-               C1 = p1.x * p2.y - p1.y * p2.x
-               C2 = p3.x * p4.y - p3.y * p4.x
-            */
-            intersection.SetX(
-                ((p1.GetX() * p2.GetY() - p1.GetY() * p2.GetX()) * (p3.GetX() - p4.GetX()) -
-                 (p1.GetX() - p2.GetX()) * (p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX())) /
-                ((p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
-                 (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX())));
-            intersection.SetY(
-                ((p1.GetX() * p2.GetY() - p1.GetY() * p2.GetX()) * (p3.GetY() - p4.GetY()) -
-                 (p1.GetY() - p2.GetY()) * (p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX())) /
-                ((p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
-                 (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX())));
+        float xNumerator = (p1.GetX() * p2.GetY() - p1.GetY() * p2.GetX()) * (p3.GetX() - p4.GetX()) -
+                           (p1.GetX() - p2.GetX()) * (p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX());
 
-            intersection.SetX(Math.Max(0, Math.Min(intersection.GetX(), MapDimensions.GetX())));
-            intersection.SetY(Math.Max(0, Math.Min(intersection.GetY(), MapDimensions.GetY())));
+        float yNumerator = (p1.GetX() * p2.GetY() - p1.GetY() * p2.GetX()) * (p3.GetY() - p4.GetY()) -
+                           (p1.GetY() - p2.GetY()) * (p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX());
 
-            return intersection;
-        }
+        float x = xNumerator / denominator;
+        float y = yNumerator / denominator;
+
+        // 4) Build final intersection coordinate
+        TCoordinate intersection = new TCoordinate();
+        intersection.SetX(x);
+        intersection.SetY(y);
+
+        return intersection;
     }
 
     private bool Approximately(float a, float b)
@@ -347,7 +347,7 @@ public class Sector<TCoordinate, TCoordinateType>
 
         if (candidateNode == null) return;
 
-        
+
         // Remove the segment from this sector that goes to neighbor site, add that same segment to neighbor sector,
         // then recompute geometry.
 
