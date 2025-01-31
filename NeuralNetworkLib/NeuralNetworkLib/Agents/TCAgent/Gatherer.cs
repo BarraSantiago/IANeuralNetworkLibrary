@@ -11,7 +11,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         public static Action OnEmptyMine;
         public static Action OnEmptyLake;
         public static Action OnEmptyTree;
-        public ResourceType ResourceGathering = ResourceType.None;
+        public ResourceType ResourceGathering = ResourceType.Gold;
 
         protected const int GoldPerFood = 3;
         protected const int FoodPerFood = 3;
@@ -253,7 +253,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected SimNode<IVector> GetTarget(ResourceType resourceType = ResourceType.None)
         {
             IVector position = CurrentNode.GetCoordinate();
-            SimNode<MyVector> target = new SimNode<MyVector>();
+            SimNode<MyVector> target = null;
 
             switch (resourceType)
             {

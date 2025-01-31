@@ -131,7 +131,7 @@ public class DataContainer
             }
         }
 
-        pathfinder = new AStarPath(Graph.NodesType.Cast<SimNode<IVector>>().ToList());
+        pathfinder = new AStarPath(Graph.NodesType);
     }
 
 
@@ -139,6 +139,9 @@ public class DataContainer
     {
         Voronois = new Voronoi<CoordinateNode, MyVector>[Enum.GetValues(typeof(NodeTerrain)).Length];
 
+        CoordinateNode coord = new CoordinateNode();
+        coord.SetCoordinate(-0.5f,-0.5f);
+        
         foreach (NodeTerrain terrain in Enum.GetValues(typeof(NodeTerrain)))
         {
             if (terrain is NodeTerrain.Construction or NodeTerrain.WatchTower or NodeTerrain.Empty) continue;
@@ -146,7 +149,8 @@ public class DataContainer
             Voronois[(int)terrain] = new Voronoi<CoordinateNode, MyVector>();
             List<CoordinateNode> nodes = new List<CoordinateNode>();
             nodes.AddRange(Graph.CoordNodes.Cast<CoordinateNode>());
-            Voronois[(int)terrain].Init(new CoordinateNode(), Graph.MapSize, Sim2Graph.CellSize, nodes);
+            
+            Voronois[(int)terrain].Init(coord, Graph.MapSize, Sim2Graph.CellSize, nodes);
             
             UpdateVoronoi(terrain);
         }

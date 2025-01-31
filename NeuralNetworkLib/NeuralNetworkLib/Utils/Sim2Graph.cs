@@ -20,7 +20,7 @@ namespace NeuralNetworkLib.Utils
         private CoordinateNode _mapSize = new CoordinateNode();
 
         // TODO MODIFY THIS TO 20
-        private const int MaxTerrains = 2;
+        private const int MaxTerrains = 10;
         private int mines = 0;
         private int trees = 0;
         private int lakes = 0;
@@ -86,11 +86,9 @@ namespace NeuralNetworkLib.Utils
                     node.SetCoordinate(i * CellSize, j * CellSize);
                     CoordNodes[i, j] = node;
 
-                    SimNode<IVector> nodeType = new SimNode<IVector>();
-                    nodeType.SetCoordinate(new MyVector(i * CellSize, j * CellSize));
-                    nodeType.NodeType = (NodeType)nodeData[index].NodeType;
-                    nodeType.NodeTerrain = (NodeTerrain)nodeData[index].NodeTerrain;
-                    NodesType[i, j] = nodeType;
+                    NodesType[i, j].SetCoordinate(new MyVector(i * CellSize, j * CellSize));
+                    NodesType[i, j].NodeType = (NodeType)nodeData[index].NodeType;
+                    NodesType[i, j].NodeTerrain = (NodeTerrain)nodeData[index].NodeTerrain;
 
                     index++;
                 }

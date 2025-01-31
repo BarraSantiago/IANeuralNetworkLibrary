@@ -30,7 +30,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
 
     private int cost;
     private Coordinate coordinate;
-    private ICollection<INode<Coordinate>> neighbors;
+    private ICollection<Coordinate> neighbors;
     private int _resource;
 
     public SimNode()
@@ -63,15 +63,16 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         return coordinate;
     }
 
-    public void SetNeighbors(ICollection<INode<Coordinate>> neighbors)
+    public void SetNeighbors(ICollection<Coordinate> neighbors)
     {
         this.neighbors = neighbors;
     }
 
-    public ICollection<INode<Coordinate>> GetNeighbors()
+    public ICollection<Coordinate> GetNeighbors()
     {
         return neighbors;
     }
+
 
     public int GetCost()
     {

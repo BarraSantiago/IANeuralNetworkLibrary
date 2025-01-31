@@ -5,10 +5,10 @@ namespace Pathfinder
 {
     public class AStarPathfinder<NodeType, CoordinateType, TCoordinate> : Pathfinder<NodeType, CoordinateType, TCoordinate>
         where NodeType : INode, INode<CoordinateType>, new()
-        where CoordinateType : IEquatable<CoordinateType>
+        where CoordinateType : IEquatable<CoordinateType>, IVector
         where TCoordinate : ICoordinate<CoordinateType>, new()
     {
-        public AStarPathfinder(ICollection<NodeType> graph)
+        public AStarPathfinder(NodeType[,] graph)
         {
             this.Graph = graph;
         }
@@ -28,7 +28,7 @@ namespace Pathfinder
             return (int)distance;
         }
 
-        protected override ICollection<INode<CoordinateType>> GetNeighbors(NodeType node)
+        protected override ICollection<CoordinateType> GetNeighbors(NodeType node)
         {
             return node.GetNeighbors();
         }
@@ -41,7 +41,7 @@ namespace Pathfinder
 
         protected override int MoveToNeighborCost(NodeType A, NodeType B)
         {
-            if (!GetNeighbors(A).Contains(B))
+            if (!GetNeighbors(A).Contains(B.GetCoordinate()))
             {
                 throw new InvalidOperationException("B node has to be a neighbor.");
             }

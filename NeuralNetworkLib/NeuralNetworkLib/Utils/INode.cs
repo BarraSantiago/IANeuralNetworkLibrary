@@ -31,8 +31,8 @@
     {
         public void SetCoordinate(Coordinate coordinateType);
         public Coordinate GetCoordinate();
-        public void SetNeighbors(ICollection<INode<Coordinate>> neighbors);
-        public ICollection<INode<Coordinate>> GetNeighbors();
+        public void SetNeighbors(ICollection<Coordinate> neighbors);
+        public ICollection<Coordinate> GetNeighbors();
         public int GetCost();
         public bool IsOccupied { get; set; }
         public void SetCost(int newCost);

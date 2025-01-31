@@ -34,11 +34,11 @@
 
         private void AddNeighbors(float cellSize)
         {
-            Parallel.For(0, CoordNodes.GetLength(0), parallelOptions, i =>
+            Parallel.For((long)0, CoordNodes.GetLength(0), parallelOptions, i =>
             {
                 for (int j = 0; j < CoordNodes.GetLength(1); j++)
                 {
-                    List<INode<TCoordinateType>> neighbors = new List<INode<TCoordinateType>>();
+                    List<TCoordinateType> neighbors = new List<TCoordinateType>();
 
                     for (int k = 0; k < CoordNodes.GetLength(0); k++)
                     {
@@ -52,8 +52,8 @@
                                      cellSize)) ||
                                 (Approximately(CoordNodes[i, j].GetY(), CoordNodes[k, l].GetY()) &&
                                  Approximately(Math.Abs(CoordNodes[i, j].GetX() - CoordNodes[k, l].GetX()), cellSize));
-
-                            if (isNeighbor) neighbors.Add(NodesType[k, l]);
+        
+                            if (isNeighbor) neighbors.Add(CoordNodes[k, l].GetCoordinate());
                         }
                     }
 
