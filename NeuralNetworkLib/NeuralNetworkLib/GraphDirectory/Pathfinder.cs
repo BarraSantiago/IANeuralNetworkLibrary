@@ -22,8 +22,8 @@ namespace NeuralNetworkLib.GraphDirectory
             // Because we may have up to 40k nodes, let's store node data in dictionaries
             // or arrays (depending on your node indexing). Here we use dictionaries keyed by TNodeType.
             // For large grids, consider storing these in arrays if you can map TNodeType -> x,y indices.
-            var gCost = new ConcurrentDictionary<TNodeType, int>();
-            var cameFrom = new ConcurrentDictionary<TNodeType, TNodeType>();
+            ConcurrentDictionary<TNodeType, int> gCost = new ConcurrentDictionary<TNodeType, int>();
+            ConcurrentDictionary<TNodeType, TNodeType> cameFrom = new ConcurrentDictionary<TNodeType, TNodeType>();
 
             // Heuristic is typically estimated from the current node to the GOAL, 
             // not from the node to the START. We'll define a small function for that:
@@ -40,7 +40,7 @@ namespace NeuralNetworkLib.GraphDirectory
 
             // We'll initialize costs and parent for every node to "infinity" or an extremely large number
             // except the start node
-            foreach (var node in Graph)
+            foreach (TNodeType node in Graph)
             {
                 gCost[node] = int.MaxValue;
             }
@@ -48,7 +48,7 @@ namespace NeuralNetworkLib.GraphDirectory
 
             // A min-heap priority queue for (node, priority = fCost = gCost + heuristic).
             // .NET 7's PriorityQueue usage:
-            var openQueue = new PriorityQueue<TNodeType, int>();
+            PriorityQueue<TNodeType, int> openQueue = new PriorityQueue<TNodeType, int>();
 
             // Enqueue the start node with its initial priority
             openQueue.Enqueue(startNode, gCost[startNode] + HeuristicCost(startNode, destinationNode));
@@ -56,12 +56,12 @@ namespace NeuralNetworkLib.GraphDirectory
             // A thread-safe set to mark visited / closed nodes (or a dictionary).
             // Because we pop from the queue in ascending order of fCost, once a node is closed, 
             // we don't revisit it.
-            var closedSet = new ConcurrentDictionary<TNodeType, bool>();
+            ConcurrentDictionary<TNodeType, bool> closedSet = new ConcurrentDictionary<TNodeType, bool>();
 
             while (openQueue.Count > 0)
             {
                 // Dequeue the node with the smallest (gCost + heuristic)
-                var current = openQueue.Dequeue();
+                TNodeType current = openQueue.Dequeue();
 
                 // If we've reached the goal, reconstruct the path
                 if (NodesEquals(current, destinationNode))
@@ -77,11 +77,11 @@ namespace NeuralNetworkLib.GraphDirectory
                 }
 
                 // Expand neighbors in parallel
-                var neighbors = GetNeighbors(current);
+                ICollection<TCoordinateType> neighbors = GetNeighbors(current);
 
                 Parallel.ForEach(neighbors, neighbor =>
                 {
-                    var neighborNode = Graph[(int)neighbor.X, (int)neighbor.Y];
+                    TNodeType neighborNode = Graph[(int)neighbor.X, (int)neighbor.Y];
 
                     // If neighbor is blocked or already closed, skip
                     if (IsBlocked(neighborNode) || closedSet.ContainsKey(neighborNode)) 
@@ -119,14 +119,14 @@ namespace NeuralNetworkLib.GraphDirectory
             TNodeType start,
             TNodeType goal)
         {
-            var path = new List<TNodeType>();
-            var current = goal;
+            List<TNodeType> path = new List<TNodeType>();
+            TNodeType? current = goal;
 
             while (!NodesEquals(current, start))
             {
                 path.Add(current);
                 // If we can't find the parent (parallel race?), break or handle
-                if (!cameFrom.TryGetValue(current, out var parent))
+                if (!cameFrom.TryGetValue(current, out TNodeType? parent))
                 {
                     break;
                 }

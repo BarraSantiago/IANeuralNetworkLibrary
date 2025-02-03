@@ -65,7 +65,7 @@ public class Voronoi<TCoordinate, TCoordinateType>
         {
             SimNode<TCoordinateType> node = new SimNode<TCoordinateType>();
             node.SetCoordinate(point.GetCoordinate());
-            var sector = new Sector<TCoordinate, TCoordinateType>(node)
+            Sector<TCoordinate, TCoordinateType> sector = new Sector<TCoordinate, TCoordinateType>(node)
             {
                 MapDimensions = _mapSize
             };
@@ -162,7 +162,7 @@ public class Voronoi<TCoordinate, TCoordinateType>
 
         foreach (Sector<TCoordinate, TCoordinateType>? sector in sectors)
         {
-            foreach (var node in _allNodes)
+            foreach (TCoordinate? node in _allNodes)
             {
                 if (!sector.CheckPointInSector(node)) continue;
                 SimNode<TCoordinate> newNode = new SimNode<TCoordinate>(node);

@@ -37,7 +37,7 @@ public sealed class PriorityQueue<TElement, TPriority> where TPriority : ICompar
             throw new InvalidOperationException("Queue is empty.");
 
         // Swap root with last element
-        var root = _heap[0].Element;
+        TElement? root = _heap[0].Element;
         _heap[0] = _heap[_heap.Count - 1];
         _heap.RemoveAt(_heap.Count - 1);
 

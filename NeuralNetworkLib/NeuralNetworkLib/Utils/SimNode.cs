@@ -8,7 +8,33 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     public bool isBlocked = false;
     public NodeType NodeType { get; set; }
 
-    public NodeTerrain NodeTerrain { get; set; }
+    public NodeTerrain NodeTerrain
+    {
+        get => _nodeTerrain;
+        set
+        {
+            _nodeTerrain = value;
+
+            switch (_nodeTerrain)
+            {
+                case NodeTerrain.Mine:
+                case NodeTerrain.Tree:
+                case NodeTerrain.Lake:
+                    _resource = 20;
+                    break;
+                case NodeTerrain.Stump:
+                    _resource = 1;
+                    break;
+                case NodeTerrain.TownCenter:
+                case NodeTerrain.Construction:
+                case NodeTerrain.Empty:
+                case NodeTerrain.WatchTower:
+                default:
+                    break;
+            }
+        }
+        
+    }
 
     public int Resource
     {
@@ -18,7 +44,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
             if (value <= _resource && value <= 0)
             {
                 NodeTerrain terrain = NodeTerrain;
-                NodeTerrain = NodeTerrain.Empty;
+                NodeTerrain = _nodeTerrain == NodeTerrain.Tree ? NodeTerrain.Stump : NodeTerrain.Empty;
                 DataContainer.OnUpdateVoronoi?.Invoke(terrain == NodeTerrain.WatchTower
                     ? NodeTerrain.TownCenter : terrain);
                 DataContainer.OnUpdateVoronoi?.Invoke(NodeTerrain);
@@ -32,7 +58,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     private Coordinate coordinate;
     private ICollection<Coordinate> neighbors;
     private int _resource;
-
+    private NodeTerrain _nodeTerrain;
     public SimNode()
     {
     }
@@ -123,11 +149,12 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         return Equals((SimNode<Coordinate>)obj);
     }
 
-    public INode<Coordinate> GetAdjacentNode()
+    public IVector GetAdjacentNode()
     {
-        foreach (INode<Coordinate>? neighbor in neighbors)
+        foreach (IVector neighbor in neighbors)
         {
-            if (!neighbor.IsOccupied) return neighbor;
+            SimNode<IVector> neighNode = DataContainer.Graph.NodesType[(int)neighbor.X, (int)neighbor.Y];
+            if (!neighNode.IsOccupied) return neighbor;
         }
 
         return null;

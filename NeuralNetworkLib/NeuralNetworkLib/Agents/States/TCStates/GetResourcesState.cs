@@ -24,6 +24,12 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             behaviours.SetTransitionBehaviour(() =>
             {
+                if (retreat)
+                {
+                    OnFlag?.Invoke(Flags.OnRetreat);
+                    return;
+                }
+                
                 switch (currentResource)
                 {
                     case ResourceType.Gold:
@@ -47,16 +53,14 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                             return;
                         }
                         break;
+                    case ResourceType.None:
+                        return;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        break;
                 }
                 
 
-                if (retreat)
-                {
-                    OnFlag?.Invoke(Flags.OnRetreat);
-                    return;
-                }
+                
             });
             return behaviours;
         }

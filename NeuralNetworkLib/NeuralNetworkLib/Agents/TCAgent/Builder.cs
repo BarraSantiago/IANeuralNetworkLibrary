@@ -31,7 +31,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected override void FsmBehaviours()
         {
-            base.FsmBehaviours();
+            Fsm.AddBehaviour<BuilderWalkState>(Behaviours.Walk, WalkTickParameters);
+            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
             Fsm.AddBehaviour<BuildState>(Behaviours.Build, BuildTickParameters);
         }
 
@@ -69,14 +70,22 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 }
             });
             Fsm.SetTransition(Behaviours.Build, Flags.OnTargetLost, Behaviours.Walk,
-                () => { TargetNode = (SimNode<IVector>?)TownCenter.GetWatchTowerConstruction(); });
+                () =>
+                {
+                    IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
+                    TargetNode = DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+                });
         }
 
         protected override void WaitTransitions()
         {
             base.WaitTransitions();
             Fsm.SetTransition(Behaviours.Wait, Flags.OnTargetLost, Behaviours.Walk,
-                () => { TargetNode = (SimNode<IVector>?)TownCenter.GetWatchTowerConstruction(); });
+                () =>
+                {
+                    IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
+                    TargetNode = DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+                });
             Fsm.SetTransition(Behaviours.Wait, Flags.OnBuild, Behaviours.Build);
         }
 

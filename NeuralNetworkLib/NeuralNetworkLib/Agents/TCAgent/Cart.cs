@@ -18,7 +18,6 @@ namespace NeuralNetworkLib.Agents.TCAgent
             AgentType = AgentTypes.Cart;
             base.Init();
             CurrentFood = 0;
-            AgentType = AgentTypes.Cart;
             Fsm.ForceTransition(Behaviours.GatherResources);
             onGather += Gather;
             onDeliver += DeliverResource;
@@ -144,7 +143,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected override object[] WalkTickParameters()
         {
-            object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, returnResource };
+            object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, returnResource, Path };
             return objects;
         }
 
@@ -201,7 +200,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         TownCenter.Wood++;
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        return;
                 }
             }
         }
@@ -228,7 +227,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         TownCenter.Wood--;
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                    return;
                 }
             }
         }
@@ -255,7 +254,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         _target.CurrentWood++;
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        return;
                 }
             }
         }

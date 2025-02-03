@@ -151,7 +151,8 @@ public class TownCenter
             {
                 case NodeTerrain.Construction when
                     WatchTowerConstructions.First().GetAdjacentNode() != null:
-                    return WatchTowerConstructions.First().GetAdjacentNode();
+                    IVector coord = WatchTowerConstructions.First().GetAdjacentNode();
+                    return DataContainer.Graph.NodesType[(int)coord.X, (int)coord.Y];
                 case NodeTerrain.WatchTower:
                     WatchTowerPositions.Add(WatchTowerConstructions.First());
                     WatchTowerConstructions.RemoveAt(0);
@@ -180,7 +181,7 @@ public class TownCenter
 
                 bool isFarEnough = true;
 
-                foreach (var watchTower in WatchTowerPositions)
+                foreach (SimNode<IVector>? watchTower in WatchTowerPositions)
                 {
                     if (IVector.Distance(node.GetCoordinate(), watchTower.GetCoordinate()) >
                         maxTowerDistance) continue;

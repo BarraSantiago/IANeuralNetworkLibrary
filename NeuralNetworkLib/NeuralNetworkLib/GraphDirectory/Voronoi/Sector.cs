@@ -322,7 +322,7 @@ public class Sector<TCoordinate, TCoordinateType>
 
         // Get all nodes inside this sector
         List<SimNode<TCoordinate>> myNodes = new List<SimNode<TCoordinate>>();
-        foreach (var node in allNodes)
+        foreach (SimNode<TCoordinate>? node in allNodes)
         {
             // Check if the node is in the sector
             if (CheckPointInSector(node.GetCoordinate()))
@@ -332,7 +332,7 @@ public class Sector<TCoordinate, TCoordinateType>
         }
 
         // pick the node that is closest to neighbor site
-        foreach (var node in myNodes)
+        foreach (SimNode<TCoordinate>? node in myNodes)
         {
             // Distance from node to neighbor site
             float distToNeighbor = node.GetCoordinate()

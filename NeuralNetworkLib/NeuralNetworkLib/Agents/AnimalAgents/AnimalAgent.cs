@@ -222,7 +222,6 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 if (currNode.Resource <= 0) return;
                 Food++;
                 currNode.Resource--;
-                if (currNode.Resource <= 0) currNode.NodeType = NodeType.Empty;
             }
         }
 

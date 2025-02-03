@@ -136,7 +136,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected virtual void FsmBehaviours()
         {
             Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters, WalkExitParameters);
+            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
         }
 
         protected virtual void FsmTransitions()
@@ -205,7 +205,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected virtual object[] WalkTickParameters()
         {
-            object[] objects = { CurrentNode, TargetNode, Retreat, OnMove };
+            object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, Path };
             return objects;
         }
 
@@ -231,7 +231,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected virtual void Move()
         {
-            if (CurrentNode == null || TargetNode == null)
+            if (CurrentNode == null || TargetNode == null || Path == null)
             {
                 return;
             }

@@ -28,7 +28,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             FoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Lake];
             WoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Tree];
             GoldVoronoi = DataContainer.Voronois[(int)NodeTerrain.Mine];
-            
+
             AgentType = AgentTypes.Gatherer;
             Fsm.ForceTransition(Behaviours.Walk);
             onGather += Gather;
@@ -46,7 +46,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void FsmBehaviours()
         {
             Fsm.AddBehaviour<GathererWaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters, WalkExitParameters);
+            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
             Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters, default,
                 GatherExitParameters);
         }
@@ -111,7 +111,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
                 () =>
                 {
-                    adjacentNode = TargetNode.GetAdjacentNode();
+                    IVector coord = TargetNode.GetAdjacentNode();
+                    adjacentNode = DataContainer.Graph.NodesType[(int)coord.X, (int)coord.Y];
                     if (adjacentNode == null)
                     {
                         throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
@@ -143,24 +144,43 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void Wait()
         {
             base.Wait();
+            const int minFood = 3;
             if (CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
 
             if (CurrentGold > 0)
             {
                 CurrentGold--;
-                TownCenter.Gold++;
+                lock (TownCenter)
+                {
+                    TownCenter.Gold++;
+                }
             }
 
             if (CurrentWood > 0)
             {
                 CurrentWood--;
-                TownCenter.Wood++;
+                lock (TownCenter)
+                {
+                    TownCenter.Wood++;
+                }
             }
 
-            if (CurrentFood < ResourceLimit && TownCenter.Food > 0)
+
+            if (CurrentFood < minFood && TownCenter.Food > 0)
             {
                 CurrentFood++;
-                TownCenter.Food--;
+                lock (TownCenter)
+                {
+                    TownCenter.Food--;
+                }
+            }
+            else if (CurrentFood > minFood)
+            {
+                CurrentFood--;
+                lock (TownCenter)
+                {
+                    TownCenter.Food++;
+                }
             }
         }
 
@@ -234,7 +254,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
             CurrentGold++;
             LastTimeEat++;
-            
+
             lock (TargetNode)
             {
                 TargetNode.Resource--;
