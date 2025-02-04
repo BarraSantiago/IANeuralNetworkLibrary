@@ -30,7 +30,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 }
 
 
-                if (currentNode == null || targetNode == null || Path is { Count: <= 0} ||
+                if (currentNode == null || targetNode == null || Path is { Count: <= 0 } ||
                     targetNode is { NodeTerrain: NodeTerrain.Mine, Resource: <= 0 } or
                         { NodeTerrain: NodeTerrain.Tree, Resource: <= 0 } or
                         { NodeTerrain: NodeTerrain.Lake, Resource: <= 0 } ||
@@ -104,7 +104,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                if (currentNode == null || targetNode == null || Path is { Count: <= 0} ||
+                if (currentNode == null || targetNode == null || Path is { Count: <= 0 } ||
                     targetNode is { NodeTerrain: NodeTerrain.Mine, Resource: <= 0 } ||
                     targetNode.NodeTerrain == NodeTerrain.Empty)
                 {
@@ -168,10 +168,10 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-
-                if (currentNode == null || targetNode == null || Path is { Count: <= 0} ||
-                    targetNode is { NodeTerrain: NodeTerrain.Mine, Resource: <= 0 } ||
-                    targetNode.NodeTerrain == NodeTerrain.Empty)
+                
+                if (currentNode == null || targetNode == null || Path is { Count: <= 0 } ||
+                    targetNode is not { NodeTerrain: NodeTerrain.Empty or NodeTerrain.Construction or
+                                        NodeTerrain.WatchTower or NodeTerrain.TownCenter })
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
@@ -181,23 +181,15 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 {
                     return;
                 }
-
-                switch (currentNode.NodeTerrain)
+                
+                if(targetNode.NodeTerrain is NodeTerrain.TownCenter or NodeTerrain.WatchTower)
                 {
-                    case NodeTerrain.Mine:
-                    case NodeTerrain.Lake:
-                    case NodeTerrain.Tree:
-                        OnFlag?.Invoke(Flags.OnGather);
-                        break;
-                    case NodeTerrain.TownCenter:
-                    case NodeTerrain.WatchTower:
-                        OnFlag?.Invoke(Flags.OnWait);
-                        break;
-                    case NodeTerrain.Empty:
-                    default:
-                        OnFlag?.Invoke(Flags.OnTargetLost);
-                        break;
+                    OnFlag?.Invoke(Flags.OnWait);
+                    return;
                 }
+                
+                OnFlag?.Invoke(Flags.OnBuild);
+                return;
             });
 
             return behaviours;

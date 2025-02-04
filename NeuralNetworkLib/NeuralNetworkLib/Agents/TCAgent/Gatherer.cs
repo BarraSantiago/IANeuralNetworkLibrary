@@ -29,8 +29,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
             WoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Tree];
             GoldVoronoi = DataContainer.Voronois[(int)NodeTerrain.Mine];
 
-            AgentType = AgentTypes.Gatherer;
+            ResourceGathering = TownCenter.GetResourceNeeded();
+            TargetNode = GetTarget(ResourceGathering);
             Fsm.ForceTransition(Behaviours.Walk);
+            
             onGather += Gather;
             stopwatch = new Stopwatch();
             stopwatch.Start();

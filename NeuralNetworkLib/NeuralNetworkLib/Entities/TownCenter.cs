@@ -49,7 +49,6 @@ public class TownCenter
 
     private Dictionary<ResourceType, int> _gatherersPerResource = new()
     {
-        { ResourceType.None, 0 },
         { ResourceType.Food, 0 },
         { ResourceType.Gold, 0 },
         { ResourceType.Wood, 0 }
@@ -141,7 +140,6 @@ public class TownCenter
         AgentsResources.Add((agent, resourceNeeded));
     }
 
-
     public INode<IVector> GetWatchTowerConstruction()
     {
         const int maxTowerDistance = 5;
@@ -203,26 +201,28 @@ public class TownCenter
 
     public ResourceType GetResourceNeeded()
     {
-        ResourceType resourceNeeded = ResourceType.None;
+        ResourceType resourceNeeded = ResourceType.Food;
 
-        switch (_gatherersPerResource.OrderBy(x => x.Value).First().Key)
+        lock (_gatherersPerResource)
         {
-            case ResourceType.Food:
-                resourceNeeded = ResourceType.Food;
-                _gatherersPerResource[ResourceType.Food]++;
-                break;
-            case ResourceType.Gold:
-                resourceNeeded = ResourceType.Gold;
-                _gatherersPerResource[ResourceType.Gold]++;
-                break;
-            case ResourceType.Wood:
-                resourceNeeded = ResourceType.Wood;
-                _gatherersPerResource[ResourceType.Wood]++;
-                break;
-            case ResourceType.None:
-                break;
-            default:
-                throw new Exception("TownCenter: GetResourceNeeded, resource type not found");
+            switch (_gatherersPerResource.OrderBy(x => x.Value).First().Key)
+            {
+                case ResourceType.Food:
+                    resourceNeeded = ResourceType.Food;
+                    _gatherersPerResource[ResourceType.Food]++;
+                    break;
+                case ResourceType.Gold:
+                    resourceNeeded = ResourceType.Gold;
+                    _gatherersPerResource[ResourceType.Gold]++;
+                    break;
+                case ResourceType.Wood:
+                    resourceNeeded = ResourceType.Wood;
+                    _gatherersPerResource[ResourceType.Wood]++;
+                    break;
+                case ResourceType.None:
+                default:
+                    throw new Exception("TownCenter: GetResourceNeeded, resource type not found");
+            }
         }
 
         return resourceNeeded;

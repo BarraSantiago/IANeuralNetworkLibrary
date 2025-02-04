@@ -18,6 +18,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             AgentType = AgentTypes.Cart;
             base.Init();
             CurrentFood = 0;
+
             Fsm.ForceTransition(Behaviours.GatherResources);
             onGather += Gather;
             onDeliver += DeliverResource;
@@ -84,22 +85,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     }
                     else
                     {
-                        TownCenter.AgentsResources.Remove(agentResource);
-                        _target = agentResource.Item1;
-                        resourceCarrying = agentResource.Item2;
-                        TargetNode = _target.CurrentNode;
+                        TargetNode = GetTarget();
                     }
                 });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetReach, Behaviours.Deliver);
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources, () =>
-            {
-                (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.AgentsResources[0];
-                TownCenter.AgentsResources.Remove(agentResource);
-                _target = agentResource.Item1;
-                resourceCarrying = agentResource.Item2;
-                TargetNode = _target.CurrentNode;
-            });
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
+                () => { TargetNode = GetTarget(); });
             Fsm.SetTransition(Behaviours.Walk, Flags.OnReturnResource, Behaviours.ReturnResources);
             Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait, () => { returnResource = true; });
         }
@@ -123,11 +115,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () =>
                 {
                     returnResource = false;
-                    (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.AgentsResources[0];
-                    TownCenter.AgentsResources.Remove(agentResource);
-                    _target = agentResource.Item1;
-                    resourceCarrying = agentResource.Item2;
-                    TargetNode = _target.CurrentNode;
+
+                    TargetNode = GetTarget();
+                    ;
                 });
             Fsm.SetTransition(Behaviours.ReturnResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
@@ -227,7 +217,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         TownCenter.Wood--;
                         break;
                     default:
-                    return;
+                        return;
                 }
             }
         }
@@ -266,6 +256,29 @@ namespace NeuralNetworkLib.Agents.TCAgent
             CurrentFood = 0;
 
             TownCenter.SoundAlarm();
+        }
+
+        protected override void Wait()
+        {
+            base.Wait();
+            
+            if (Retreat) return;
+
+            (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource =
+                TownCenter.AgentsResources.First(agent => agent.Item2 == resourceCarrying);
+            if (agentResource.Item1 == null) return;
+            
+            TargetNode = GetTarget();
+            Fsm.ForceTransition(Behaviours.Walk);
+        }
+
+        private SimNode<IVector> GetTarget()
+        {
+            (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.AgentsResources[0];
+            TownCenter.AgentsResources.Remove(agentResource);
+            _target = agentResource.Item1;
+            resourceCarrying = agentResource.Item2;
+            return _target.CurrentNode;
         }
     }
 }

@@ -15,7 +15,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
             AgentType = AgentTypes.Builder;
             base.Init();
             plainsVoronoi = DataContainer.Voronois[(int)NodeTerrain.Empty];
-            AgentType = AgentTypes.Gatherer;
+            
+            IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
+            TargetNode = DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+            
             Fsm.ForceTransition(Behaviours.Walk);
             onBuild += Build;
         }

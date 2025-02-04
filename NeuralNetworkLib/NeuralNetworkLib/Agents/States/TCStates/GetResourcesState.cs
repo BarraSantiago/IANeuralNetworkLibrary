@@ -54,6 +54,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                         }
                         break;
                     case ResourceType.None:
+                        OnFlag?.Invoke(Flags.OnWait);
                         return;
                     default:
                         break;

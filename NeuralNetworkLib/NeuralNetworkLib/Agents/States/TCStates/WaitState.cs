@@ -133,7 +133,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
                     return;
                 }
-
+        
                 OnFlag?.Invoke(Flags.OnReturnResource);
                 return;
             });
