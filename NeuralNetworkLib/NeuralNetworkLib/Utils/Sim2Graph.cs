@@ -20,7 +20,7 @@ namespace NeuralNetworkLib.Utils
         private CoordinateNode _mapSize = new CoordinateNode();
 
         // TODO MODIFY THIS TO 20
-        private const int MaxTerrains = 10;
+        private const int MaxTerrains = 5;
         private int mines = 0;
         private int trees = 0;
         private int lakes = 0;

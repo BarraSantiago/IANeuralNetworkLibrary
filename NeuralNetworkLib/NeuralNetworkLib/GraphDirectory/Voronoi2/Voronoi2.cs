@@ -1,16 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace VoronoiWeightBalancing
+﻿namespace VoronoiWeightBalancing
 {
-    /// <summary>
-    /// A simple 2D point with basic vector operations.
-    /// </summary>
-    public struct Point2D
+    public interface IPoint2D : IEquatable<IPoint2D>
     {
         public double X { get; set; }
         public double Y { get; set; }
+        
+        public IPoint2D Sum(IPoint2D other);
+        public IPoint2D Minuns(IPoint2D other);
+        public IPoint2D Multiply(double scalar);
+        public IPoint2D Divide(double scalar);
+        public double DistanceTo(IPoint2D other);
+        public static double Dot(IPoint2D a, IPoint2D b)
+        {
+            return a.X * b.X + a.Y * b.Y;
+        }
+        public double Dot(IPoint2D other)
+        {
+            return X * other.X + Y * other.Y;
+        }
+    }
+
+    /// <summary>
+    /// A simple 2D point with basic vector operations.
+    /// </summary>
+    public class Point2D : IPoint2D
+    {
 
         public Point2D(double x, double y) { X = x; Y = y; }
 
@@ -25,13 +39,62 @@ namespace VoronoiWeightBalancing
             new Point2D(a.X / scalar, a.Y / scalar);
 
         // Euclidean distance.
-        public double DistanceTo(Point2D other) =>
+        public double X { get; set; }
+        public double Y { get; set; }
+        public IPoint2D Sum(IPoint2D other)
+        {
+            return new Point2D(X+other.X, Y+other.Y);
+        }
+
+        public IPoint2D Minuns(IPoint2D other)
+        {
+            return new Point2D(X-other.X, Y-other.Y);
+        }
+
+        public IPoint2D Multiply(double scalar)
+        {
+            return new Point2D(X*scalar, Y*scalar);
+        }
+
+        public IPoint2D Divide(double scalar)
+        {
+            return new Point2D(X/scalar, Y/scalar);
+        }
+
+        public double DistanceTo(IPoint2D other) =>
             Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
 
         // Dot product.
         public static double Dot(Point2D a, Point2D b) => a.X * b.X + a.Y * b.Y;
 
         public override string ToString() => $"({X:F2}, {Y:F2})";
+
+        protected bool Equals(Point2D other)
+        {
+            return Approximately(X,other.X) && Approximately(Y, other.Y);
+        }
+        private bool Approximately(double a, double b)
+        {
+            return Math.Abs(a - b) < 1e-6f;
+        }
+
+        public bool Equals(IPoint2D other)
+        {
+            return Approximately(X,other.X) && Approximately(Y, other.Y);
+         }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((Point2D)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y);
+        }
     }
 
     /// <summary>
@@ -54,13 +117,14 @@ namespace VoronoiWeightBalancing
     /// After computing the diagram, CellPolygon holds the list of vertices for the cell,
     /// and CellWeight holds the sum of the weights of nodes that fall inside the cell.
     /// </summary>
-    public class Site
+    public class Site<TPoint2D>
+        where TPoint2D : IEquatable<TPoint2D>, IPoint2D
     {
-        public Point2D Position { get; set; }
-        public List<Point2D> CellPolygon { get; set; } = new List<Point2D>();
+        public TPoint2D Position { get; set; }
+        public List<TPoint2D> CellPolygon { get; set; } = new List<TPoint2D>();
         public double CellWeight { get; set; }
 
-        public Site(Point2D pos)
+        public Site(TPoint2D pos)
         {
             Position = pos;
         }
@@ -70,11 +134,12 @@ namespace VoronoiWeightBalancing
     /// Builds the Voronoi diagram and supports weight balancing.
     /// The diagram is computed over a bounding convex polygon (here a rectangle).
     /// </summary>
-    public class VoronoiDiagram
+    public class VoronoiDiagram <TPoint2D> 
+    where TPoint2D : IPoint2D, IEquatable<TPoint2D>, new()
     {
-        public List<Site> Sites { get; set; }
+        public List<Site<TPoint2D>> Sites { get; set; }
         public List<Node> Nodes { get; set; }
-        public List<Point2D> BoundingPolygon { get; set; }
+        public List<TPoint2D> BoundingPolygon { get; set; }
 
         /// <summary>
         /// Constructor.
@@ -85,7 +150,7 @@ namespace VoronoiWeightBalancing
         /// A convex polygon (e.g. a rectangle) that defines the zone.
         /// The polygon vertices should be given in order.
         /// </param>
-        public VoronoiDiagram(List<Site> sites, List<Node> nodes, List<Point2D> boundingPolygon)
+        public VoronoiDiagram(List<Site<TPoint2D>> sites, List<Node> nodes, List<TPoint2D> boundingPolygon)
         {
             Sites = sites;
             Nodes = nodes;
@@ -102,7 +167,7 @@ namespace VoronoiWeightBalancing
             foreach (var site in Sites)
             {
                 // Start with the whole bounding polygon.
-                List<Point2D> cell = new List<Point2D>(BoundingPolygon);
+                List<TPoint2D> cell = new List<TPoint2D>(BoundingPolygon);
 
                 foreach (var other in Sites)
                 {
@@ -113,8 +178,8 @@ namespace VoronoiWeightBalancing
                     // that are closer to "site" than "other." One way to express this is:
                     //   (p - midpoint) · (site - other) >= 0
                     // where midpoint = (site.Position + other.Position) / 2.
-                    Point2D midpoint = (site.Position + other.Position) / 2.0;
-                    Point2D normal = site.Position - other.Position; // directs from "other" toward "site"
+                    TPoint2D midpoint = (site.Position.Sum(other.Position)).Divide(2.0);
+                    TPoint2D normal = site.Position - other.Position; // directs from "other" toward "site"
 
                     // Clip the current cell polygon with the half–plane defined by the line:
                     //   (p - midpoint) · normal = 0
@@ -135,26 +200,26 @@ namespace VoronoiWeightBalancing
         /// Points p satisfying (p - boundaryPoint) · boundaryNormal >= 0 are kept.
         /// Uses the Sutherland–Hodgman algorithm.
         /// </summary>
-        private List<Point2D> ClipPolygonWithLine(List<Point2D> polygon, Point2D boundaryPoint, Point2D boundaryNormal)
+        private List<TPoint2D> ClipPolygonWithLine(List<TPoint2D> polygon, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
         {
-            List<Point2D> output = new List<Point2D>();
+            List<TPoint2D> output = new List<TPoint2D>();
 
             if (polygon.Count == 0)
                 return output;
 
-            Point2D prev = polygon[polygon.Count - 1];
-            bool prevInside = (Point2D.Dot(prev - boundaryPoint, boundaryNormal) >= 0);
+            TPoint2D prev = polygon[polygon.Count - 1];
+            bool prevInside = (boundaryNormal.Dot(prev - boundaryPoint) >= 0);
 
             foreach (var curr in polygon)
             {
-                bool currInside = (Point2D.Dot(curr - boundaryPoint, boundaryNormal) >= 0);
+                bool currInside = (boundaryNormal.Dot(curr - boundaryPoint) >= 0);
 
                 if (currInside)
                 {
                     if (!prevInside)
                     {
                         // Edge goes from outside to inside: add intersection.
-                        Point2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
+                        TPoint2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
                         output.Add(intersection);
                     }
                     output.Add(curr);
@@ -162,7 +227,7 @@ namespace VoronoiWeightBalancing
                 else if (prevInside)
                 {
                     // Edge goes from inside to outside: add intersection.
-                    Point2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
+                    TPoint2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
                     output.Add(intersection);
                 }
 
@@ -177,10 +242,10 @@ namespace VoronoiWeightBalancing
         ///   (p - boundaryPoint) · boundaryNormal = 0.
         /// Assumes that A and B are not both parallel to the boundary.
         /// </summary>
-        private Point2D LineIntersection(Point2D A, Point2D B, Point2D boundaryPoint, Point2D boundaryNormal)
+        private TPoint2D LineIntersection(TPoint2D A, TPoint2D B, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
         {
-            Point2D AB = B - A;
-            double t = Point2D.Dot(boundaryPoint - A, boundaryNormal) / Point2D.Dot(AB, boundaryNormal);
+            TPoint2D AB = B - A;
+            double t = TPoint2D.Dot(boundaryPoint - A, boundaryNormal) / TPoint2D.Dot(AB, boundaryNormal);
             return A + AB * t;
         }
 
@@ -204,7 +269,7 @@ namespace VoronoiWeightBalancing
         /// <summary>
         /// A standard ray–casting algorithm to decide whether point p is inside a polygon.
         /// </summary>
-        public bool PointInPolygon(Point2D p, List<Point2D> polygon)
+        public bool PointInPolygon(TPoint2D p, List<TPoint2D> polygon)
         {
             bool inside = false;
             int n = polygon.Count;
@@ -250,7 +315,7 @@ namespace VoronoiWeightBalancing
 
                     // Compute the weighted centroid.
                     double sumWeights = nodesInCell.Sum(n => n.Weight);
-                    Point2D centroid = new Point2D(0, 0);
+                    TPoint2D centroid = new TPoint2D(0, 0);
                     foreach (var node in nodesInCell)
                     {
                         centroid += node.Position * node.Weight;
@@ -266,81 +331,35 @@ namespace VoronoiWeightBalancing
             ComputeCells();
             ComputeCellWeights();
         }
-    }
-
-    /// <summary>
-    /// Example program: creates a bounding rectangle, several sites (points of interest) and randomly distributed nodes.
-    /// Then computes the Voronoi diagram and iteratively balances the weights.
-    /// </summary>
-    class Program
-    {
-        static void Main(string[] args)
+        
+        /// <summary>
+        /// Returns the site (point of interest) whose Voronoi cell contains the given point.
+        /// If no cell contains the point (for example, if the point lies outside all computed cells),
+        /// the function returns the site that is closest (by Euclidean distance) to the point.
+        /// </summary>
+        /// <param name="agentPosition">The 2D point for which to determine the corresponding site.</param>
+        /// <returns>The Site whose cell contains the point, or the closest site if none contain it.</returns>
+        public Site<TPoint2D> GetClosestPointOfInterest(TPoint2D agentPosition)
         {
-            // Define the bounding rectangle.
-            double width = 100.0, height = 100.0;
-            List<Point2D> boundingPolygon = new List<Point2D>
+            // First, check if the point is inside any site's cell polygon.
+            foreach (var site in Sites)
             {
-                new Point2D(0,0),
-                new Point2D(width,0),
-                new Point2D(width, height),
-                new Point2D(0, height)
-            };
-
-            // Define sites (points of interest). You can add as many as you need.
-            List<Site> sites = new List<Site>
-            {
-                new Site(new Point2D(20, 30)),
-                new Site(new Point2D(50, 50)),
-                new Site(new Point2D(80, 20)),
-                new Site(new Point2D(70, 80))
-            };
-
-            // Generate a number of nodes randomly throughout the zone.
-            // In this example every node has weight 1.
-            Random rnd = new Random();
-            List<Node> nodes = new List<Node>();
-            int numNodes = 1000;
-            for (int i = 0; i < numNodes; i++)
-            {
-                double x = rnd.NextDouble() * width;
-                double y = rnd.NextDouble() * height;
-                nodes.Add(new Node(new Point2D(x, y), 1.0));
-            }
-
-            // Create the Voronoi diagram.
-            VoronoiDiagram vd = new VoronoiDiagram(sites, nodes, boundingPolygon);
-
-            // Compute initial cells and cell weights.
-            vd.ComputeCells();
-            vd.ComputeCellWeights();
-
-            Console.WriteLine("Initial cell weights:");
-            foreach (var site in sites)
-            {
-                Console.WriteLine($"Site at {site.Position} has weight {site.CellWeight:F2}");
-            }
-
-            // Perform weight balancing (e.g. 20 iterations, with a step size of 0.2).
-            vd.BalanceWeights(iterations: 20, step: 0.2);
-
-            Console.WriteLine("\nAfter weight balancing:");
-            foreach (var site in sites)
-            {
-                Console.WriteLine($"Site at {site.Position} has weight {site.CellWeight:F2}");
-            }
-
-            // (Optional) Print cell polygon vertices for each site.
-            for (int i = 0; i < sites.Count; i++)
-            {
-                Console.WriteLine($"\nCell polygon for site {i} at {sites[i].Position}:");
-                foreach (var p in sites[i].CellPolygon)
+                // PointInPolygon is assumed to be a helper method that determines if agentPosition is inside the polygon.
+                if (PointInPolygon(agentPosition, site.CellPolygon))
                 {
-                    Console.WriteLine(p);
+                    return site;
                 }
             }
+    
+            // If the point is not inside any cell (or if the cells are not computed), 
+            // return the site that is closest to the agentPosition by Euclidean distance.
+            return Sites.OrderBy(site => site.Position.DistanceTo(agentPosition)).FirstOrDefault();
+        }
 
-            Console.WriteLine("\nPress any key to exit.");
-            Console.ReadKey();
+        
+        public List<Site<TPoint2D>> GetSectors()
+        {
+            return Sites;
         }
     }
 }
