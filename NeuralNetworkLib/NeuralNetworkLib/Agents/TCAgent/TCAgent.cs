@@ -6,266 +6,267 @@ using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
 using Pathfinder;
 
-namespace NeuralNetworkLib.Agents.TCAgent
+namespace NeuralNetworkLib.Agents.TCAgent;
+
+using Voronoi = VoronoiDiagram<Point2D>;
+
+public enum Flags
 {
-    public enum Flags
-    {
-        OnTargetReach,
-        OnTargetLost,
-        OnHunger,
-        OnRetreat,
-        OnFull,
-        OnGather,
-        OnBuild,
-        OnWait,
-        OnReturnResource
-    }
+    OnTargetReach,
+    OnTargetLost,
+    OnHunger,
+    OnRetreat,
+    OnFull,
+    OnGather,
+    OnBuild,
+    OnWait,
+    OnReturnResource
+}
 
-    public enum Behaviours
-    {
-        Wait,
-        Walk,
-        GatherResources,
-        ReturnResources,
-        Build,
-        Deliver,
-    }
+public enum Behaviours
+{
+    Wait,
+    Walk,
+    GatherResources,
+    ReturnResources,
+    Build,
+    Deliver,
+}
 
-    public enum ResourceType
-    {
-        None,
-        Gold,
-        Wood,
-        Food
-    }
+public enum ResourceType
+{
+    None,
+    Gold,
+    Wood,
+    Food
+}
 
-    public class TcAgent<TVector, TTransform>
-        where TVector : IVector, IEquatable<TVector>
-        where TTransform : ITransform<IVector>, new()
+public class TcAgent<TVector, TTransform>
+    where TVector : IVector, IEquatable<TVector>
+    where TTransform : ITransform<IVector>, new()
+{
+    public virtual TTransform Transform
     {
-        public virtual TTransform Transform
+        get => transform;
+        set
         {
-            get => transform;
-            set
+            transform ??= new TTransform();
+            transform.position ??= new MyVector(0, 0);
+
+            if (value == null)
             {
-                transform ??= new TTransform();
-                transform.position ??= new MyVector(0, 0);
-
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value), "Transform value cannot be null");
-                }
-
-                if (transform.position == null || value.position == null)
-                {
-                    throw new InvalidOperationException("Transform positions cannot be null");
-                }
-
-                transform.forward = (transform.position - value.position).Normalized();
-                transform = value;
+                throw new ArgumentNullException(nameof(value), "Transform value cannot be null");
             }
-        }
 
-        public TVector AcsVector;
-
-        public int CurrentFood = 3;
-        public int CurrentGold = 0;
-        public int CurrentWood = 0;
-        public bool Retreat;
-        public AgentTypes AgentType;
-        public FSM<Behaviours, Flags> Fsm;
-        public TownCenter TownCenter;
-        public SimNode<IVector> CurrentNode;
-        public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
-
-        protected int speed = 6;
-        protected Action OnMove;
-        protected Action OnWait;
-        protected int LastTimeEat = 0;
-        protected const int ResourceLimit = 15;
-        protected const int FoodLimit = 15;
-        protected int? PathNodeId;
-        protected Stopwatch stopwatch;
-        protected TTransform transform = new TTransform();
-        protected INode<IVector>? adjacentNode;
-        protected List<SimNode<IVector>> Path;
-        protected static Voronoi<CoordinateNode, MyVector> alarmVoronoi;
-
-        protected SimNode<IVector> TargetNode
-        {
-            get => targetNode;
-            set
+            if (transform.position == null || value.position == null)
             {
-                targetNode = value;
-                if (targetNode == null || targetNode.GetCoordinate() == null) return;
-                Path = Pathfinder.FindPath(CurrentNode, TargetNode);
-                PathNodeId = 0;
+                throw new InvalidOperationException("Transform positions cannot be null");
             }
+
+            transform.forward = (transform.position - value.position).Normalized();
+            transform = value;
         }
+    }
 
-        private SimNode<IVector> targetNode;
+    public TVector AcsVector;
 
-        private void Update()
+    public int CurrentFood = 3;
+    public int CurrentGold = 0;
+    public int CurrentWood = 0;
+    public bool Retreat;
+    public AgentTypes AgentType;
+    public FSM<Behaviours, Flags> Fsm;
+    public TownCenter TownCenter;
+    public SimNode<IVector> CurrentNode;
+    public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
+
+    protected int speed = 6;
+    protected Action OnMove;
+    protected Action OnWait;
+    protected int LastTimeEat = 0;
+    protected const int ResourceLimit = 15;
+    protected const int FoodLimit = 15;
+    protected int? PathNodeId;
+    protected Stopwatch stopwatch;
+    protected TTransform transform = new TTransform();
+    protected INode<IVector>? adjacentNode;
+    protected List<SimNode<IVector>> Path;
+    protected static Voronoi alarmVoronoi;
+
+    protected SimNode<IVector> TargetNode
+    {
+        get => targetNode;
+        set
         {
-            Fsm.Tick();
+            targetNode = value;
+            if (targetNode == null || targetNode.GetCoordinate() == null) return;
+            Path = Pathfinder.FindPath(CurrentNode, TargetNode);
+            PathNodeId = 0;
         }
+    }
 
-        public virtual void Init()
+    private SimNode<IVector> targetNode;
+
+    private void Update()
+    {
+        Fsm.Tick();
+    }
+
+    public virtual void Init()
+    {
+        Fsm = new FSM<Behaviours, Flags>();
+        stopwatch = new Stopwatch();
+        Transform.position = TownCenter.Position.GetCoordinate();
+        alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
+
+        Pathfinder = AgentType switch
         {
-            Fsm = new FSM<Behaviours, Flags>();
-            stopwatch = new Stopwatch();
-            Transform.position = TownCenter.Position.GetCoordinate();
-            alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
+            AgentTypes.Gatherer => DataContainer.GathererPathfinder,
+            AgentTypes.Cart => DataContainer.CartPathfinder,
+            AgentTypes.Builder => DataContainer.BuilderPathfinder,
+            _ => throw new ArgumentOutOfRangeException()
+        };
 
-            Pathfinder = AgentType switch
+        OnMove += Move;
+        OnWait += Wait;
+
+        FsmBehaviours();
+
+        FsmTransitions();
+    }
+
+    protected virtual void FsmBehaviours()
+    {
+        Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
+        Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
+    }
+
+    protected virtual void FsmTransitions()
+    {
+        WalkTransitions();
+        WaitTransitions();
+        GatherTransitions();
+        GetResourcesTransitions();
+        DeliverTransitions();
+    }
+
+    #region Transitions
+
+    protected virtual void GatherTransitions()
+    {
+        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
+            () =>
             {
-                AgentTypes.Gatherer => DataContainer.GathererPathfinder,
-                AgentTypes.Cart => DataContainer.CartPathfinder,
-                AgentTypes.Builder => DataContainer.BuilderPathfinder,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            OnMove += Move;
-            OnWait += Wait;
-
-            FsmBehaviours();
-
-            FsmTransitions();
-        }
-
-        protected virtual void FsmBehaviours()
-        {
-            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
-        }
-
-        protected virtual void FsmTransitions()
-        {
-            WalkTransitions();
-            WaitTransitions();
-            GatherTransitions();
-            GetResourcesTransitions();
-            DeliverTransitions();
-        }
-
-        #region Transitions
-
-        protected virtual void GatherTransitions()
-        {
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetRetreatNode();
-                    TownCenter.RefugeeCount++;
-                });
-        }
+                TargetNode = GetRetreatNode();
+                TownCenter.RefugeeCount++;
+            });
+    }
 
 
-        protected virtual object[] GatherTickParameters()
-        {
-            object[] objects = { Retreat, CurrentFood, CurrentGold, ResourceLimit };
-            return objects;
-        }
+    protected virtual object[] GatherTickParameters()
+    {
+        object[] objects = { Retreat, CurrentFood, CurrentGold, ResourceLimit };
+        return objects;
+    }
 
-        protected virtual void WalkTransitions()
-        {
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetRetreatNode();
-                    TownCenter.RefugeeCount++;
-                });
+    protected virtual void WalkTransitions()
+    {
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
+            () =>
+            {
+                TargetNode = GetRetreatNode();
+                TownCenter.RefugeeCount++;
+            });
 
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait);
-        }
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait);
+    }
 
-        protected virtual void WaitTransitions()
-        {
-            Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetRetreatNode();
-                    TownCenter.RefugeeCount++;
-                });
-        }
+    protected virtual void WaitTransitions()
+    {
+        Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
+            () =>
+            {
+                TargetNode = GetRetreatNode();
+                TownCenter.RefugeeCount++;
+            });
+    }
 
-        protected virtual void DeliverTransitions()
+    protected virtual void DeliverTransitions()
+    {
+        return;
+    }
+
+    protected virtual void GetResourcesTransitions()
+    {
+        return;
+    }
+
+    #endregion
+
+    #region Params
+
+    protected virtual object[] WalkTickParameters()
+    {
+        object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, Path };
+        return objects;
+    }
+
+    protected virtual object[] WalkEnterParameters()
+    {
+        object[] objects = { CurrentNode, TargetNode, Path, Pathfinder, AgentType };
+        return objects;
+    }
+
+    protected virtual object[] WalkExitParameters()
+    {
+        object[] objects = { PathNodeId };
+        return objects;
+    }
+
+    protected virtual object[] WaitTickParameters()
+    {
+        object[] objects = { Retreat, CurrentFood, CurrentGold, CurrentNode, OnWait };
+        return objects;
+    }
+
+    #endregion
+
+    protected virtual void Move()
+    {
+        if (CurrentNode == null || TargetNode == null || Path == null)
         {
             return;
         }
 
-        protected virtual void GetResourcesTransitions()
-        {
-            return;
-        }
+        if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate())) return;
 
-        #endregion
+        if (Path.Count <= 0) return;
+        //if (PathNodeId >= Path.Count) PathNodeId = 0;
 
-        #region Params
+        double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
 
-        protected virtual object[] WalkTickParameters()
-        {
-            object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, Path };
-            return objects;
-        }
+        if (speed * elapsedSeconds < 1) return;
 
-        protected virtual object[] WalkEnterParameters()
-        {
-            object[] objects = { CurrentNode, TargetNode, Path, Pathfinder, AgentType };
-            return objects;
-        }
+        int distanceToMove = (int)(speed * elapsedSeconds);
 
-        protected virtual object[] WalkExitParameters()
-        {
-            object[] objects = { PathNodeId };
-            return objects;
-        }
+        PathNodeId += distanceToMove;
+        PathNodeId = Math.Clamp((int)PathNodeId, 0, Path.Count - 1);
 
-        protected virtual object[] WaitTickParameters()
-        {
-            object[] objects = { Retreat, CurrentFood, CurrentGold, CurrentNode, OnWait };
-            return objects;
-        }
+        CurrentNode = Path[(int)PathNodeId];
+        Transform.position = CurrentNode.GetCoordinate();
+        Transform.position += AcsVector;
+        stopwatch.Restart();
+    }
 
-        #endregion
+    protected SimNode<IVector> GetRetreatNode()
+    {
+        Point2D node = alarmVoronoi
+            .GetClosestPointOfInterest(new Point2D(CurrentNode.GetCoordinate().X, CurrentNode.GetCoordinate().Y))
+            .Position;
+        return DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+    }
 
-        protected virtual void Move()
-        {
-            if (CurrentNode == null || TargetNode == null || Path == null)
-            {
-                return;
-            }
-
-            if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate())) return;
-
-            if (Path.Count <= 0) return;
-            //if (PathNodeId >= Path.Count) PathNodeId = 0;
-
-            double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-
-            if (speed * elapsedSeconds < 1) return;
-
-            int distanceToMove = (int)(speed * elapsedSeconds);
-
-            PathNodeId += distanceToMove;
-            PathNodeId = Math.Clamp((int)PathNodeId, 0, Path.Count - 1);
-
-            CurrentNode = Path[(int)PathNodeId];
-            Transform.position = CurrentNode.GetCoordinate();
-            Transform.position += AcsVector;
-            stopwatch.Restart();
-        }
-
-        protected SimNode<IVector> GetRetreatNode()
-        {
-            SimNode<MyVector> node = alarmVoronoi.GetClosestPointOfInterest(
-                DataContainer.Graph.CoordNodes[(int)CurrentNode.GetCoordinate().X,
-                    (int)CurrentNode.GetCoordinate().Y]);
-            return DataContainer.Graph.NodesType[(int)node.GetCoordinate().X, (int)node.GetCoordinate().Y];
-        }
-
-        protected virtual void Wait()
-        {
-        }
+    protected virtual void Wait()
+    {
     }
 }

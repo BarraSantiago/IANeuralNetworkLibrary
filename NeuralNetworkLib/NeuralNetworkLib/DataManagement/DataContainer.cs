@@ -9,6 +9,7 @@ using Pathfinder;
 namespace NeuralNetworkLib.DataManagement;
 
 using AStarPath = AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>;
+using Voronoi = VoronoiDiagram<Point2D>;
 
 public struct NeuronInputCount
 {
@@ -34,8 +35,8 @@ public class DataContainer
     public static AStarPath? GathererPathfinder;
     public static AStarPath? BuilderPathfinder;
     public static AStarPath? CartPathfinder;
-    public static Voronoi<CoordinateNode, MyVector>[] Voronois;
-    public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi;
+    public static Voronoi[] Voronois;
+    public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi2;
 
     private const string FilePath = "path/to/your/file.json";
 
@@ -115,7 +116,7 @@ public class DataContainer
             switch (node.NodeType)
             {
                 case NodeType.Lake:
-                    node.SetCost(1000);
+                    node.SetCost(100);
                     node.isBlocked = true;
                     break;
                 case NodeType.Mountain:
@@ -134,60 +135,83 @@ public class DataContainer
         pathfinder = new AStarPath(Graph.NodesType);
     }
 
-
+    
+    private static List<Node<Point2D>> allNodes = new List<Node<Point2D>>();
+    private static double width = 200.0, height = 200.0;
+    private static List<Point2D> boundingPolygon = new List<Point2D>
+    {
+        new Point2D(0, 0),
+        new Point2D(width, 0),
+        new Point2D(width, height),
+        new Point2D(0, height)
+    };
     private static void InitVoronois()
     {
-        Voronois = new Voronoi<CoordinateNode, MyVector>[Enum.GetValues(typeof(NodeTerrain)).Length];
 
-        CoordinateNode coord = new CoordinateNode();
-        coord.SetCoordinate(-0.5f,-0.5f);
+        foreach (SimNode<IVector> node in DataContainer.Graph.NodesType)
+        {
+            allNodes.Add(new Node<Point2D>(new Point2D(node.GetCoordinate().X, node.GetCoordinate().Y),
+                node.GetCost()));
+        }
+
         
+        Voronois = new VoronoiDiagram<Point2D>[Enum.GetValues(typeof(NodeTerrain)).Length];
+
+
         foreach (NodeTerrain terrain in Enum.GetValues(typeof(NodeTerrain)))
         {
             if (terrain is NodeTerrain.Construction or NodeTerrain.WatchTower or NodeTerrain.Empty) continue;
 
-            Voronois[(int)terrain] = new Voronoi<CoordinateNode, MyVector>();
-            List<CoordinateNode> nodes = new List<CoordinateNode>();
-            nodes.AddRange(Graph.CoordNodes.Cast<CoordinateNode>());
-            
-            Voronois[(int)terrain].Init(coord, Graph.MapSize, Sim2Graph.CellSize, nodes);
-            
-            UpdateVoronoi(terrain);
+            List<Site<Point2D>> sites = GetSites(terrain);
+            Voronois[(int)terrain] = new Voronoi(sites, allNodes, boundingPolygon);
+            Voronois[(int)terrain].ComputeCells();
+            Voronois[(int)terrain].ComputeCellWeights();
+            Voronois[(int)terrain].BalanceWeights(iterations: 20, step: 0.2);
         }
     }
 
 
-    private static void UpdateVoronoi(NodeTerrain terrain)
+    private static List<Site<Point2D>> GetSites(NodeTerrain terrain)
     {
-        ConcurrentBag<CoordinateNode> pointsOfInterest = new ConcurrentBag<CoordinateNode>();
+        ConcurrentBag<Site<Point2D>> pointsOfInterest = new ConcurrentBag<Site<Point2D>>();
 
         List<SimNode<IVector>> nodesList = Graph.NodesType.Cast<SimNode<IVector>>().ToList();
 
         Parallel.ForEach(nodesList, parallelOptions, simNode =>
         {
             if (terrain == NodeTerrain.Empty) return;
-            
+
             if (terrain == NodeTerrain.TownCenter)
             {
                 if (simNode.NodeTerrain != terrain && simNode.NodeTerrain != NodeTerrain.WatchTower) return;
-                
+
                 lock (pointsOfInterest)
                 {
-                    pointsOfInterest.Add(Graph.CoordNodes[(int)simNode.GetCoordinate().X,
-                        (int)simNode.GetCoordinate().Y]);
+                    pointsOfInterest.Add(new Site<Point2D>(new Point2D(simNode.GetCoordinate().X,
+                        simNode.GetCoordinate().Y)));
                 }
             }
             else if (simNode.NodeTerrain == terrain)
             {
                 lock (pointsOfInterest)
                 {
-                    pointsOfInterest.Add(Graph.CoordNodes[(int)simNode.GetCoordinate().X,
-                        (int)simNode.GetCoordinate().Y]);
+                    pointsOfInterest.Add(new Site<Point2D>(new Point2D(simNode.GetCoordinate().X,
+                        simNode.GetCoordinate().Y)));
                 }
             }
         });
 
-        Voronois[(int)terrain].SetVoronoi(pointsOfInterest.ToList());
+        return pointsOfInterest.ToList();
+    }
+    
+    public static void UpdateVoronoi2(NodeTerrain terrain)
+    {
+        if (Voronois == null) return;
+
+        Voronois[(int)terrain] = new VoronoiDiagram<Point2D>(GetSites(terrain), allNodes, boundingPolygon);
+        Voronois[(int)terrain].ComputeCells();
+        Voronois[(int)terrain].ComputeCellWeights();
+        Voronois[(int)terrain].BalanceWeights(iterations: 7, step: 0.2);
     }
 
     public static INode<IVector> CoordinateToNode(IVector coordinate)

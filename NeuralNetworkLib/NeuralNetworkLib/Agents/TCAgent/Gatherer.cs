@@ -4,306 +4,303 @@ using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.Agents.TCAgent
+namespace NeuralNetworkLib.Agents.TCAgent;
+using Voronoi = VoronoiDiagram<Point2D>;
+
+
+public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 {
-    public class Gatherer : TcAgent<IVector, ITransform<IVector>>
+    public static Action OnEmptyMine;
+    public static Action OnEmptyLake;
+    public static Action OnEmptyTree;
+    public ResourceType ResourceGathering = ResourceType.Gold;
+
+    protected const int GoldPerFood = 3;
+    protected const int FoodPerFood = 3;
+    protected const int WoodPerFood = 5;
+    private Action onGather;
+    private static Voronoi FoodVoronoi;
+    private static Voronoi WoodVoronoi;
+    private static Voronoi GoldVoronoi;
+
+    public override void Init()
     {
-        public static Action OnEmptyMine;
-        public static Action OnEmptyLake;
-        public static Action OnEmptyTree;
-        public ResourceType ResourceGathering = ResourceType.Gold;
+        AgentType = AgentTypes.Gatherer;
+        base.Init();
+        FoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Lake];
+        WoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Tree];
+        GoldVoronoi = DataContainer.Voronois[(int)NodeTerrain.Mine];
 
-        protected const int GoldPerFood = 3;
-        protected const int FoodPerFood = 3;
-        protected const int WoodPerFood = 5;
-        private Action onGather;
-        private static Voronoi<CoordinateNode, MyVector> FoodVoronoi;
-        private static Voronoi<CoordinateNode, MyVector> WoodVoronoi;
-        private static Voronoi<CoordinateNode, MyVector> GoldVoronoi;
-
-        public override void Init()
-        {
-            AgentType = AgentTypes.Gatherer;
-            base.Init();
-            FoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Lake];
-            WoodVoronoi = DataContainer.Voronois[(int)NodeTerrain.Tree];
-            GoldVoronoi = DataContainer.Voronois[(int)NodeTerrain.Mine];
-
-            ResourceGathering = TownCenter.GetResourceNeeded();
-            TargetNode = GetTarget(ResourceGathering);
-            Fsm.ForceTransition(Behaviours.Walk);
+        ResourceGathering = TownCenter.GetResourceNeeded();
+        TargetNode = GetTarget(ResourceGathering);
+        Fsm.ForceTransition(Behaviours.Walk);
             
-            onGather += Gather;
-            stopwatch = new Stopwatch();
-            stopwatch.Start();
-        }
+        onGather += Gather;
+        stopwatch = new Stopwatch();
+        stopwatch.Start();
+    }
 
-        protected override void FsmTransitions()
-        {
-            base.FsmTransitions();
-            GatherTransitions();
-            WalkTransitions();
-        }
+    protected override void FsmTransitions()
+    {
+        base.FsmTransitions();
+        GatherTransitions();
+        WalkTransitions();
+    }
 
-        protected override void FsmBehaviours()
-        {
-            Fsm.AddBehaviour<GathererWaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
-            Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters, default,
-                GatherExitParameters);
-        }
+    protected override void FsmBehaviours()
+    {
+        Fsm.AddBehaviour<GathererWaitState>(Behaviours.Wait, WaitTickParameters);
+        Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
+        Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters, default,
+            GatherExitParameters);
+    }
 
-        #region Transition
+    #region Transition
 
-        protected override void WaitTransitions()
-        {
-            base.WaitTransitions();
-            Fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
-                () =>
-                {
-                    if (CurrentNode.NodeTerrain == NodeTerrain.TownCenter)
-                    {
-                        ResourceGathering = TownCenter.GetResourceNeeded();
-                        TargetNode = GetTarget(ResourceGathering);
-                        return;
-                    }
-
-                    Fsm.ForceTransition(Behaviours.GatherResources);
-                });
-        }
-
-        protected override void GatherTransitions()
-        {
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
-                    TargetNode = GetRetreatNode();
-                    TownCenter.RefugeeCount++;
-                });
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
-                () => { TownCenter.AskForResources(this, ResourceType.Food); });
-
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
-                () =>
-                {
-                    ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
-                    TargetNode = TownCenter.Position;
-                });
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
-                () =>
+    protected override void WaitTransitions()
+    {
+        base.WaitTransitions();
+        Fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
+            () =>
+            {
+                if (CurrentNode.NodeTerrain == NodeTerrain.TownCenter)
                 {
                     ResourceGathering = TownCenter.GetResourceNeeded();
                     TargetNode = GetTarget(ResourceGathering);
-                });
-        }
-
-        protected override void WalkTransitions()
-        {
-            base.WalkTransitions();
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetTarget(ResourceGathering);
-
-                    if (TargetNode == null)
-                    {
-                    }
-                });
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
-                () =>
-                {
-                    IVector coord = TargetNode.GetAdjacentNode();
-                    adjacentNode = DataContainer.Graph.NodesType[(int)coord.X, (int)coord.Y];
-                    if (adjacentNode == null)
-                    {
-                        throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
-                    }
-
-                    adjacentNode.IsOccupied = true;
-                    CurrentNode = DataContainer.Graph.NodesType[(int)adjacentNode.GetCoordinate().X,
-                        (int)adjacentNode.GetCoordinate().Y];
-                });
-        }
-
-        #endregion
-
-
-        protected override object[] GatherTickParameters()
-        {
-            return new object[]
-            {
-                Retreat, CurrentFood, CurrentGold, CurrentWood, ResourceLimit, ResourceGathering, onGather, TargetNode
-            };
-        }
-
-        protected object[] GatherExitParameters()
-        {
-            return new object[] { adjacentNode };
-        }
-
-
-        protected override void Wait()
-        {
-            base.Wait();
-            const int minFood = 3;
-            if (CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
-
-            if (CurrentGold > 0)
-            {
-                CurrentGold--;
-                lock (TownCenter)
-                {
-                    TownCenter.Gold++;
+                    return;
                 }
-            }
 
-            if (CurrentWood > 0)
+                Fsm.ForceTransition(Behaviours.GatherResources);
+            });
+    }
+
+    protected override void GatherTransitions()
+    {
+        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
+            () =>
             {
-                CurrentWood--;
-                lock (TownCenter)
+                ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
+                TargetNode = GetRetreatNode();
+                TownCenter.RefugeeCount++;
+            });
+        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
+            () => { TownCenter.AskForResources(this, ResourceType.Food); });
+
+        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
+            () =>
+            {
+                ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
+                TargetNode = TownCenter.Position;
+            });
+        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
+            () =>
+            {
+                ResourceGathering = TownCenter.GetResourceNeeded();
+                TargetNode = GetTarget(ResourceGathering);
+            });
+    }
+
+    protected override void WalkTransitions()
+    {
+        base.WalkTransitions();
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
+            () =>
+            {
+                TargetNode = GetTarget(ResourceGathering);
+
+                if (TargetNode == null)
                 {
-                    TownCenter.Wood++;
                 }
-            }
+            });
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
+            () =>
+            {
+                IVector coord = TargetNode.GetAdjacentNode();
+                adjacentNode = DataContainer.Graph.NodesType[(int)coord.X, (int)coord.Y];
+                if (adjacentNode == null)
+                {
+                    throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
+                }
+
+                adjacentNode.IsOccupied = true;
+                CurrentNode = DataContainer.Graph.NodesType[(int)adjacentNode.GetCoordinate().X,
+                    (int)adjacentNode.GetCoordinate().Y];
+            });
+    }
+
+    #endregion
 
 
-            if (CurrentFood < minFood && TownCenter.Food > 0)
+    protected override object[] GatherTickParameters()
+    {
+        return new object[]
+        {
+            Retreat, CurrentFood, CurrentGold, CurrentWood, ResourceLimit, ResourceGathering, onGather, TargetNode
+        };
+    }
+
+    protected object[] GatherExitParameters()
+    {
+        return new object[] { adjacentNode };
+    }
+
+
+    protected override void Wait()
+    {
+        base.Wait();
+        const int minFood = 3;
+        if (CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
+
+        if (CurrentGold > 0)
+        {
+            CurrentGold--;
+            lock (TownCenter)
             {
-                CurrentFood++;
-                lock (TownCenter)
-                {
-                    TownCenter.Food--;
-                }
-            }
-            else if (CurrentFood > minFood)
-            {
-                CurrentFood--;
-                lock (TownCenter)
-                {
-                    TownCenter.Food++;
-                }
+                TownCenter.Gold++;
             }
         }
 
-        private void Gather()
+        if (CurrentWood > 0)
         {
-            if (CurrentFood <= 0 || TargetNode.Resource <= 0) return;
-
-            switch (TargetNode.NodeTerrain)
+            CurrentWood--;
+            lock (TownCenter)
             {
-                case NodeTerrain.Mine:
-                    GatherGold();
-                    break;
-                case NodeTerrain.Tree:
-                    GatherWood();
-                    break;
-                case NodeTerrain.Lake:
-                    GatherFood();
-                    break;
-                default:
-                    throw new Exception("Gatherer: Gather, resource type not found");
+                TownCenter.Wood++;
             }
         }
 
-        private void GatherFood()
-        {
-            if (stopwatch.Elapsed.TotalSeconds < 1) return;
 
+        if (CurrentFood < minFood && TownCenter.Food > 0)
+        {
             CurrentFood++;
-            LastTimeEat++;
-
-            lock (TargetNode)
+            lock (TownCenter)
             {
-                TargetNode.Resource--;
+                TownCenter.Food--;
             }
-
-            stopwatch.Restart();
-
-            if (TargetNode.Resource <= 0) OnEmptyLake?.Invoke();
-
-            if (LastTimeEat < FoodPerFood) return;
-
-            CurrentFood--;
-            LastTimeEat = 0;
         }
-
-        private void GatherWood()
+        else if (CurrentFood > minFood)
         {
-            if (stopwatch.Elapsed.TotalSeconds < 1) return;
-
-            CurrentWood++;
-            LastTimeEat++;
-
-            lock (TargetNode)
-            {
-                TargetNode.Resource--;
-            }
-
-            stopwatch.Restart();
-
-            if (TargetNode.Resource <= 0) OnEmptyTree?.Invoke();
-
-            if (LastTimeEat < WoodPerFood) return;
-
             CurrentFood--;
-            LastTimeEat = 0;
+            lock (TownCenter)
+            {
+                TownCenter.Food++;
+            }
         }
+    }
 
-        private void GatherGold()
+    private void Gather()
+    {
+        if (CurrentFood <= 0 || TargetNode.Resource <= 0) return;
+
+        switch (TargetNode.NodeTerrain)
         {
-            if (stopwatch.Elapsed.TotalSeconds < 1) return;
-
-            CurrentGold++;
-            LastTimeEat++;
-
-            lock (TargetNode)
-            {
-                TargetNode.Resource--;
-            }
-
-            stopwatch.Restart();
-
-            if (TargetNode.Resource <= 0) OnEmptyMine?.Invoke();
-
-            if (LastTimeEat < GoldPerFood) return;
-
-            CurrentFood--;
-            LastTimeEat = 0;
+            case NodeTerrain.Mine:
+                GatherGold();
+                break;
+            case NodeTerrain.Tree:
+                GatherWood();
+                break;
+            case NodeTerrain.Lake:
+                GatherFood();
+                break;
+            default:
+                throw new Exception("Gatherer: Gather, resource type not found");
         }
+    }
 
-        protected SimNode<IVector> GetTarget(ResourceType resourceType = ResourceType.None)
+    private void GatherFood()
+    {
+        if (stopwatch.Elapsed.TotalSeconds < 1) return;
+
+        CurrentFood++;
+        LastTimeEat++;
+
+        lock (TargetNode)
         {
-            IVector position = CurrentNode.GetCoordinate();
-            SimNode<MyVector> target = null;
-
-            switch (resourceType)
-            {
-                case ResourceType.None:
-                    break;
-                case ResourceType.Food:
-                    target = FoodVoronoi.GetClosestPointOfInterest(
-                        DataContainer.Graph.CoordNodes[(int)position.X, (int)position.Y]);
-                    break;
-                case ResourceType.Gold:
-                    target = GoldVoronoi.GetClosestPointOfInterest(
-                        DataContainer.Graph.CoordNodes[(int)position.X, (int)position.Y]);
-                    break;
-                case ResourceType.Wood:
-                    target = WoodVoronoi.GetClosestPointOfInterest(
-                        DataContainer.Graph.CoordNodes[(int)position.X, (int)position.Y]);
-                    break;
-                default:
-                    break;
-            }
-
-            if (target == null)
-            {
-                // Debug.LogError("No resourceType available.");
-                return null;
-            }
-
-            return DataContainer.Graph.NodesType[(int)target.GetCoordinate().X, (int)target.GetCoordinate().Y];
+            TargetNode.Resource--;
         }
+
+        stopwatch.Restart();
+
+        if (TargetNode.Resource <= 0) OnEmptyLake?.Invoke();
+
+        if (LastTimeEat < FoodPerFood) return;
+
+        CurrentFood--;
+        LastTimeEat = 0;
+    }
+
+    private void GatherWood()
+    {
+        if (stopwatch.Elapsed.TotalSeconds < 1) return;
+
+        CurrentWood++;
+        LastTimeEat++;
+
+        lock (TargetNode)
+        {
+            TargetNode.Resource--;
+        }
+
+        stopwatch.Restart();
+
+        if (TargetNode.Resource <= 0) OnEmptyTree?.Invoke();
+
+        if (LastTimeEat < WoodPerFood) return;
+
+        CurrentFood--;
+        LastTimeEat = 0;
+    }
+
+    private void GatherGold()
+    {
+        if (stopwatch.Elapsed.TotalSeconds < 1) return;
+
+        CurrentGold++;
+        LastTimeEat++;
+
+        lock (TargetNode)
+        {
+            TargetNode.Resource--;
+        }
+
+        stopwatch.Restart();
+
+        if (TargetNode.Resource <= 0) OnEmptyMine?.Invoke();
+
+        if (LastTimeEat < GoldPerFood) return;
+
+        CurrentFood--;
+        LastTimeEat = 0;
+    }
+
+    protected SimNode<IVector> GetTarget(ResourceType resourceType = ResourceType.None)
+    {
+        IVector position = CurrentNode.GetCoordinate();
+        Point2D target = new Point2D(-1, -1);
+        Point2D wrongPoint = new Point2D(-1, -1);
+        switch (resourceType)
+        {
+            case ResourceType.Food:
+                 target = FoodVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y)).Position;
+                break;
+            case ResourceType.Gold:
+                target = GoldVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y)).Position;
+                break;
+            case ResourceType.Wood:
+                target = WoodVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y)).Position;
+                break;
+            case ResourceType.None:
+            default:
+                break;
+        }
+
+        if (target.Equals(wrongPoint))
+        {
+            // Debug.LogError("No resourceType available.");
+            return null;
+        }
+
+        return DataContainer.Graph.NodesType[(int)target.X, (int)target.Y];
     }
 }

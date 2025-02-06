@@ -277,7 +277,7 @@ namespace VoronoiWeightBalancing
         static void Main(string[] args)
         {
             // Define the bounding rectangle.
-            double width = 100.0, height = 100.0;
+            double width = 200.0, height = 200.0;
             List<Point2D> boundingPolygon = new List<Point2D>
             {
                 new Point2D(0,0),
