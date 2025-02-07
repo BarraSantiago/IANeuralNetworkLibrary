@@ -80,6 +80,7 @@ public class TownCenter
 
     public TownCenter(SimNode<IVector> position)
     {
+        position.NodeTerrain = NodeTerrain.TownCenter;
         Position = position;
         AgentsResources = new List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)>();
         WatchTowerConstructions = new List<SimNode<IVector>>();
@@ -189,6 +190,7 @@ public class TownCenter
 
                 if (isFarEnough)
                 {
+                    DataContainer.Graph.NodesType[x, y].NodeTerrain = NodeTerrain.Construction;
                     WatchTowerConstructions.Add(node);
                     return node;
                 }

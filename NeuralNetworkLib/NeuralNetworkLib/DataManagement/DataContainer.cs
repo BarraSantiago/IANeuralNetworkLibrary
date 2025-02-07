@@ -22,7 +22,7 @@ public struct NeuronInputCount
 
 public class DataContainer
 {
-    public static Sim2Graph Graph;
+    public static Sim2DGraph Graph;
 
     public static Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>> Animals = new();
     public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TcAgents = new();
@@ -166,7 +166,8 @@ public class DataContainer
             Voronois[(int)terrain] = new Voronoi(sites, allNodes, boundingPolygon);
             Voronois[(int)terrain].ComputeCells();
             Voronois[(int)terrain].ComputeCellWeights();
-            Voronois[(int)terrain].BalanceWeights(iterations: 20, step: 0.2);
+            // TODO Fix this
+            //Voronois[(int)terrain].BalanceWeights(iterations: 5, step: 0.2);
         }
     }
 
@@ -211,7 +212,8 @@ public class DataContainer
         Voronois[(int)terrain] = new VoronoiDiagram<Point2D>(GetSites(terrain), allNodes, boundingPolygon);
         Voronois[(int)terrain].ComputeCells();
         Voronois[(int)terrain].ComputeCellWeights();
-        Voronois[(int)terrain].BalanceWeights(iterations: 7, step: 0.2);
+        // TODO Fix this
+        //Voronois[(int)terrain].BalanceWeights(iterations: 7, step: 0.2);
     }
 
     public static INode<IVector> CoordinateToNode(IVector coordinate)

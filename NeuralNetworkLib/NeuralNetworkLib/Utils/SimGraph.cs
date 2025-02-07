@@ -8,7 +8,6 @@
         public static TCoordinateNode MapDimensions;
         public static TCoordinateNode OriginPosition;
         public static float CellSize;
-        public TCoordinateNode[,] CoordNodes;
         public readonly TNodeType[,] NodesType;
 
         private ParallelOptions parallelOptions = new ParallelOptions()
@@ -22,7 +21,6 @@
             MapDimensions.SetCoordinate(x, y);
             CellSize = cellSize;
 
-            CoordNodes = new TCoordinateNode[x, y];
             NodesType = new TNodeType[x, y];
 
             CreateGraph(x, y, cellSize);
@@ -34,26 +32,25 @@
 
         private void AddNeighbors(float cellSize)
         {
-            Parallel.For((long)0, CoordNodes.GetLength(0), parallelOptions, i =>
+            Parallel.For((long)0, NodesType.GetLength(0), parallelOptions, i =>
             {
-                for (int j = 0; j < CoordNodes.GetLength(1); j++)
+                for (int j = 0; j < NodesType.GetLength(1); j++)
                 {
                     List<TCoordinateType> neighbors = new List<TCoordinateType>();
 
-                    for (int k = 0; k < CoordNodes.GetLength(0); k++)
+                    for (int k = 0; k < NodesType.GetLength(0); k++)
                     {
-                        for (int l = 0; l < CoordNodes.GetLength(1); l++)
+                        for (int l = 0; l < NodesType.GetLength(1); l++)
                         {
                             if (i == k && j == l) continue;
 
                             bool isNeighbor =
-                                (Approximately(CoordNodes[i, j].GetX(), CoordNodes[k, l].GetX()) &&
-                                 Approximately(Math.Abs(CoordNodes[i, j].GetY() - CoordNodes[k, l].GetY()),
-                                     cellSize)) ||
-                                (Approximately(CoordNodes[i, j].GetY(), CoordNodes[k, l].GetY()) &&
-                                 Approximately(Math.Abs(CoordNodes[i, j].GetX() - CoordNodes[k, l].GetX()), cellSize));
+                                (Approximately(NodesType[i, j].X, NodesType[k, l].X) &&
+                                 Approximately(Math.Abs(NodesType[i, j].Y - NodesType[k, l].Y), cellSize)) ||
+                                (Approximately(NodesType[i, j].Y, NodesType[k, l].Y) &&
+                                 Approximately(Math.Abs(NodesType[i, j].X - NodesType[k, l].X), cellSize));
         
-                            if (isNeighbor) neighbors.Add(CoordNodes[k, l].GetCoordinate());
+                            if (isNeighbor) neighbors.Add(NodesType[k, l].GetCoordinate());
                         }
                     }
 

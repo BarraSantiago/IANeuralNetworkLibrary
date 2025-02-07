@@ -29,6 +29,8 @@
     public interface INode<Coordinate> : IEquatable<Coordinate>
         where Coordinate : IEquatable<Coordinate>
     {
+        public float X { get; set; }
+        public float Y { get; set; }
         public void SetCoordinate(Coordinate coordinateType);
         public Coordinate GetCoordinate();
         public void SetNeighbors(ICollection<Coordinate> neighbors);
