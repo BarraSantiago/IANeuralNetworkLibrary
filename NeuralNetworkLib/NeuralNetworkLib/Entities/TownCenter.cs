@@ -151,7 +151,7 @@ public class TownCenter
                 case NodeTerrain.Construction when
                     WatchTowerConstructions.First().GetAdjacentNode() != null:
                     IVector coord = WatchTowerConstructions.First().GetAdjacentNode();
-                    return DataContainer.Graph.NodesType[(int)coord.X, (int)coord.Y];
+                    return DataContainer.GetNode(coord);
                 case NodeTerrain.WatchTower:
                     WatchTowerPositions.Add(WatchTowerConstructions.First());
                     WatchTowerConstructions.RemoveAt(0);

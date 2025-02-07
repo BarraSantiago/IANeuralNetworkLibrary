@@ -18,7 +18,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         plainsVoronoi = DataContainer.Voronois[(int)NodeTerrain.Empty];
             
         IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
-        TargetNode = DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+        TargetNode = DataContainer.GetNode(node);
             
         Fsm.ForceTransition(Behaviours.Walk);
         onBuild += Build;
@@ -77,7 +77,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
             () =>
             {
                 IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
-                TargetNode = DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+                TargetNode = DataContainer.GetNode(node);
             });
     }
 
@@ -88,7 +88,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
             () =>
             {
                 IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
-                TargetNode = DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+                TargetNode = DataContainer.GetNode(node);
             });
         Fsm.SetTransition(Behaviours.Wait, Flags.OnBuild, Behaviours.Build);
     }

@@ -33,6 +33,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
         ResourceGathering = TownCenter.GetResourceNeeded();
         TargetNode = GetTarget(ResourceGathering);
+        Path = Pathfinder.FindPath(CurrentNode, TargetNode);
         Fsm.ForceTransition(Behaviours.Walk);
             
         onGather += Gather;
@@ -116,15 +117,14 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
             () =>
             {
                 IVector coord = TargetNode.GetAdjacentNode();
-                adjacentNode = DataContainer.Graph.NodesType[(int)coord.X, (int)coord.Y];
+                adjacentNode = DataContainer.GetNode(coord);
                 if (adjacentNode == null)
                 {
                     throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
                 }
 
                 adjacentNode.IsOccupied = true;
-                CurrentNode = DataContainer.Graph.NodesType[(int)adjacentNode.GetCoordinate().X,
-                    (int)adjacentNode.GetCoordinate().Y];
+                CurrentNode = DataContainer.GetNode(adjacentNode.GetCoordinate());
             });
     }
 
@@ -301,6 +301,6 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
             return null;
         }
 
-        return DataContainer.Graph.NodesType[(int)target.X, (int)target.Y];
+        return DataContainer.GetNode(target);
     }
 }

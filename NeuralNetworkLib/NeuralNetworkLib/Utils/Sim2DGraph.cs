@@ -41,6 +41,8 @@ namespace NeuralNetworkLib.Utils
 
                     SimNode<IVector> nodeType = new SimNode<IVector>();
                     nodeType.SetCoordinate(new MyVector(i * cellSize, j * cellSize));
+                    nodeType.X = i * cellSize;
+                    nodeType.Y = j * cellSize;
                     nodeType.NodeType = GetNodeType(type);
                     if(nodeType.NodeType == NodeType.Lake) nodeType.NodeTerrain = NodeTerrain.Lake;
                     NodesType[i, j] = nodeType;

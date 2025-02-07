@@ -135,9 +135,10 @@ public class DataContainer
         pathfinder = new AStarPath(Graph.NodesType);
     }
 
-    
+
     private static List<Node<Point2D>> allNodes = new List<Node<Point2D>>();
     private static double width = 200.0, height = 200.0;
+
     private static List<Point2D> boundingPolygon = new List<Point2D>
     {
         new Point2D(0, 0),
@@ -145,16 +146,16 @@ public class DataContainer
         new Point2D(width, height),
         new Point2D(0, height)
     };
+
     private static void InitVoronois()
     {
-
         foreach (SimNode<IVector> node in DataContainer.Graph.NodesType)
         {
             allNodes.Add(new Node<Point2D>(new Point2D(node.GetCoordinate().X, node.GetCoordinate().Y),
                 node.GetCost()));
         }
 
-        
+
         Voronois = new VoronoiDiagram<Point2D>[Enum.GetValues(typeof(NodeTerrain)).Length];
 
 
@@ -204,7 +205,7 @@ public class DataContainer
 
         return pointsOfInterest.ToList();
     }
-    
+
     public static void UpdateVoronoi2(NodeTerrain terrain)
     {
         if (Voronois == null) return;
@@ -216,14 +217,31 @@ public class DataContainer
         //Voronois[(int)terrain].BalanceWeights(iterations: 7, step: 0.2);
     }
 
-    public static INode<IVector> CoordinateToNode(IVector coordinate)
+    public static SimNode<IVector> GetNode(int x, int y)
     {
-        if (coordinate.X < 0 || coordinate.Y < 0 || coordinate.X >= Graph.MaxX || coordinate.Y >= Graph.MaxY)
+        if (x < 0 || y < 0 || x >= Graph.MaxX || y >= Graph.MaxY)
         {
             return null;
         }
+        return Graph.NodesType[x, y];
+    }
 
-        return Graph.NodesType[(int)coordinate.X, (int)coordinate.Y];
+    public static SimNode<IVector> GetNode(Point2D point)
+    {
+        if (point.X < 0 || point.Y < 0 || point.X >= Graph.MaxX || point.Y >= Graph.MaxY)
+        {
+            return null;
+        }
+        return Graph.NodesType[(int)point.X, (int)point.Y];
+    }
+
+    public static SimNode<IVector> GetNode(IVector point)
+    {
+        if (point.X < 0 || point.Y < 0 || point.X >= Graph.MaxX || point.Y >= Graph.MaxY)
+        {
+            return null;
+        }
+        return Graph.NodesType[(int)point.X, (int)point.Y];
     }
 
     public static INode<IVector> GetNearestNode(NodeType nodeType, IVector position)

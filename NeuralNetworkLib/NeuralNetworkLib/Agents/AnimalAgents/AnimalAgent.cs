@@ -50,8 +50,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             }
         }
 
-        public virtual INode<IVector> CurrentNode =>
-            DataContainer.Graph.NodesType[(int)Transform.position.X, (int)Transform.position.Y];
+        public virtual INode<IVector> CurrentNode => DataContainer.GetNode(transform.position);
 
         public static Action<AnimalAgent<TVector, TTransform>> OnDeath;
         public virtual bool CanReproduce => Food >= FoodLimit;
@@ -259,7 +258,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 }
             }
 
-            INode<IVector> newPos = DataContainer.CoordinateToNode(currentPos);
+            INode<IVector> newPos = DataContainer.GetNode(currentPos);
             if (newPos != null) SetPosition(newPos.GetCoordinate());
 
             stopwatch.Restart();

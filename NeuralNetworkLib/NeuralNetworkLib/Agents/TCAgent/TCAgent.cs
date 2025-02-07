@@ -117,6 +117,7 @@ public class TcAgent<TVector, TTransform>
         Fsm = new FSM<Behaviours, Flags>();
         stopwatch = new Stopwatch();
         Transform.position = TownCenter.Position.GetCoordinate();
+        CurrentNode = TownCenter.Position;
         alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
 
         Pathfinder = AgentType switch
@@ -260,10 +261,8 @@ public class TcAgent<TVector, TTransform>
 
     protected SimNode<IVector> GetRetreatNode()
     {
-        Point2D node = alarmVoronoi
-            .GetClosestPointOfInterest(new Point2D(CurrentNode.GetCoordinate().X, CurrentNode.GetCoordinate().Y))
-            .Position;
-        return DataContainer.Graph.NodesType[(int)node.X, (int)node.Y];
+        Point2D node = alarmVoronoi.GetClosestPointOfInterest(new Point2D(CurrentNode.X, CurrentNode.Y)).Position;
+        return DataContainer.GetNode(node);
     }
 
     protected virtual void Wait()

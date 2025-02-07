@@ -156,7 +156,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
     {
         foreach (IVector neighbor in neighbors)
         {
-            SimNode<IVector> neighNode = DataContainer.Graph.NodesType[(int)neighbor.X, (int)neighbor.Y];
+            SimNode<IVector> neighNode = DataContainer.GetNode(neighbor);
             if (!neighNode.IsOccupied) return neighbor;
         }
 
