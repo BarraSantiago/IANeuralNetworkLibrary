@@ -134,6 +134,7 @@ public class TcAgent<TVector, TTransform>
         FsmBehaviours();
 
         FsmTransitions();
+        stopwatch.Start();
     }
 
     protected virtual void FsmBehaviours()
@@ -239,7 +240,8 @@ public class TcAgent<TVector, TTransform>
             return;
         }
 
-        if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate())) return;
+        if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) || 
+            Approximately(CurrentNode.GetCoordinate(), TargetNode.GetCoordinate(), 0.001f)) return;
 
         if (Path.Count <= 0) return;
         //if (PathNodeId >= Path.Count) PathNodeId = 0;
@@ -267,5 +269,9 @@ public class TcAgent<TVector, TTransform>
 
     protected virtual void Wait()
     {
+    }
+    private bool Approximately(IVector coord1, IVector coord2, float tolerance)
+    {
+        return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;
     }
 }

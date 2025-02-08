@@ -12,9 +12,9 @@ public class BuildState : State
         bool retreat = Convert.ToBoolean(parameters[0]);
         int food = Convert.ToInt32(parameters[1]);
         int gold = Convert.ToInt32(parameters[2]);
-        int wood = Convert.ToInt32(parameters[2]);
-        Action OnBuild = parameters[3] as Action;
-        SimNode<IVector>? targetNode = (SimNode<IVector>?)parameters[4];
+        int wood = Convert.ToInt32(parameters[3]);
+        Action OnBuild = parameters[4] as Action;
+        SimNode<IVector>? targetNode = (SimNode<IVector>?)parameters[5];
 
         behaviours.AddMultiThreadableBehaviours(0, () =>
         {

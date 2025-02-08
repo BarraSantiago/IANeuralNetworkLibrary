@@ -14,11 +14,11 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             bool retreat = Convert.ToBoolean(parameters[0]);
             int food = Convert.ToInt32(parameters[1]);
             int gold = Convert.ToInt32(parameters[2]);
-            int wood = Convert.ToInt32(parameters[2]);
-            int resourceLimit = Convert.ToInt32(parameters[3]);
-            ResourceType currentResource = (ResourceType)parameters[3];
-            Action OnGather = parameters[4] as Action;
-            SimNode<IVector> targetNode = parameters[5] as SimNode<IVector>;
+            int wood = Convert.ToInt32(parameters[3]);
+            int resourceLimit = Convert.ToInt32(parameters[4]);
+            ResourceType currentResource = (ResourceType)parameters[5];
+            Action OnGather = parameters[6] as Action;
+            SimNode<IVector> targetNode = parameters[7] as SimNode<IVector>;
 
             behaviours.AddMultiThreadableBehaviours(0, () => { OnGather?.Invoke(); });
 

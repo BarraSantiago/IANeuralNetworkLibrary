@@ -39,11 +39,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()))
-                {
-                    return;
-                }
-
+                if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()) &&
+                    !Approximately(currentNode.GetCoordinate(), targetNode.GetCoordinate(), 0.001f)) return;
                 switch (currentNode.NodeTerrain)
                 {
                     case NodeTerrain.Mine:
@@ -65,6 +62,11 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             });
 
             return behaviours;
+        }
+
+        protected bool Approximately(IVector coord1, IVector coord2, float tolerance)
+        {
+            return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;
         }
 
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
@@ -111,10 +113,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                if (currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()))
-                {
-                    return;
-                }
+                if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()) &&
+                    !Approximately(currentNode.GetCoordinate(), targetNode.GetCoordinate(), 0.001f)) return;
 
                 if (retreat && targetNode.NodeTerrain == NodeTerrain.TownCenter
                     || targetNode.NodeTerrain != NodeTerrain.WatchTower)
@@ -143,7 +143,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         }
     }
 
-    public class BuilderWalkState : State
+    public class BuilderWalkState : WalkState
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
@@ -167,26 +167,27 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                
+
                 if (currentNode == null || targetNode == null || Path is { Count: <= 0 } ||
-                    targetNode is not { NodeTerrain: NodeTerrain.Empty or NodeTerrain.Construction or
-                                        NodeTerrain.WatchTower or NodeTerrain.TownCenter })
+                    targetNode is not
+                    {
+                        NodeTerrain: NodeTerrain.Empty or NodeTerrain.Construction or
+                        NodeTerrain.WatchTower or NodeTerrain.TownCenter
+                    })
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
                 }
 
-                if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()))
-                {
-                    return;
-                }
-                
-                if(targetNode.NodeTerrain is NodeTerrain.TownCenter or NodeTerrain.WatchTower)
+                if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()) &&
+                    !Approximately(currentNode.GetCoordinate(), targetNode.GetCoordinate(), 0.001f)) return;
+
+                if (targetNode.NodeTerrain is NodeTerrain.TownCenter or NodeTerrain.WatchTower)
                 {
                     OnFlag?.Invoke(Flags.OnWait);
                     return;
                 }
-                
+
                 OnFlag?.Invoke(Flags.OnBuild);
                 return;
             });

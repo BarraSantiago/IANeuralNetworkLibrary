@@ -130,6 +130,12 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
     #endregion
 
 
+    protected override object[] WaitTickParameters()
+    {
+        object[] objects = { Retreat, CurrentNode, OnWait };
+        return objects;
+    }
+
     protected override object[] GatherTickParameters()
     {
         return new object[]
