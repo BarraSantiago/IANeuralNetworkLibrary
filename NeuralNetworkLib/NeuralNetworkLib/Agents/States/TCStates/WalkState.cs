@@ -2,7 +2,6 @@
 using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.GraphDirectory;
 using NeuralNetworkLib.Utils;
-using Pathfinder;
 
 namespace NeuralNetworkLib.Agents.States.TCStates
 {

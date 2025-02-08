@@ -1,15 +1,20 @@
 namespace NeuralNetworkLib.GraphDirectory.Voronoi;
 
 /// <summary>
-/// A generic Voronoi diagram. The cells are computed by iteratively “clipping” the bounding polygon
-/// with the half–planes determined by the perpendicular bisectors between sites.
-/// This class also provides weight balancing and a query method to get the site that “owns” a given point.
+/// A generic Voronoi (power) diagram.
+/// The cell for each site is computed by clipping the bounding polygon with
+/// half–planes defined by the weighted (power) distance.
+/// Weight balancing is achieved by adjusting each site's PowerWeight.
 /// </summary>
 public class VoronoiDiagram<TPoint2D>
     where TPoint2D : IEquatable<TPoint2D>, IPoint2D<TPoint2D>, new()
 {
     public List<Site<TPoint2D>> Sites { get; set; }
     public List<Node<TPoint2D>> Nodes { get; set; }
+
+    /// <summary>
+    /// The bounding polygon (typically convex, e.g. a rectangle) in which the cells are computed.
+    /// </summary>
     public List<TPoint2D> BoundingPolygon { get; set; }
 
     public VoronoiDiagram(List<Site<TPoint2D>> sites, List<Node<TPoint2D>> nodes, List<TPoint2D> boundingPolygon)
@@ -20,28 +25,46 @@ public class VoronoiDiagram<TPoint2D>
     }
 
     /// <summary>
-    /// Computes the Voronoi cell for each site by clipping the bounding polygon with the half–planes
-    /// determined by every other site.
+    /// Computes the cell (as a polygon) for each site using the power diagram definition.
+    /// For each pair of sites, the half–plane is defined by:
+    ///    ||p - s_i||^2 - w_i <= ||p - s_j||^2 - w_j,
+    /// which can be rewritten as (p - A) · (s_i - s_j) >= 0, with A computed below.
     /// </summary>
     public void ComputeCells()
     {
         foreach (var site in Sites)
         {
-            // Start with the entire bounding polygon.
+            // Start with the full bounding polygon.
             List<TPoint2D> cell = new List<TPoint2D>(BoundingPolygon);
             foreach (var other in Sites)
             {
-                if (other == site) continue;
+                if (other == site)
+                    continue;
 
-                // The perpendicular bisector between site and other is defined by:
-                //   (p - midpoint) · (site.Position - other.Position) >= 0
+                // Compute the vector from other to this site.
+                TPoint2D diff = site.Position.Subtract(other.Position);
+                double normSq = diff.Dot(diff);
+                if (normSq < 1e-9)
+                    continue; // avoid division by zero for coincident sites
+
+                // Standard (unweighted) bisector would use the midpoint:
                 TPoint2D mid = site.Position.Add(other.Position).Divide(2.0);
-                TPoint2D normal = site.Position.Subtract(other.Position);
-                cell = ClipPolygonWithLine(cell, mid, normal);
 
+                // With power weights, we shift the bisector.
+                // Let the half–plane be defined by (p - A) · (site.Position - other.Position) >= 0.
+                // Choose A = mid + correction, with:
+                //    correction = diff * ((other.PowerWeight - site.PowerWeight) / (2 * normSq)).
+                double correctionFactor = (other.PowerWeight - site.PowerWeight) / (2.0 * normSq);
+                TPoint2D correction = diff.Multiply(correctionFactor);
+                TPoint2D A = mid.Add(correction);
+
+                // Use diff as the normal.
+                // The half–plane for site is: (p - A) · diff >= 0.
+                cell = ClipPolygonWithLine(cell, A, diff);
                 if (cell.Count == 0)
                     break;
             }
+
             site.CellPolygon = cell;
         }
     }
@@ -49,6 +72,7 @@ public class VoronoiDiagram<TPoint2D>
     /// <summary>
     /// Clips a polygon with a half–plane defined by a boundary point and a boundary normal.
     /// Points p satisfying (p - boundaryPoint) · boundaryNormal >= 0 are kept.
+    /// Uses the Sutherland–Hodgman algorithm.
     /// </summary>
     private List<TPoint2D> ClipPolygonWithLine(List<TPoint2D> polygon, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
     {
@@ -57,10 +81,10 @@ public class VoronoiDiagram<TPoint2D>
             return output;
 
         TPoint2D prev = polygon[polygon.Count - 1];
-        bool prevInside = (prev.Subtract(boundaryPoint).Dot(boundaryNormal) >= 0);
+        bool prevInside = (prev.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
         foreach (var curr in polygon)
         {
-            bool currInside = (curr.Subtract(boundaryPoint).Dot(boundaryNormal) >= 0);
+            bool currInside = (curr.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
             if (currInside)
             {
                 if (!prevInside)
@@ -68,6 +92,7 @@ public class VoronoiDiagram<TPoint2D>
                     TPoint2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
                     output.Add(intersection);
                 }
+
                 output.Add(curr);
             }
             else if (prevInside)
@@ -75,14 +100,17 @@ public class VoronoiDiagram<TPoint2D>
                 TPoint2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
                 output.Add(intersection);
             }
+
             prev = curr;
             prevInside = currInside;
         }
+
         return output;
     }
 
     /// <summary>
-    /// Computes the intersection between a segment (from A to B) and the line defined by (p - boundaryPoint) · boundaryNormal = 0.
+    /// Computes the intersection between the segment (from A to B) and the line defined by:
+    /// (p - boundaryPoint) · boundaryNormal = 0.
     /// </summary>
     private TPoint2D LineIntersection(TPoint2D A, TPoint2D B, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
     {
@@ -104,17 +132,19 @@ public class VoronoiDiagram<TPoint2D>
         {
             TPoint2D pi = polygon[i];
             TPoint2D pj = polygon[j];
+            // Check if p is between the y-coordinates of the edge, and then use the x-coordinate.
             if (((pi.Y > p.Y) != (pj.Y > p.Y)) &&
                 (p.X < (pj.X - pi.X) * (p.Y - pi.Y) / (pj.Y - pi.Y) + pi.X))
             {
                 inside = !inside;
             }
         }
+
         return inside;
     }
 
     /// <summary>
-    /// Computes the total weight (sum of node weights) for each site’s cell.
+    /// Computes the total node weight for each site's cell.
     /// </summary>
     public void ComputeCellWeights()
     {
@@ -126,53 +156,14 @@ public class VoronoiDiagram<TPoint2D>
                 if (PointInPolygon(node.Position, site.CellPolygon))
                     total += node.Weight;
             }
+
             site.CellWeight = total;
         }
     }
 
     /// <summary>
-    /// Iteratively re–computes the cells and then moves each site toward the weighted centroid
-    /// of the nodes within its cell. The parameter “step” determines how far (fractionally)
-    /// each site moves in one iteration.
-    /// </summary>
-    public void BalanceWeights(int iterations, double step = 0.1)
-    {
-        for (int iter = 0; iter < iterations; iter++)
-        {
-            ComputeCells();
-            ComputeCellWeights();
-
-            foreach (var site in Sites)
-            {
-                var nodesInCell = Nodes.Where(n => PointInPolygon(n.Position, site.CellPolygon)).ToList();
-                if (nodesInCell.Count == 0)
-                    continue;
-
-                double sumWeights = nodesInCell.Sum(n => n.Weight);
-
-                // Start with a new (zero) instance for the weighted centroid.
-                TPoint2D centroid = new TPoint2D();
-                centroid.X = 0;
-                centroid.Y = 0;
-
-                foreach (var node in nodesInCell)
-                {
-                    // Multiply the node’s position by its weight and add it.
-                    centroid = centroid.Add(node.Position.Multiply(node.Weight));
-                }
-                centroid = centroid.Divide(sumWeights);
-
-                // Move the site’s position a fraction “step” toward the weighted centroid.
-                site.Position = site.Position.Multiply(1 - step).Add(centroid.Multiply(step));
-            }
-        }
-        ComputeCells();
-        ComputeCellWeights();
-    }
-
-    /// <summary>
     /// Returns the site (point of interest) whose cell contains the given point.
-    /// If none of the cells contain the point, the site with the closest position is returned.
+    /// If no cell contains the point, returns the site with the closest Position.
     /// </summary>
     public Site<TPoint2D> GetClosestPointOfInterest(TPoint2D agentPosition)
     {
@@ -181,6 +172,44 @@ public class VoronoiDiagram<TPoint2D>
             if (PointInPolygon(agentPosition, site.CellPolygon))
                 return site;
         }
+
         return Sites.OrderBy(site => site.Position.DistanceTo(agentPosition)).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Adjusts each site's PowerWeight (without modifying its fixed Position) so that its cell's total node weight
+    /// approaches the target weight. This is done iteratively. Increasing a site's PowerWeight will shrink its cell,
+    /// and vice versa.
+    /// </summary>
+    /// <param name="iterations">Number of balancing iterations.</param>
+    /// <param name="step">
+    /// The adjustment factor for the PowerWeight update.
+    /// A typical value might be 0.1.
+    /// </param>
+    public void BalanceWeights(int iterations, double step = 0.1)
+    {
+        // Compute target node weight per cell.
+        double totalNodeWeight = Nodes.Sum(n => n.Weight);
+        double targetWeight = totalNodeWeight / Sites.Count;
+
+        for (int iter = 0; iter < iterations; iter++)
+        {
+            // Recompute cells and their node weights.
+            ComputeCells();
+            ComputeCellWeights();
+
+            // Adjust the power weight for each site based on the difference.
+            foreach (var site in Sites)
+            {
+                double diff = site.CellWeight - targetWeight;
+                // If cell weight is above target, increase PowerWeight to shrink the cell;
+                // if below target, decrease PowerWeight to expand the cell.
+                site.PowerWeight += step * diff;
+            }
+        }
+
+        // Final update.
+        ComputeCells();
+        ComputeCellWeights();
     }
 }

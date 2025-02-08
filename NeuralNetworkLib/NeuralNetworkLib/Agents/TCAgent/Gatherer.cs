@@ -33,7 +33,6 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
         ResourceGathering = TownCenter.GetResourceNeeded();
         TargetNode = GetTarget(ResourceGathering);
-        Path = Pathfinder.FindPath(CurrentNode, TargetNode);
         Fsm.ForceTransition(Behaviours.Walk);
             
         onGather += Gather;

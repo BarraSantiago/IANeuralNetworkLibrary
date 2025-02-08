@@ -2,9 +2,9 @@
 using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Entities;
+using NeuralNetworkLib.GraphDirectory;
 using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
-using Pathfinder;
 
 namespace NeuralNetworkLib.Agents.TCAgent;
 

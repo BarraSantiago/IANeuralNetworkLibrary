@@ -2,9 +2,9 @@
 using NeuralNetworkLib.Agents.AnimalAgents;
 using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.TCAgent;
+using NeuralNetworkLib.GraphDirectory;
 using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
-using Pathfinder;
 
 namespace NeuralNetworkLib.DataManagement;
 
