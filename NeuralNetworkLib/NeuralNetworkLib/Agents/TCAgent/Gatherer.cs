@@ -5,8 +5,8 @@ using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.TCAgent;
-using Voronoi = VoronoiDiagram<Point2D>;
 
+using Voronoi = VoronoiDiagram<Point2D>;
 
 public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 {
@@ -34,7 +34,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         ResourceGathering = TownCenter.GetResourceNeeded();
         TargetNode = GetTarget(ResourceGathering);
         Fsm.ForceTransition(Behaviours.Walk);
-            
+
         onGather += Gather;
         stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -98,6 +98,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                 ResourceGathering = TownCenter.GetResourceNeeded();
                 TargetNode = GetTarget(ResourceGathering);
             });
+        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnGather, Behaviours.GatherResources);
     }
 
     protected override void WalkTransitions()
@@ -287,7 +288,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         switch (resourceType)
         {
             case ResourceType.Food:
-                 target = FoodVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y)).Position;
+                target = FoodVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y)).Position;
                 break;
             case ResourceType.Gold:
                 target = GoldVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y)).Position;

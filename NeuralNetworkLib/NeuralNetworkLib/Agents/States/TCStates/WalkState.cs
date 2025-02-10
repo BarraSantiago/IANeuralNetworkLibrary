@@ -41,12 +41,13 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
                 if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()) &&
                     !Approximately(currentNode.GetCoordinate(), targetNode.GetCoordinate(), 0.001f)) return;
-                switch (currentNode.NodeTerrain)
+                switch (targetNode.NodeTerrain)
                 {
                     case NodeTerrain.Mine:
                     case NodeTerrain.Lake:
                     case NodeTerrain.Tree:
                         OnFlag?.Invoke(Flags.OnGather);
+                        return;
                         break;
                     case NodeTerrain.TownCenter:
                     case NodeTerrain.WatchTower:

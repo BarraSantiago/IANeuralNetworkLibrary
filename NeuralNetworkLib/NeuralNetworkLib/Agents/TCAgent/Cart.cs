@@ -275,6 +275,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         private SimNode<IVector> GetTarget()
         {
             (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.AgentsResources[0];
+            if(TownCenter.AgentsResources.Count < 1 || agentResource.Item1 == null || agentResource.Item2 == null) return TownCenter.Position;
             TownCenter.AgentsResources.Remove(agentResource);
             _target = agentResource.Item1;
             resourceCarrying = agentResource.Item2;
