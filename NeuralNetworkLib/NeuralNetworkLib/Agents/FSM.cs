@@ -9,99 +9,318 @@
         private readonly Dictionary<int, Func<object[]>> _behaviourOnExitParameters;
         private readonly Dictionary<int, State> _behaviours;
         private readonly Dictionary<int, Func<object[]>> _behaviourTickParameters;
-        private readonly (int destinationInState, Action onTransition)[,] _transitions;
+        private readonly (int destinationInState, Action? onTransition)[,] _transitions;
         private int _currentState;
 
-        private readonly ParallelOptions parallelOptions = new ParallelOptions()
+        private readonly ParallelOptions parallelOptions = new ParallelOptions
         {
             MaxDegreeOfParallelism = 32
         };
+
+        private readonly object _fsmLock = new object();
+        private bool _isTransitioning = false;
+        // Queue any transition requests that occur while a transition is in progress.
+        private Queue<TransitionRequest> _queuedTransitions = new Queue<TransitionRequest>();
+
+        private struct TransitionRequest
+        {
+            /// <summary>
+            /// If true, this is a forced transition (the parameter is a state).
+            /// If false, it is a flag-based transition.
+            /// </summary>
+            public bool IsForce;
+            public Enum Value;
+
+            public TransitionRequest(bool isForce, Enum value)
+            {
+                IsForce = isForce;
+                Value = value;
+            }
+        }
 
         public FSM()
         {
             int states = Enum.GetValues(typeof(EnumState)).Length;
             int flags = Enum.GetValues(typeof(EnumFlag)).Length;
             _behaviours = new Dictionary<int, State>();
-            _transitions = new (int, Action)[states, flags];
+            _transitions = new (int, Action?)[states, flags];
 
             for (int i = 0; i < states; i++)
-            for (int j = 0; j < flags; j++)
-                _transitions[i, j] = (UNNASIGNED_TRANSITION, null);
+            {
+                for (int j = 0; j < flags; j++)
+                {
+                    _transitions[i, j] = (UNNASIGNED_TRANSITION, null);
+                }
+            }
 
             _behaviourTickParameters = new Dictionary<int, Func<object[]>>();
             _behaviourOnEnterParameters = new Dictionary<int, Func<object[]>?>();
             _behaviourOnExitParameters = new Dictionary<int, Func<object[]>>();
         }
 
-        private BehaviourActions GetCurrentStateOnEnterBehaviours => _behaviours[_currentState]
-            .GetOnEnterBehaviour(_behaviourOnEnterParameters[_currentState]?.Invoke());
+        private BehaviourActions GetCurrentStateOnEnterBehaviours
+        {
+            get
+            {
+                int state;
+                lock (_fsmLock)
+                {
+                    state = _currentState;
+                }
+                return _behaviours[state].GetOnEnterBehaviour(_behaviourOnEnterParameters[state]?.Invoke());
+            }
+        }
 
-        private BehaviourActions GetCurrentStateOnExitBehaviours => _behaviours[_currentState]
-            .GetOnExitBehaviour(_behaviourOnExitParameters[_currentState]?.Invoke());
+        private BehaviourActions GetCurrentStateOnExitBehaviours
+        {
+            get
+            {
+                int state;
+                lock (_fsmLock)
+                {
+                    state = _currentState;
+                }
+                return _behaviours[state].GetOnExitBehaviour(_behaviourOnExitParameters[state]?.Invoke());
+            }
+        }
 
-        private BehaviourActions GetCurrentStateTickBehaviours => _behaviours[_currentState]
-            .GetTickBehaviour(_behaviourTickParameters[_currentState]?.Invoke());
+        private BehaviourActions GetCurrentStateTickBehaviours
+        {
+            get
+            {
+                int state;
+                lock (_fsmLock)
+                {
+                    state = _currentState;
+                }
+                return _behaviours[state].GetTickBehaviour(_behaviourTickParameters[state]?.Invoke());
+            }
+        }
 
+        /// <summary>
+        /// A forced transition externally invoked. (For example, a user might
+        /// decide that the FSM should immediately go to a specific state.)
+        /// </summary>
         public void ForceTransition(Enum state)
         {
-            ExecuteBehaviour(GetCurrentStateOnExitBehaviours);
-            ExecuteBehaviour(GetCurrentStateOnExitBehaviours, true);
-            _currentState = Convert.ToInt32(state);
-            ExecuteBehaviour(GetCurrentStateOnEnterBehaviours);
-            ExecuteBehaviour(GetCurrentStateOnEnterBehaviours, true);
+            lock (_fsmLock)
+            {
+                if (_isTransitioning)
+                {
+                    // If a transition is in progress, queue this forced transition.
+                    _queuedTransitions.Enqueue(new TransitionRequest(true, state));
+                    return;
+                }
+                _isTransitioning = true;
+            }
+
+            try
+            {
+                ProcessForceTransition(state);
+                ProcessQueuedTransitions();
+            }
+            finally
+            {
+                lock (_fsmLock)
+                {
+                    _isTransitioning = false;
+                }
+            }
         }
 
-        public void AddBehaviour<T>(EnumState stateIndexEnum, Func<object[]> onTickParameters = null,
-            Func<object[]>? onEnterParameters = null, Func<object[]> onExitParameters = null) where T : State, new()
+        public void SetTransition(Enum originState, Enum flag, Enum destinationState, Action? onTransition = null)
+        {
+            lock (_fsmLock)
+            {
+                _transitions[Convert.ToInt32(originState), Convert.ToInt32(flag)] =
+                    (Convert.ToInt32(destinationState), onTransition);
+            }
+        }
+
+        public void AddBehaviour<T>(EnumState stateIndexEnum,
+            Func<object[]>? onTickParameters = null,
+            Func<object[]>? onEnterParameters = null,
+            Func<object[]>? onExitParameters = null)
+            where T : State, new()
         {
             int stateIndex = Convert.ToInt32(stateIndexEnum);
+            lock (_fsmLock)
+            {
+                if (_behaviours.ContainsKey(stateIndex))
+                    return;
 
-            if (_behaviours.ContainsKey(stateIndex)) return;
-
-            State newBehaviour = new T();
-            newBehaviour.OnFlag += Transition;
-            _behaviours.Add(stateIndex, newBehaviour);
-            _behaviourTickParameters.Add(stateIndex, onTickParameters);
-            _behaviourOnEnterParameters.Add(stateIndex, onEnterParameters);
-            _behaviourOnExitParameters.Add(stateIndex, onExitParameters);
+                State newBehaviour = new T();
+                newBehaviour.OnFlag += Transition;
+                _behaviours.Add(stateIndex, newBehaviour);
+                _behaviourTickParameters.Add(stateIndex, onTickParameters);
+                _behaviourOnEnterParameters.Add(stateIndex, onEnterParameters);
+                _behaviourOnExitParameters.Add(stateIndex, onExitParameters);
+            }
         }
 
-        public void SetTransition(Enum originState, Enum flag, Enum destinationState, Action onTransition = null)
-        {
-            _transitions[Convert.ToInt32(originState), Convert.ToInt32(flag)] =
-                (Convert.ToInt32(destinationState), onTransition);
-        }
-
+        /// <summary>
+        /// This method is registered as an event handler on each state’s OnFlag event.
+        /// It gets called when a state wants to transition.
+        /// </summary>
         private void Transition(Enum flag)
         {
-            if (_transitions[_currentState, Convert.ToInt32(flag)].destinationInState == UNNASIGNED_TRANSITION) return;
+            lock (_fsmLock)
+            {
+                if (_isTransitioning)
+                {
+                    // Queue the transition request if we are already in the middle of a transition.
+                    _queuedTransitions.Enqueue(new TransitionRequest(false, flag));
+                    return;
+                }
+                _isTransitioning = true;
+            }
 
-            ExecuteBehaviour(GetCurrentStateOnExitBehaviours);
-            ExecuteBehaviour(GetCurrentStateOnExitBehaviours, true);
-
-            _transitions[_currentState, Convert.ToInt32(flag)].onTransition?.Invoke();
-
-            int currentState = _transitions[_currentState, Convert.ToInt32(flag)].destinationInState;
-            if (currentState == UNNASIGNED_TRANSITION) return;
-            _currentState = _transitions[_currentState, Convert.ToInt32(flag)].destinationInState;
-
-            ExecuteBehaviour(GetCurrentStateOnEnterBehaviours);
-            ExecuteBehaviour(GetCurrentStateOnEnterBehaviours,true);
+            try
+            {
+                ProcessTransition(flag);
+                ProcessQueuedTransitions();
+            }
+            finally
+            {
+                lock (_fsmLock)
+                {
+                    _isTransitioning = false;
+                }
+            }
         }
 
+        /// <summary>
+        /// Process a flag-based transition.
+        /// Looks up the transition in the table, executes exit behaviours, calls any onTransition callback,
+        /// changes state, then executes enter behaviours.
+        /// </summary>
+        private void ProcessTransition(Enum flag)
+        {
+            int flagInt = Convert.ToInt32(flag);
+            int currentState;
+            lock (_fsmLock)
+            {
+                currentState = _currentState;
+            }
+            var transition = _transitions[currentState, flagInt];
+            if (transition.destinationInState == UNNASIGNED_TRANSITION)
+                return;
+
+            // Execute exit behaviours for the current state.
+            BehaviourActions exitBehaviours;
+            lock (_fsmLock)
+            {
+                exitBehaviours = _behaviours[_currentState].GetOnExitBehaviour(
+                    _behaviourOnExitParameters[_currentState]?.Invoke());
+            }
+            ExecuteBehaviour(exitBehaviours);
+            ExecuteBehaviour(exitBehaviours, true);
+
+            // Invoke any transition callback.
+            transition.onTransition?.Invoke();
+
+            // Change to the new state.
+            lock (_fsmLock)
+            {
+                _currentState = transition.destinationInState;
+            }
+
+            // Execute enter behaviours for the new state.
+            BehaviourActions enterBehaviours;
+            lock (_fsmLock)
+            {
+                enterBehaviours = _behaviours[_currentState].GetOnEnterBehaviour(
+                    _behaviourOnEnterParameters[_currentState]?.Invoke());
+            }
+            ExecuteBehaviour(enterBehaviours);
+            ExecuteBehaviour(enterBehaviours, true);
+        }
+
+        /// <summary>
+        /// Process a forced transition.
+        /// </summary>
+        private void ProcessForceTransition(Enum state)
+        {
+            // Execute exit behaviours for the current state.
+            BehaviourActions exitBehaviours;
+            lock (_fsmLock)
+            {
+                exitBehaviours = _behaviours[_currentState].GetOnExitBehaviour(
+                    _behaviourOnExitParameters[_currentState]?.Invoke());
+            }
+            ExecuteBehaviour(exitBehaviours);
+            ExecuteBehaviour(exitBehaviours, true);
+
+            int forcedState = Convert.ToInt32(state);
+            if (forcedState == UNNASIGNED_TRANSITION)
+                return;
+
+            // Change state.
+            lock (_fsmLock)
+            {
+                _currentState = forcedState;
+            }
+
+            // Execute enter behaviours for the new state.
+            BehaviourActions enterBehaviours;
+            lock (_fsmLock)
+            {
+                enterBehaviours = _behaviours[_currentState].GetOnEnterBehaviour(
+                    _behaviourOnEnterParameters[_currentState]?.Invoke());
+            }
+            ExecuteBehaviour(enterBehaviours);
+            ExecuteBehaviour(enterBehaviours, true);
+        }
+
+        /// <summary>
+        /// After finishing a transition, process any transition requests that were queued.
+        /// </summary>
+        private void ProcessQueuedTransitions()
+        {
+            while (true)
+            {
+                TransitionRequest req;
+                lock (_fsmLock)
+                {
+                    if (_queuedTransitions.Count == 0)
+                        break;
+                    req = _queuedTransitions.Dequeue();
+                }
+                if (req.IsForce)
+                {
+                    ProcessForceTransition(req.Value);
+                }
+                else
+                {
+                    ProcessTransition(req.Value);
+                }
+            }
+        }
 
         public void Tick()
         {
-            if (!_behaviours.ContainsKey(_currentState)) return;
+            int state;
+            lock (_fsmLock)
+            {
+                state = _currentState;
+            }
+            if (!_behaviours.ContainsKey(state))
+                return;
 
-            ExecuteBehaviour(GetCurrentStateTickBehaviours);
-            ExecuteBehaviour(GetCurrentStateTickBehaviours,true);
+            BehaviourActions tickBehaviours;
+            lock (_fsmLock)
+            {
+                tickBehaviours = _behaviours[state].GetTickBehaviour(
+                    _behaviourTickParameters[state]?.Invoke());
+            }
+            ExecuteBehaviour(tickBehaviours);
+            ExecuteBehaviour(tickBehaviours, true);
         }
 
-
-        private void ExecuteBehaviour(BehaviourActions behaviourActions, bool multi = false)
+        public void ExecuteBehaviour(BehaviourActions behaviourActions, bool multi = false)
         {
-            if (behaviourActions.Equals(default(BehaviourActions))) return;
+            if (behaviourActions.Equals(default(BehaviourActions)))
+                return;
 
             int executionOrder = 0;
 
@@ -136,24 +355,42 @@
                 ExecuteMainThreadBehaviours(behaviourActions, executionOrder);
             }
 
-
             behaviourActions.TransitionBehaviour?.Invoke();
         }
 
         public int GetMainThreadCount()
         {
-            BehaviourActions currentStateBehaviours = GetCurrentStateTickBehaviours;
-            if (currentStateBehaviours.MainThreadBehaviour == null)
+            int state;
+            lock (_fsmLock)
             {
-                return 0;
+                state = _currentState;
             }
+            BehaviourActions currentStateBehaviours;
+            lock (_fsmLock)
+            {
+                currentStateBehaviours = _behaviours[state].GetTickBehaviour(
+                    _behaviourTickParameters[state]?.Invoke());
+            }
+
+            if (currentStateBehaviours.MainThreadBehaviour == null)
+                return 0;
 
             return currentStateBehaviours.MainThreadBehaviour.Count;
         }
 
         public int GetMultiThreadCount()
         {
-            BehaviourActions currentStateBehaviours = GetCurrentStateTickBehaviours;
+            int state;
+            lock (_fsmLock)
+            {
+                state = _currentState;
+            }
+            BehaviourActions currentStateBehaviours;
+            lock (_fsmLock)
+            {
+                currentStateBehaviours = _behaviours[state].GetTickBehaviour(
+                    _behaviourTickParameters[state]?.Invoke());
+            }
             return currentStateBehaviours.MultiThreadablesBehaviour == null
                 ? 0
                 : currentStateBehaviours.MultiThreadablesBehaviour.Count;
@@ -177,8 +414,10 @@
 
         public void ExecuteMultiThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)
         {
-            if (behaviourActions.MultiThreadablesBehaviour == null) return;
-            if (!behaviourActions.MultiThreadablesBehaviour.ContainsKey(executionOrder)) return;
+            if (behaviourActions.MultiThreadablesBehaviour == null)
+                return;
+            if (!behaviourActions.MultiThreadablesBehaviour.ContainsKey(executionOrder))
+                return;
 
             Parallel.ForEach(behaviourActions.MultiThreadablesBehaviour, parallelOptions, behaviour =>
             {
@@ -188,23 +427,45 @@
                 }
             });
 
-            //Parallel.ForEach(behaviourActions.MultiThreadablesBehaviour[executionOrder], parallelOptions,
-            //    behaviour => { behaviour?.Invoke(); });
             behaviourActions.MultiThreadablesBehaviour.TryRemove(executionOrder, out _);
         }
 
         public void MultiThreadTick(int executionOrder)
         {
-            if (!_behaviours.ContainsKey(_currentState)) return;
+            int state;
+            lock (_fsmLock)
+            {
+                state = _currentState;
+            }
+            if (!_behaviours.ContainsKey(state))
+                return;
 
-            ExecuteBehaviour(GetCurrentStateTickBehaviours, executionOrder, true);
+            BehaviourActions tickBehaviours;
+            lock (_fsmLock)
+            {
+                tickBehaviours = _behaviours[state].GetTickBehaviour(
+                    _behaviourTickParameters[state]?.Invoke());
+            }
+            ExecuteBehaviour(tickBehaviours, executionOrder, true);
         }
 
         public void MainThreadTick(int executionOrder)
         {
-            if (!_behaviours.ContainsKey(_currentState)) return;
+            int state;
+            lock (_fsmLock)
+            {
+                state = _currentState;
+            }
+            if (!_behaviours.ContainsKey(state))
+                return;
 
-            ExecuteBehaviour(GetCurrentStateTickBehaviours, executionOrder, false);
+            BehaviourActions tickBehaviours;
+            lock (_fsmLock)
+            {
+                tickBehaviours = _behaviours[state].GetTickBehaviour(
+                    _behaviourTickParameters[state]?.Invoke());
+            }
+            ExecuteBehaviour(tickBehaviours, executionOrder, false);
         }
     }
 }
