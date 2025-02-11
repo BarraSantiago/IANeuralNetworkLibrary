@@ -4,14 +4,26 @@
         where EnumState : Enum
         where EnumFlag : Enum
     {
+        public Action<int> OnStateChange;
         private const int UNNASIGNED_TRANSITION = -1;
         private readonly Dictionary<int, Func<object[]>?> _behaviourOnEnterParameters;
         private readonly Dictionary<int, Func<object[]>> _behaviourOnExitParameters;
         private readonly Dictionary<int, State> _behaviours;
         private readonly Dictionary<int, Func<object[]>> _behaviourTickParameters;
         private readonly (int destinationInState, Action? onTransition)[,] _transitions;
-        private int _currentState;
 
+        private int CurrentState
+        {
+            get => _currentState;
+            set
+            {
+                _currentState = value;
+                OnStateChange?.Invoke(_currentState);
+            }
+        }
+
+        private int _currentState;
+        
         private readonly ParallelOptions parallelOptions = new ParallelOptions
         {
             MaxDegreeOfParallelism = 32
@@ -65,7 +77,7 @@
                 int state;
                 lock (_fsmLock)
                 {
-                    state = _currentState;
+                    state = CurrentState;
                 }
                 return _behaviours[state].GetOnEnterBehaviour(_behaviourOnEnterParameters[state]?.Invoke());
             }
@@ -78,7 +90,7 @@
                 int state;
                 lock (_fsmLock)
                 {
-                    state = _currentState;
+                    state = CurrentState;
                 }
                 return _behaviours[state].GetOnExitBehaviour(_behaviourOnExitParameters[state]?.Invoke());
             }
@@ -91,7 +103,7 @@
                 int state;
                 lock (_fsmLock)
                 {
-                    state = _currentState;
+                    state = CurrentState;
                 }
                 return _behaviours[state].GetTickBehaviour(_behaviourTickParameters[state]?.Invoke());
             }
@@ -200,7 +212,7 @@
             int currentState;
             lock (_fsmLock)
             {
-                currentState = _currentState;
+                currentState = CurrentState;
             }
             var transition = _transitions[currentState, flagInt];
             if (transition.destinationInState == UNNASIGNED_TRANSITION)
@@ -210,8 +222,8 @@
             BehaviourActions exitBehaviours;
             lock (_fsmLock)
             {
-                exitBehaviours = _behaviours[_currentState].GetOnExitBehaviour(
-                    _behaviourOnExitParameters[_currentState]?.Invoke());
+                exitBehaviours = _behaviours[CurrentState].GetOnExitBehaviour(
+                    _behaviourOnExitParameters[CurrentState]?.Invoke());
             }
             ExecuteBehaviour(exitBehaviours);
             ExecuteBehaviour(exitBehaviours, true);
@@ -222,15 +234,15 @@
             // Change to the new state.
             lock (_fsmLock)
             {
-                _currentState = transition.destinationInState;
+                CurrentState = transition.destinationInState;
             }
 
             // Execute enter behaviours for the new state.
             BehaviourActions enterBehaviours;
             lock (_fsmLock)
             {
-                enterBehaviours = _behaviours[_currentState].GetOnEnterBehaviour(
-                    _behaviourOnEnterParameters[_currentState]?.Invoke());
+                enterBehaviours = _behaviours[CurrentState].GetOnEnterBehaviour(
+                    _behaviourOnEnterParameters[CurrentState]?.Invoke());
             }
             ExecuteBehaviour(enterBehaviours);
             ExecuteBehaviour(enterBehaviours, true);
@@ -245,8 +257,8 @@
             BehaviourActions exitBehaviours;
             lock (_fsmLock)
             {
-                exitBehaviours = _behaviours[_currentState].GetOnExitBehaviour(
-                    _behaviourOnExitParameters[_currentState]?.Invoke());
+                exitBehaviours = _behaviours[CurrentState].GetOnExitBehaviour(
+                    _behaviourOnExitParameters[CurrentState]?.Invoke());
             }
             ExecuteBehaviour(exitBehaviours);
             ExecuteBehaviour(exitBehaviours, true);
@@ -258,15 +270,15 @@
             // Change state.
             lock (_fsmLock)
             {
-                _currentState = forcedState;
+                CurrentState = forcedState;
             }
 
             // Execute enter behaviours for the new state.
             BehaviourActions enterBehaviours;
             lock (_fsmLock)
             {
-                enterBehaviours = _behaviours[_currentState].GetOnEnterBehaviour(
-                    _behaviourOnEnterParameters[_currentState]?.Invoke());
+                enterBehaviours = _behaviours[CurrentState].GetOnEnterBehaviour(
+                    _behaviourOnEnterParameters[CurrentState]?.Invoke());
             }
             ExecuteBehaviour(enterBehaviours);
             ExecuteBehaviour(enterBehaviours, true);
@@ -302,7 +314,7 @@
             int state;
             lock (_fsmLock)
             {
-                state = _currentState;
+                state = CurrentState;
             }
             if (!_behaviours.ContainsKey(state))
                 return;
@@ -363,7 +375,7 @@
             int state;
             lock (_fsmLock)
             {
-                state = _currentState;
+                state = CurrentState;
             }
             BehaviourActions currentStateBehaviours;
             lock (_fsmLock)
@@ -383,7 +395,7 @@
             int state;
             lock (_fsmLock)
             {
-                state = _currentState;
+                state = CurrentState;
             }
             BehaviourActions currentStateBehaviours;
             lock (_fsmLock)
@@ -435,7 +447,7 @@
             int state;
             lock (_fsmLock)
             {
-                state = _currentState;
+                state = CurrentState;
             }
             if (!_behaviours.ContainsKey(state))
                 return;
@@ -454,7 +466,7 @@
             int state;
             lock (_fsmLock)
             {
-                state = _currentState;
+                state = CurrentState;
             }
             if (!_behaviours.ContainsKey(state))
                 return;

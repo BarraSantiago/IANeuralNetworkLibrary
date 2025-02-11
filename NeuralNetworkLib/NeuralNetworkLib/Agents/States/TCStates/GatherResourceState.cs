@@ -30,45 +30,31 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
+                if (gold >= resourceLimit)
+                {
+                    OnFlag?.Invoke(Flags.OnFull);
+                    return;
+                }
+                    
+                if (wood >= resourceLimit)
+                {
+                    OnFlag?.Invoke(Flags.OnFull);
+                    return;
+                }
+                
+                if(currentResource == ResourceType.Food && food >= resourceLimit)
+                {
+                    OnFlag?.Invoke(Flags.OnFull);
+                    return;
+                }
+                
                 if (food <= 0)
                 {
                     OnFlag?.Invoke(Flags.OnHunger);
                     return;
                 }
-
-
-                switch (currentResource)
-                {
-                    case ResourceType.Gold:
-                        if (gold >= resourceLimit)
-                        {
-                            OnFlag?.Invoke(Flags.OnFull);
-                            return;
-                        }
-                        break;
-                    
-                    case ResourceType.Wood:
-                        if (wood >= resourceLimit)
-                        {
-                            OnFlag?.Invoke(Flags.OnFull);
-                            return;
-                        }
-                        break;
-                    
-                    case ResourceType.Food:
-                        if (food >= resourceLimit)
-                        {
-                            OnFlag?.Invoke(Flags.OnFull);
-                            return;
-                        }
-                        break;
-                    
-                    default:
-                        throw new Exception("Gatherer: GatherResourceState, resource type not found");
-                }
-
-
-                if (targetNode.Resource <= 0)
+                
+                if (targetNode.Resource <= 0 || currentResource == ResourceType.None)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;

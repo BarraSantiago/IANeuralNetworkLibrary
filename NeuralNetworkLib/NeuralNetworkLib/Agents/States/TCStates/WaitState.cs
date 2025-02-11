@@ -73,7 +73,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             bool retreat = (bool)parameters[0];
             SimNode<IVector> currentNode = (SimNode<IVector>)parameters[1];
             Action OnWait = parameters[2] as Action;
-
+            int currentFood = Convert.ToInt32(parameters[3]);
+            const int minFood = 5;
 
             behaviours.AddMultiThreadableBehaviours(0, () => { OnWait?.Invoke(); });
 
@@ -85,13 +86,16 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                         currentNode.NodeTerrain != NodeTerrain.WatchTower)
                     {
                         OnFlag?.Invoke(Flags.OnRetreat);
-                    }   
+                    }
 
                     return;
                 }
 
-                OnFlag?.Invoke(Flags.OnGather);
-                return;
+                if (currentFood >= minFood)
+                {
+                    OnFlag?.Invoke(Flags.OnGather);
+                    return;
+                }
             });
 
             return behaviours;
@@ -133,7 +137,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
                     return;
                 }
-        
+
                 OnFlag?.Invoke(Flags.OnReturnResource);
                 return;
             });

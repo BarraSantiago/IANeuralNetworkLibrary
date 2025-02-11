@@ -5,7 +5,7 @@ using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.States.TCStates
 {
-    public class WalkState : State
+    public class GathererWalkState : State
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
@@ -81,7 +81,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         }
     }
 
-    public class CartWalkState : WalkState
+    public class CartGathererWalkState : GathererWalkState
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
@@ -144,7 +144,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         }
     }
 
-    public class BuilderWalkState : WalkState
+    public class BuilderGathererWalkState : GathererWalkState
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {

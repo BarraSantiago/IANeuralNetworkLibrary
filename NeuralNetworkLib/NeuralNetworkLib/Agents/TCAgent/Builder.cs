@@ -21,6 +21,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         TargetNode = DataContainer.GetNode(node);
             
         Fsm.ForceTransition(Behaviours.Walk);
+        CurrentState = Behaviours.Walk;
         onBuild += Build;
     }
 
@@ -35,7 +36,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 
     protected override void FsmBehaviours()
     {
-        Fsm.AddBehaviour<BuilderWalkState>(Behaviours.Walk, WalkTickParameters);
+        Fsm.AddBehaviour<BuilderGathererWalkState>(Behaviours.Walk, WalkTickParameters);
         Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
         Fsm.AddBehaviour<BuildState>(Behaviours.Build, BuildTickParameters);
     }

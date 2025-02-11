@@ -24,7 +24,7 @@ public struct CreationCost
 public class TownCenter
 {
     public SimNode<IVector> Position;
-    public List<TcAgent<IVector, ITransform<IVector>>> Agents;
+    public List<TcAgent<IVector, ITransform<IVector>>> Agents = new();
     public List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)> AgentsResources;
     public Action<int, TownCenter, AgentTypes> OnSpawnUnit;
 
@@ -44,8 +44,13 @@ public class TownCenter
     public int InitialBuilders = 1;
     public int InitialGatherer = 5;
     private int _gathererCount = 5;
-    private List<SimNode<IVector>> WatchTowerConstructions = new List<SimNode<IVector>>();
-    private List<SimNode<IVector>> WatchTowerPositions = new List<SimNode<IVector>>();
+    private int _builderCount = 1;
+    private int _cartCount = 1;
+    private const int maxGatherers = 12;
+    private const int maxBuilders = 6;
+    private const int maxCarts = 6;
+    private List<SimNode<IVector>> _watchTowerConstructions = new();
+    private List<SimNode<IVector>> _watchTowerPositions = new();
 
     private Dictionary<ResourceType, int> _gatherersPerResource = new()
     {
@@ -83,18 +88,20 @@ public class TownCenter
         position.NodeTerrain = NodeTerrain.TownCenter;
         Position = position;
         AgentsResources = new List<(TcAgent<IVector, ITransform<IVector>>, ResourceType)>();
-        WatchTowerConstructions = new List<SimNode<IVector>>();
-        WatchTowerPositions = new List<SimNode<IVector>>();
+        _watchTowerConstructions = new List<SimNode<IVector>>();
+        _watchTowerPositions = new List<SimNode<IVector>>();
         GetWatchTowerConstruction();
-        _gold = 0;
-        _wood = 0;
-        _food = 0;
+        _gold = 60;
+        _wood = 60;
+        _food = 60;
     }
 
     #region UnitSpawn
 
     public void ManageSpawning()
     {
+        if(_gathererCount >= maxGatherers && _builderCount >= maxBuilders && _cartCount >= maxCarts) return;
+        
         if (Gold < GathererCost.Gold || Wood < GathererCost.Wood || Food < GathererCost.Food) return;
 
         if (_gathererCount % 3 == 0 && !HasEnoughResources(BuilderCost.Sum(CartCost.Sum(GathererCost))))
@@ -102,20 +109,19 @@ public class TownCenter
             return;
         }
 
-        SpawnGatherer();
-        _gathererCount++;
+        if (_gathererCount < maxGatherers) SpawnGatherer();
 
         if (_gathererCount % 3 == 0)
         {
-            SpawnBuilder();
-            SpawnCart();
+            if(_builderCount < maxBuilders) SpawnBuilder();
+            if(_cartCount < maxCarts) SpawnCart();
         }
     }
 
-    // TODO Implement units spawning
     private void SpawnCart()
     {
         if (!HasEnoughResources(CartCost)) return;
+        _cartCount++;
         ReduceResources(CartCost);
         OnSpawnUnit?.Invoke(1, this, AgentTypes.Cart);
     }
@@ -123,6 +129,7 @@ public class TownCenter
     private void SpawnBuilder()
     {
         if (!HasEnoughResources(BuilderCost)) return;
+        _builderCount++;
         ReduceResources(BuilderCost);
         OnSpawnUnit?.Invoke(1, this, AgentTypes.Builder);
     }
@@ -130,6 +137,7 @@ public class TownCenter
     private void SpawnGatherer()
     {
         if (!HasEnoughResources(GathererCost)) return;
+        _gathererCount++;
         ReduceResources(GathererCost);
         OnSpawnUnit?.Invoke(1, this, AgentTypes.Gatherer);
     }
@@ -144,17 +152,17 @@ public class TownCenter
     public INode<IVector> GetWatchTowerConstruction()
     {
         const int maxTowerDistance = 5;
-        if (WatchTowerConstructions.Count > 0)
+        if (_watchTowerConstructions.Count > 0)
         {
-            switch (WatchTowerConstructions.First().NodeTerrain)
+            switch (_watchTowerConstructions.First().NodeTerrain)
             {
                 case NodeTerrain.Construction when
-                    WatchTowerConstructions.First().GetAdjacentNode() != null:
-                    IVector coord = WatchTowerConstructions.First().GetAdjacentNode();
+                    _watchTowerConstructions.First().GetAdjacentNode() != null:
+                    IVector coord = _watchTowerConstructions.First().GetAdjacentNode();
                     return DataContainer.GetNode(coord);
                 case NodeTerrain.WatchTower:
-                    WatchTowerPositions.Add(WatchTowerConstructions.First());
-                    WatchTowerConstructions.RemoveAt(0);
+                    _watchTowerPositions.Add(_watchTowerConstructions.First());
+                    _watchTowerConstructions.RemoveAt(0);
                     break;
             }
         }
@@ -180,7 +188,7 @@ public class TownCenter
 
                 bool isFarEnough = true;
 
-                foreach (SimNode<IVector>? watchTower in WatchTowerPositions)
+                foreach (SimNode<IVector>? watchTower in _watchTowerPositions)
                 {
                     if (IVector.Distance(node.GetCoordinate(), watchTower.GetCoordinate()) >
                         maxTowerDistance) continue;
@@ -191,7 +199,7 @@ public class TownCenter
                 if (isFarEnough)
                 {
                     DataContainer.Graph.NodesType[x, y].NodeTerrain = NodeTerrain.Construction;
-                    WatchTowerConstructions.Add(node);
+                    _watchTowerConstructions.Add(node);
                     return node;
                 }
             }

@@ -68,8 +68,8 @@ public class TcAgent<TVector, TTransform>
         }
     }
 
+    public Behaviours CurrentState;
     public TVector AcsVector;
-
     public int CurrentFood = 3;
     public int CurrentGold = 0;
     public int CurrentWood = 0;
@@ -79,13 +79,12 @@ public class TcAgent<TVector, TTransform>
     public TownCenter TownCenter;
     public SimNode<IVector> CurrentNode;
     public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
-
+    
     protected int speed = 6;
     protected Action OnMove;
     protected Action OnWait;
     protected int LastTimeEat = 0;
-    protected const int ResourceLimit = 15;
-    protected const int FoodLimit = 15;
+    protected int ResourceLimit = 15;
     protected int? PathNodeId;
     protected Stopwatch stopwatch;
     protected TTransform transform = new TTransform();
@@ -115,6 +114,7 @@ public class TcAgent<TVector, TTransform>
     public virtual void Init()
     {
         Fsm = new FSM<Behaviours, Flags>();
+        Fsm.OnStateChange += state => CurrentState = (Behaviours)Math.Clamp(state, 0, Enum.GetValues(typeof(Behaviours)).Length);
         stopwatch = new Stopwatch();
         Transform.position = TownCenter.Position.GetCoordinate();
         CurrentNode = TownCenter.Position;
@@ -140,7 +140,7 @@ public class TcAgent<TVector, TTransform>
     protected virtual void FsmBehaviours()
     {
         Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
-        Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
+        Fsm.AddBehaviour<GathererWalkState>(Behaviours.Walk, WalkTickParameters);
     }
 
     protected virtual void FsmTransitions()

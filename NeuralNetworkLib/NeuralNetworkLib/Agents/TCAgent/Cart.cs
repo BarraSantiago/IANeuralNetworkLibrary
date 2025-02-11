@@ -16,9 +16,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
         public override void Init()
         {
             AgentType = AgentTypes.Cart;
+            ResourceLimit = 30;
             base.Init();
             CurrentFood = 0;
-
+        
             Fsm.ForceTransition(Behaviours.GatherResources);
             onGather += Gather;
             onDeliver += DeliverResource;
@@ -29,7 +30,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void FsmBehaviours()
         {
             Fsm.AddBehaviour<CartWaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<CartWalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
+            Fsm.AddBehaviour<CartGathererWalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
             Fsm.AddBehaviour<GetResourcesState>(Behaviours.GatherResources, GatherTickParameters);
             Fsm.AddBehaviour<DeliverResourceState>(Behaviours.Deliver, DeliverTickParameters);
             Fsm.AddBehaviour<ReturnResourceState>(Behaviours.ReturnResources, ReturnTickParameters);
@@ -56,6 +57,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void GetResourcesTransitions()
         {
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk);
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnWait, Behaviours.Wait);
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
@@ -261,25 +263,60 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void Wait()
         {
             base.Wait();
-            
+
             if (Retreat) return;
 
-            (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource =
-                TownCenter.AgentsResources.First(agent => agent.Item2 == resourceCarrying);
-            if (agentResource.Item1 == null) return;
-            
+            if (TownCenter.AgentsResources.Count < 1) return;
+
             TargetNode = GetTarget();
+
             Fsm.ForceTransition(Behaviours.Walk);
         }
 
         private SimNode<IVector> GetTarget()
         {
-            (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.AgentsResources[0];
-            if(TownCenter.AgentsResources.Count < 1 || agentResource.Item1 == null || agentResource.Item2 == null) return TownCenter.Position;
-            TownCenter.AgentsResources.Remove(agentResource);
-            _target = agentResource.Item1;
-            resourceCarrying = agentResource.Item2;
-            return _target.CurrentNode;
+            lock (TownCenter.AgentsResources)
+            {
+                if (TownCenter.AgentsResources.Count < 1) return TownCenter.Position;
+
+                (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.AgentsResources[0];
+                if (agentResource.Item1 == null || agentResource.Item2 == null) return TownCenter.Position;
+                
+                switch (agentResource.Item2)
+                {
+                    case ResourceType.Gold:
+                        if (TownCenter.Gold <= 0)
+                        {
+                            TownCenter.AgentsResources.Remove(agentResource);
+                            TownCenter.AskForResources(agentResource.Item1, ResourceType.Gold);
+                            return TownCenter.Position;
+                        }
+                        break;
+                    case ResourceType.Wood:
+                        if (TownCenter.Wood <= 0)
+                        {
+                            TownCenter.AgentsResources.Remove(agentResource);
+                            TownCenter.AskForResources(agentResource.Item1, ResourceType.Wood);
+                            return TownCenter.Position;
+                        }
+                        break;
+                    case ResourceType.Food:
+                        if (TownCenter.Food <= 0)
+                        {
+                            TownCenter.AgentsResources.Remove(agentResource);
+                            TownCenter.AskForResources(agentResource.Item1, ResourceType.Food);
+                            return TownCenter.Position;
+                        }
+                        break;
+                    case ResourceType.None:
+                    default:
+                        break;
+                }
+
+                _target = agentResource.Item1;
+                resourceCarrying = agentResource.Item2;
+                return _target.CurrentNode;
+            }
         }
     }
 }

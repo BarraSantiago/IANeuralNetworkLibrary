@@ -50,7 +50,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
     protected override void FsmBehaviours()
     {
         Fsm.AddBehaviour<GathererWaitState>(Behaviours.Wait, WaitTickParameters);
-        Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters);
+        Fsm.AddBehaviour<GathererWalkState>(Behaviours.Walk, WalkTickParameters);
         Fsm.AddBehaviour<GatherResourceState>(Behaviours.GatherResources, GatherTickParameters, default,
             GatherExitParameters);
     }
@@ -133,7 +133,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
     protected override object[] WaitTickParameters()
     {
-        object[] objects = { Retreat, CurrentNode, OnWait };
+        object[] objects = { Retreat, CurrentNode, OnWait, CurrentFood };
         return objects;
     }
 
@@ -154,7 +154,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
     protected override void Wait()
     {
         base.Wait();
-        const int minFood = 3;
+        const int minFood = 5;
         if (CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
 
         if (CurrentGold > 0)
