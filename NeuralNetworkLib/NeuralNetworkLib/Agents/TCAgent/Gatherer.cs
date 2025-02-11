@@ -197,7 +197,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
     private void Gather()
     {
         if (CurrentFood <= 0 || TargetNode.Resource <= 0) return;
-
+        
+        // TODO fix target node becomes a stump
         switch (TargetNode.NodeTerrain)
         {
             case NodeTerrain.Mine:

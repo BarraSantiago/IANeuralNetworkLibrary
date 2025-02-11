@@ -35,28 +35,30 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     OnFlag?.Invoke(Flags.OnFull);
                     return;
                 }
-                    
+
                 if (wood >= resourceLimit)
                 {
                     OnFlag?.Invoke(Flags.OnFull);
                     return;
                 }
-                
-                if(currentResource == ResourceType.Food && food >= resourceLimit)
+
+                if (currentResource == ResourceType.Food && food >= resourceLimit)
                 {
                     OnFlag?.Invoke(Flags.OnFull);
                     return;
                 }
-                
+
+                if (targetNode.Resource <= 0 || targetNode.NodeTerrain != NodeTerrain.Tree ||
+                    targetNode.NodeTerrain != NodeTerrain.Mine || targetNode.NodeTerrain != NodeTerrain.Lake ||
+                    currentResource == ResourceType.None)
+                {
+                    OnFlag?.Invoke(Flags.OnTargetLost);
+                    return;
+                }
+
                 if (food <= 0)
                 {
                     OnFlag?.Invoke(Flags.OnHunger);
-                    return;
-                }
-                
-                if (targetNode.Resource <= 0 || currentResource == ResourceType.None)
-                {
-                    OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
                 }
             });
