@@ -99,12 +99,12 @@ namespace VoronoiWeightBalancing
         /// </summary>
         public void ComputeCells()
         {
-            foreach (var site in Sites)
+            foreach (Site site in Sites)
             {
                 // Start with the whole bounding polygon.
                 List<Point2D> cell = new List<Point2D>(BoundingPolygon);
 
-                foreach (var other in Sites)
+                foreach (Site other in Sites)
                 {
                     if (other == site) continue;
 
@@ -145,7 +145,7 @@ namespace VoronoiWeightBalancing
             Point2D prev = polygon[polygon.Count - 1];
             bool prevInside = (Point2D.Dot(prev - boundaryPoint, boundaryNormal) >= 0);
 
-            foreach (var curr in polygon)
+            foreach (Point2D curr in polygon)
             {
                 bool currInside = (Point2D.Dot(curr - boundaryPoint, boundaryNormal) >= 0);
 
@@ -189,10 +189,10 @@ namespace VoronoiWeightBalancing
         /// </summary>
         public void ComputeCellWeights()
         {
-            foreach (var site in Sites)
+            foreach (Site site in Sites)
             {
                 double total = 0.0;
-                foreach (var node in Nodes)
+                foreach (Node node in Nodes)
                 {
                     if (PointInPolygon(node.Position, site.CellPolygon))
                         total += node.Weight;
@@ -241,17 +241,17 @@ namespace VoronoiWeightBalancing
                 ComputeCellWeights();
 
                 // Update each site’s position.
-                foreach (var site in Sites)
+                foreach (Site site in Sites)
                 {
                     // Find all nodes that fall inside the cell.
-                    var nodesInCell = Nodes.Where(n => PointInPolygon(n.Position, site.CellPolygon)).ToList();
+                    List<Node> nodesInCell = Nodes.Where(n => PointInPolygon(n.Position, site.CellPolygon)).ToList();
                     if (nodesInCell.Count == 0)
                         continue; // No nodes in cell? Skip adjustment.
 
                     // Compute the weighted centroid.
                     double sumWeights = nodesInCell.Sum(n => n.Weight);
                     Point2D centroid = new Point2D(0, 0);
-                    foreach (var node in nodesInCell)
+                    foreach (Node node in nodesInCell)
                     {
                         centroid += node.Position * node.Weight;
                     }
@@ -315,7 +315,7 @@ namespace VoronoiWeightBalancing
             vd.ComputeCellWeights();
 
             Console.WriteLine("Initial cell weights:");
-            foreach (var site in sites)
+            foreach (Site site in sites)
             {
                 Console.WriteLine($"Site at {site.Position} has weight {site.CellWeight:F2}");
             }
@@ -324,7 +324,7 @@ namespace VoronoiWeightBalancing
             vd.BalanceWeights(iterations: 20, step: 0.2);
 
             Console.WriteLine("\nAfter weight balancing:");
-            foreach (var site in sites)
+            foreach (Site site in sites)
             {
                 Console.WriteLine($"Site at {site.Position} has weight {site.CellWeight:F2}");
             }
@@ -333,7 +333,7 @@ namespace VoronoiWeightBalancing
             for (int i = 0; i < sites.Count; i++)
             {
                 Console.WriteLine($"\nCell polygon for site {i} at {sites[i].Position}:");
-                foreach (var p in sites[i].CellPolygon)
+                foreach (Point2D p in sites[i].CellPolygon)
                 {
                     Console.WriteLine(p);
                 }

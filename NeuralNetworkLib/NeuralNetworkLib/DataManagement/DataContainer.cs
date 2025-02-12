@@ -254,7 +254,7 @@ public class DataContainer
         // Use squared distance to avoid sqrt calls.
         float minDistSq = float.MaxValue;
 
-        foreach (var agent in Animals.Values)
+        foreach (AnimalAgent<IVector, ITransform<IVector>>? agent in Animals.Values)
         {
             if (agent.agentType != entityType)
                 continue;

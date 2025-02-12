@@ -32,11 +32,11 @@ public class VoronoiDiagram<TPoint2D>
     /// </summary>
     public void ComputeCells()
     {
-        foreach (var site in Sites)
+        foreach (Site<TPoint2D>? site in Sites)
         {
             // Start with the full bounding polygon.
             List<TPoint2D> cell = new List<TPoint2D>(BoundingPolygon);
-            foreach (var other in Sites)
+            foreach (Site<TPoint2D>? other in Sites)
             {
                 if (other == site)
                     continue;
@@ -82,7 +82,7 @@ public class VoronoiDiagram<TPoint2D>
 
         TPoint2D prev = polygon[polygon.Count - 1];
         bool prevInside = (prev.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
-        foreach (var curr in polygon)
+        foreach (TPoint2D? curr in polygon)
         {
             bool currInside = (curr.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
             if (currInside)
@@ -148,10 +148,10 @@ public class VoronoiDiagram<TPoint2D>
     /// </summary>
     public void ComputeCellWeights()
     {
-        foreach (var site in Sites)
+        foreach (Site<TPoint2D>? site in Sites)
         {
             double total = 0.0;
-            foreach (var node in Nodes)
+            foreach (Node<TPoint2D>? node in Nodes)
             {
                 if (PointInPolygon(node.Position, site.CellPolygon))
                     total += node.Weight;
@@ -167,7 +167,7 @@ public class VoronoiDiagram<TPoint2D>
     /// </summary>
     public Site<TPoint2D> GetClosestPointOfInterest(TPoint2D agentPosition)
     {
-        foreach (var site in Sites)
+        foreach (Site<TPoint2D>? site in Sites)
         {
             if (PointInPolygon(agentPosition, site.CellPolygon))
                 return site;
@@ -199,7 +199,7 @@ public class VoronoiDiagram<TPoint2D>
             ComputeCellWeights();
 
             // Adjust the power weight for each site based on the difference.
-            foreach (var site in Sites)
+            foreach (Site<TPoint2D>? site in Sites)
             {
                 double diff = site.CellWeight - targetWeight;
                 // If cell weight is above target, increase PowerWeight to shrink the cell;

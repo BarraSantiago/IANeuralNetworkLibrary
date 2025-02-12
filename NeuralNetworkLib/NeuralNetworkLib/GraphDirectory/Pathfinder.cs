@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.GraphDirectory;
@@ -10,123 +11,95 @@ public abstract class Pathfinder<TNodeType, TCoordinateType, TCoordinate>
 {
     protected TNodeType[,] Graph;
 
-    /// <summary>
-    /// Finds a path from startNode to destinationNode using a multi-threaded A*-like approach
-    /// with a priority queue (min-heap). If the destination node is blocked, it will attempt to
-    /// find an alternative adjacent node (using GetAlternativeCoordinates) and route to that node.
-    /// </summary>
     public List<TNodeType> FindPath(TNodeType startNode, TNodeType destinationNode)
     {
+        // Fast check for blocked destination with optimized alternative search
         if (IsBlocked(destinationNode))
         {
-            ICollection<TCoordinateType> alternatives = GetAlternativeCoordinates(destinationNode.GetCoordinate());
-            bool alternativeFound = false;
-            foreach (var altCoord in alternatives)
+            foreach (TCoordinateType? altCoord in GetAlternativeCoordinates(destinationNode.GetCoordinate()))
             {
                 TNodeType candidate = Graph[(int)altCoord.X, (int)altCoord.Y];
                 if (!IsBlocked(candidate))
                 {
                     destinationNode = candidate;
-                    alternativeFound = true;
                     break;
                 }
             }
-            if (!alternativeFound)
-            {
-                return null;
-            }
+            if (IsBlocked(destinationNode)) return null;
         }
 
-        ConcurrentDictionary<TNodeType, int> gCost = new ConcurrentDictionary<TNodeType, int>();
-        ConcurrentDictionary<TNodeType, TNodeType> cameFrom = new ConcurrentDictionary<TNodeType, TNodeType>();
+        FastPriorityQueue<TNodeType> openSet = new FastPriorityQueue<TNodeType>();
+        Dictionary<TNodeType, int> gScore = new Dictionary<TNodeType, int>();
+        Dictionary<TNodeType, TNodeType> cameFrom = new Dictionary<TNodeType, TNodeType>();
+        HashSet<TNodeType> closedSet = new HashSet<TNodeType>();
 
-        int HeuristicCost(TNodeType from, TNodeType to)
+        // Precompute destination coordinates
+        TCoordinate destCoord = new TCoordinate();
+        destCoord.SetCoordinate(destinationNode.GetCoordinate());
+
+        openSet.Enqueue(startNode, 0);
+        gScore[startNode] = startNode.GetCost();
+
+        while (openSet.Count > 0)
         {
-            TCoordinate fromCoord = new TCoordinate();
-            fromCoord.SetCoordinate(from.GetCoordinate());
-
-            TCoordinate toCoord = new TCoordinate();
-            toCoord.SetCoordinate(to.GetCoordinate());
-
-            return Distance(fromCoord, toCoord);
-        }
-
-        foreach (TNodeType node in Graph)
-        {
-            gCost[node] = int.MaxValue;
-        }
-        
-        gCost[startNode] = startNode.GetCost();
-
-        PriorityQueue<TNodeType, int> openQueue = new PriorityQueue<TNodeType, int>();
-        openQueue.Enqueue(startNode, gCost[startNode] + HeuristicCost(startNode, destinationNode));
-
-        ConcurrentDictionary<TNodeType, bool> closedSet = new ConcurrentDictionary<TNodeType, bool>();
-
-        while (openQueue.Count > 0)
-        {
-            TNodeType current = openQueue.Dequeue();
+            TNodeType current = openSet.Dequeue();
 
             if (NodesEquals(current, destinationNode))
             {
-                return ReconstructPath(cameFrom, startNode, destinationNode);
+                return ReconstructPath(cameFrom, current);
             }
 
-            if (!closedSet.TryAdd(current, true))
+            if (!closedSet.Add(current)) continue;
+
+            foreach (TCoordinateType? neighborCoord in GetNeighbors(current))
             {
-                continue;
-            }
+                TNodeType neighbor = Graph[(int)neighborCoord.X, (int)neighborCoord.Y];
+                if (closedSet.Contains(neighbor)) continue;
 
-            ICollection<TCoordinateType> neighbors = GetNeighbors(current);
-            Parallel.ForEach(neighbors, neighbor =>
-            {
-                TNodeType neighborNode = Graph[(int)neighbor.X, (int)neighbor.Y];
+                int tentativeG = gScore[current] + MoveToNeighborCost(current, neighbor);
 
-                if (closedSet.ContainsKey(neighborNode))
-                    return;
+                if (tentativeG >= (gScore.TryGetValue(neighbor, out int existingG) ? existingG : int.MaxValue))
+                    continue;
 
-                int tentative_g = gCost[current] + MoveToNeighborCost(current, neighborNode);
+                cameFrom[neighbor] = current;
+                gScore[neighbor] = tentativeG;
 
-                if (tentative_g < gCost[neighborNode])
+                int fCost = tentativeG + Heuristic(neighbor.GetCoordinate(), destCoord);
+                if (!openSet.Contains(neighbor))
                 {
-                    gCost[neighborNode] = tentative_g;
-                    cameFrom[neighborNode] = current;
-
-                    int fCost = tentative_g + HeuristicCost(neighborNode, destinationNode);
-                    lock (openQueue)
-                    {
-                        openQueue.Enqueue(neighborNode, fCost);
-                    }
+                    openSet.Enqueue(neighbor, fCost);
                 }
-            });
+                else
+                {
+                    openSet.UpdatePriority(neighbor, fCost);
+                }
+            }
         }
 
         return null;
     }
 
-    /// <summary>
-    /// Reconstructs the path from start to goal using the cameFrom data.
-    /// </summary>
-    private List<TNodeType> ReconstructPath(
-        ConcurrentDictionary<TNodeType, TNodeType> cameFrom,
-        TNodeType start,
-        TNodeType goal)
+// Optimized supporting methods
+    private List<TNodeType> ReconstructPath(Dictionary<TNodeType, TNodeType> cameFrom, TNodeType current)
     {
         List<TNodeType> path = new List<TNodeType>();
-        TNodeType current = goal;
-
-        while (!NodesEquals(current, start))
+        while (cameFrom.TryGetValue(current, out TNodeType? parent))
         {
             path.Add(current);
-            if (!cameFrom.TryGetValue(current, out TNodeType parent))
-            {
-                break;
-            }
             current = parent;
         }
-        path.Add(start);
+
+        path.Add(current);
         path.Reverse();
         return path;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int Heuristic(TCoordinateType aCoord, TCoordinate b)
+    {
+        TCoordinate a = new TCoordinate();
+        a.SetCoordinate(aCoord);
+        return Distance(a, b);
     }
 
     /// <summary>

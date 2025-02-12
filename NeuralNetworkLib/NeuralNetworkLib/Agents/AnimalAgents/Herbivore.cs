@@ -133,7 +133,7 @@ public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
         IVector position = CurrentNode.GetCoordinate();
         Point2D wrongPoint = new Point2D(-1, -1);
         
-        var target = StumpVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y));
+        Site<Point2D>? target = StumpVoronoi.GetClosestPointOfInterest(new Point2D(position.X, position.Y));
 
         if (target == null) return null;
         

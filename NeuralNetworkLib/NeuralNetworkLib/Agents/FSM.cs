@@ -1,4 +1,6 @@
-﻿namespace NeuralNetworkLib.Agents
+﻿using System.Collections.Concurrent;
+
+namespace NeuralNetworkLib.Agents
 {
     public class FSM<EnumState, EnumFlag>
         where EnumState : Enum
@@ -214,7 +216,7 @@
             {
                 currentState = CurrentState;
             }
-            var transition = _transitions[currentState, flagInt];
+            (int destinationInState, Action onTransition) transition = _transitions[currentState, flagInt];
             if (transition.destinationInState == UNNASIGNED_TRANSITION)
                 return;
 
@@ -373,7 +375,7 @@
         public void ExecuteMainThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)
         {
             if (behaviourActions.MainThreadBehaviour != null &&
-                behaviourActions.MainThreadBehaviour.TryGetValue(executionOrder, out var actions))
+                behaviourActions.MainThreadBehaviour.TryGetValue(executionOrder, out List<Action>? actions))
             {
                 foreach (Action action in actions)
                 {
@@ -425,11 +427,11 @@
 
         public void ExecuteMultiThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)
         {
-            var multiThreadables = behaviourActions.MultiThreadablesBehaviour;
+            ConcurrentDictionary<int, ConcurrentBag<Action>>? multiThreadables = behaviourActions.MultiThreadablesBehaviour;
             if (multiThreadables == null)
                 return;
     
-            if (!multiThreadables.TryGetValue(executionOrder, out var actions))
+            if (!multiThreadables.TryGetValue(executionOrder, out ConcurrentBag<Action>? actions))
                 return;
     
             int count = actions.Count;

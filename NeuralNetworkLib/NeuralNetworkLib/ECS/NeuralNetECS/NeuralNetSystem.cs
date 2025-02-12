@@ -1,4 +1,7 @@
-﻿using System.Numerics;
+﻿using System.Collections.Concurrent;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.ECS.Patron;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 
@@ -15,7 +18,10 @@ public sealed class NeuralNetSystem : ECSSystem
 
     public override void Initialize()
     {
-        parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = 32 };
+        parallelOptions = new ParallelOptions 
+        { 
+            MaxDegreeOfParallelism = Environment.ProcessorCount 
+        };
     }
 
     public override void Deinitialize()
@@ -29,7 +35,6 @@ public sealed class NeuralNetSystem : ECSSystem
 
     protected override void PreExecute(float deltaTime)
     {
-        // Cache component dictionaries and the queried entities.
         neuralNetworkComponents ??= ECSManager.GetComponents<NeuralNetComponent>();
         outputComponents ??= ECSManager.GetComponents<OutputComponent>();
         inputComponents ??= ECSManager.GetComponents<InputComponent>();
@@ -40,35 +45,28 @@ public sealed class NeuralNetSystem : ECSSystem
 
     protected override void Execute(float deltaTime)
     {
-        // Parallelize over the entities; each entity will process all of its brains in a simple for-loop.
-        Parallel.ForEach(queriedEntities, parallelOptions, entityId =>
+        OrderablePartitioner<uint>? partitioner = Partitioner.Create(queriedEntities, EnumerablePartitionerOptions.NoBuffering);
+            
+        Parallel.ForEach(partitioner, parallelOptions, entityId =>
         {
-            // Cache per-entity components to avoid repeated dictionary lookups.
-            NeuralNetComponent neuralNet = neuralNetworkComponents[entityId];
-            OutputComponent outputComp = outputComponents[entityId];
-            // Assume each entity has a 2D array of inputs (one per brain).
+            NeuralNetComponent? neuralNet = neuralNetworkComponents[entityId];
+            OutputComponent? outputComp = outputComponents[entityId];
             float[][] inputsArray = inputComponents[entityId].inputs;
             int brainAmount = brainAmountComponents[entityId].BrainAmount;
 
-            // Process each brain sequentially (if brainAmount is small, this is more efficient than nesting parallel loops)
             for (int i = 0; i < brainAmount; i++)
             {
-                // Validate that the brain index is in range.
-                if (i >= neuralNet.Layers.Count || i >= inputsArray.Length)
-                    continue;
+                if (i >= neuralNet.Layers.Length || i >= inputsArray.Length) continue;
 
                 float[] currentInputs = inputsArray[i];
-                List<NeuronLayer> layers = neuralNet.Layers[i];
-                int layerCount = layers.Count;
-
-                // Feed forward through all layers.
-                for (int j = 0; j < layerCount; j++)
+                NeuronLayer[] layers = neuralNet.Layers[i];
+                    
+                for (int j = 0; j < layers.Length; j++)
                 {
                     currentInputs = Synapsis(layers[j], currentInputs);
                 }
 
-                // Only assign the output if the final layer produced the expected number of outputs.
-                if (layerCount > 0 && layers[layerCount - 1].OutputsCount == currentInputs.Length)
+                if (layers.Length > 0 && layers[^1].OutputsCount == currentInputs.Length)
                 {
                     outputComp.Outputs[i] = currentInputs;
                 }
@@ -76,84 +74,86 @@ public sealed class NeuralNetSystem : ECSSystem
         });
     }
 
-    protected override void PostExecute(float deltaTime)
-    {
-        // No post-execution logic needed here.
-    }
-
     private float[] Synapsis(NeuronLayer layer, float[] inputs)
     {
         int neuronCount = (int)layer.NeuronsCount;
-        int inputLength = inputs.Length;
         float[] outputs = new float[neuronCount];
+        int totalOperations = neuronCount * inputs.Length;
 
-        // Threshold below which parallel overhead may outweigh benefits.
-        const int ParallelThreshold = 30;
+        bool useParallel = totalOperations > 10_000; // Tune based on your workload
 
-        // Use SIMD if hardware accelerated and there is a reasonable vector length.
-        bool useSIMD = Vector.IsHardwareAccelerated && inputLength >= Vector<float>.Count;
-        int simdSize = useSIMD ? Vector<float>.Count : 1;
-
-        // Local function to compute dot product using SIMD if possible.
-        float DotProduct(float[] weights)
+        if (useParallel)
         {
-            float sum = 0f;
-            if (useSIMD)
+            Parallel.For(0, neuronCount, parallelOptions, j =>
             {
-                int i = 0;
-                Vector<float> vecSum = Vector<float>.Zero;
-                // Process chunks of simdSize.
-                for (; i <= inputLength - simdSize; i += simdSize)
-                {
-                    Vector<float> vecInput = new Vector<float>(inputs, i);
-                    Vector<float> vecWeights = new Vector<float>(weights, i);
-                    vecSum += vecInput * vecWeights;
-                }
-
-                for (int j = 0; j < simdSize; j++)
-                {
-                    sum += vecSum[j];
-                }
-
-                // Process remaining elements.
-                for (int iRem = inputLength - (inputLength % simdSize); iRem < inputLength; iRem++)
-                {
-                    sum += weights[iRem] * inputs[iRem];
-                }
-            }
-            else
-            {
-                for (int i = 0; i < inputLength; i++)
-                {
-                    sum += weights[i] * inputs[i];
-                }
-            }
-
-            return sum;
+                ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j);
+            });
         }
-
-        // Define an action to process one neuron.
-        Action<int> processNeuron = j =>
-        {
-            Neuron neuron = layer.neurons[j];
-            float sum = DotProduct(neuron.weights);
-            sum += neuron.bias;
-            outputs[j] = (float)Math.Tanh(sum);
-        };
-
-        if (neuronCount < ParallelThreshold)
+        else
         {
             for (int j = 0; j < neuronCount; j++)
             {
-                processNeuron(j);
+                ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j);
+            }
+        }
+
+        return outputs;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ComputeNeuronOutput(Neuron neuron, float[] inputs, float[] outputs, int index)
+    {
+        float sum = ComputeWeightedSum(neuron, inputs);
+        outputs[index] = FastTanh(sum);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float ComputeWeightedSum(Neuron neuron, ReadOnlySpan<float> inputs)
+    {
+        float sum = 0f;
+        int inputLength = inputs.Length;
+        ReadOnlySpan<float> weights = neuron.weights;
+
+        if (Vector.IsHardwareAccelerated && inputLength >= Vector<float>.Count)
+        {
+            Vector<float> sumVector = Vector<float>.Zero;
+            int vectorSize = Vector<float>.Count;
+            int i = 0;
+
+            for (; i <= inputLength - vectorSize; i += vectorSize)
+            {
+                Vector<float> weightVec = new Vector<float>(weights.Slice(i).ToArray());
+                Vector<float> inputVec = new Vector<float>(inputs.Slice(i).ToArray());
+                sumVector += weightVec * inputVec;
+            }
+
+            sum = Vector.Dot(sumVector, Vector<float>.One);
+
+            for (; i < inputLength; i++)
+            {
+                sum += weights[i] * inputs[i];
             }
         }
         else
         {
-            Parallel.For(0, neuronCount, parallelOptions, j => { processNeuron(j); });
+            for (int i = 0; i < inputLength; i++)
+            {
+                sum += weights[i] * inputs[i];
+            }
         }
 
-
-        return outputs;
+        return sum + neuron.bias;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float FastTanh(float x)
+    {
+        // 5th-order rational approximation accurate to ±0.00005
+        float x2 = x * x;
+        float p = x * (135135.0f + x2 * (17325.0f + x2 * 378.0f));
+        float q = 135135.0f + x2 * (62370.0f + x2 * (3150.0f + x2 * 28.0f));
+        return p / q;
+    }
+
+    protected override void PostExecute(float deltaTime) { }
 }

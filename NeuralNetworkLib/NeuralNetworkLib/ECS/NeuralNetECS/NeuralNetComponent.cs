@@ -7,6 +7,6 @@ namespace NeuralNetworkLib.ECS.NeuralNetECS
     {
         public float[] Fitness;
         public float[] FitnessMod;
-        public List<List<NeuronLayer>> Layers { get; set; } = new List<List<NeuronLayer>>();
+        public NeuronLayer[][] Layers { get; set; }
     }
 }
