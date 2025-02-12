@@ -223,6 +223,7 @@ public class DataContainer
         {
             return null;
         }
+
         return Graph.NodesType[x, y];
     }
 
@@ -232,6 +233,7 @@ public class DataContainer
         {
             return null;
         }
+
         return Graph.NodesType[(int)point.X, (int)point.Y];
     }
 
@@ -241,67 +243,37 @@ public class DataContainer
         {
             return null;
         }
+
         return Graph.NodesType[(int)point.X, (int)point.Y];
     }
 
-    public static INode<IVector> GetNearestNode(NodeType nodeType, IVector position)
-    {
-        INode<IVector> nearestNode = null;
-        float minDistance = float.MaxValue;
 
-        foreach (SimNode<IVector> node in Graph.NodesType)
-        {
-            if (node.NodeType != nodeType) continue;
-
-            float distance = IVector.Distance(position, node.GetCoordinate());
-
-            if (minDistance < distance) continue;
-
-            minDistance = distance;
-
-            nearestNode = node;
-        }
-
-        return nearestNode;
-    }
-
-    public static INode<IVector> GetNearestNode(NodeTerrain nodeTerrain, IVector position)
-    {
-        INode<IVector> nearestNode = null;
-        float minDistance = float.MaxValue;
-
-        foreach (SimNode<IVector> node in Graph.NodesType)
-        {
-            if (node.NodeTerrain != nodeTerrain) continue;
-
-            float distance = IVector.Distance(position, node.GetCoordinate());
-
-            if (minDistance < distance) continue;
-
-            minDistance = distance;
-
-            nearestNode = node;
-        }
-
-        return nearestNode;
-    }
-
-    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(AgentTypes entityType,
-        IVector position)
+    public static AnimalAgent<IVector, ITransform<IVector>> GetNearestEntity(AgentTypes entityType, IVector position)
     {
         AnimalAgent<IVector, ITransform<IVector>> nearestAgent = null;
-        float minDistance = float.MaxValue;
+        // Use squared distance to avoid sqrt calls.
+        float minDistSq = float.MaxValue;
 
-        foreach (AnimalAgent<IVector, ITransform<IVector>> agent in Animals.Values)
+        foreach (var agent in Animals.Values)
         {
-            if (agent.agentType != entityType) continue;
+            if (agent.agentType != entityType)
+                continue;
 
-            float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());
+            // Get the agent’s current coordinate once.
+            IVector agentPos = agent.CurrentNode.GetCoordinate();
+            float dx = position.X - agentPos.X;
+            float dy = position.Y - agentPos.Y;
+            float distSq = dx * dx + dy * dy;
 
-            if (minDistance < distance) continue;
-
-            minDistance = distance;
-            nearestAgent = agent;
+            // If this agent is closer, update our best candidate.
+            if (distSq < minDistSq)
+            {
+                minDistSq = distSq;
+                nearestAgent = agent;
+                // Optionally, if distSq is 0 we can break early.
+                if (minDistSq == 0)
+                    break;
+            }
         }
 
         return nearestAgent;
@@ -309,36 +281,58 @@ public class DataContainer
 
     public static (uint, bool) GetNearestPrey(IVector position)
     {
-        uint nearestAgent = 0;
+        uint nearestAgentId = 0;
         bool isAnimal = true;
-        float minDistance = float.MaxValue;
+        float minDistSq = float.MaxValue;
 
-        foreach (KeyValuePair<uint, AnimalAgent<IVector, ITransform<IVector>>> prey in Animals)
+        // First search among herbivores in the Animals collection.
+        foreach (KeyValuePair<uint, AnimalAgent<IVector, ITransform<IVector>>> kvp in Animals)
         {
-            AnimalAgent<IVector, ITransform<IVector>>? agent = prey.Value;
-            if (agent.agentType != AgentTypes.Herbivore) continue;
+            AnimalAgent<IVector, ITransform<IVector>> agent = kvp.Value;
+            // Only consider herbivores.
+            if (agent.agentType != AgentTypes.Herbivore)
+                continue;
 
-            float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());
+            IVector agentPos = agent.CurrentNode.GetCoordinate();
+            float dx = position.X - agentPos.X;
+            float dy = position.Y - agentPos.Y;
+            float distSq = dx * dx + dy * dy;
 
-            if (distance > minDistance) continue;
-            minDistance = distance;
-            nearestAgent = prey.Key;
+            if (distSq < minDistSq)
+            {
+                minDistSq = distSq;
+                nearestAgentId = kvp.Key;
+                isAnimal = true;
+                if (minDistSq == 0)
+                    break;
+            }
         }
 
-        foreach (KeyValuePair<uint, TcAgent<IVector, ITransform<IVector>>> prey in TcAgents)
+        // Then search among the TcAgents.
+        foreach (KeyValuePair<uint, TcAgent<IVector, ITransform<IVector>>> kvp in TcAgents)
         {
-            TcAgent<IVector, ITransform<IVector>>? agent = prey.Value;
-            if (agent.AgentType != AgentTypes.Cart && agent.CurrentFood > 0) continue;
+            TcAgent<IVector, ITransform<IVector>> agent = kvp.Value;
+            // Only consider agents of type Cart that have some food.
+            // (Assuming that “CurrentFood > 0” is required.)
+            if (agent.AgentType != AgentTypes.Cart || agent.CurrentFood <= 0)
+                continue;
 
-            float distance = IVector.Distance(position, agent.CurrentNode.GetCoordinate());
+            IVector agentPos = agent.CurrentNode.GetCoordinate();
+            float dx = position.X - agentPos.X;
+            float dy = position.Y - agentPos.Y;
+            float distSq = dx * dx + dy * dy;
 
-            if (distance > minDistance) continue;
-            minDistance = distance;
-            isAnimal = false;
-            nearestAgent = prey.Key;
+            if (distSq < minDistSq)
+            {
+                minDistSq = distSq;
+                nearestAgentId = kvp.Key;
+                isAnimal = false;
+                if (minDistSq == 0)
+                    break;
+            }
         }
 
-        return (nearestAgent, isAnimal);
+        return (nearestAgentId, isAnimal);
     }
 
     public static IVector GetPosition(uint id, bool isAnimal)

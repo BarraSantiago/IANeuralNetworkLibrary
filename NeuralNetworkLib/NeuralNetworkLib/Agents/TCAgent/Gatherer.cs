@@ -10,9 +10,6 @@ using Voronoi = VoronoiDiagram<Point2D>;
 
 public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 {
-    public static Action OnEmptyMine;
-    public static Action OnEmptyLake;
-    public static Action OnEmptyTree;
     public ResourceType ResourceGathering = ResourceType.Gold;
 
     protected const int GoldPerFood = 3;
@@ -196,86 +193,61 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
     private void Gather()
     {
-        if (CurrentFood <= 0 || TargetNode.Resource <= 0) return;
-        
-        // TODO fix target node becomes a stump
+        if (CurrentFood <= 0 || TargetNode.Resource <= 0 || TargetNode.NodeTerrain != NodeTerrain.Tree ||
+            TargetNode.NodeTerrain != NodeTerrain.Mine || TargetNode.NodeTerrain != NodeTerrain.Lake) return;
+
         switch (TargetNode.NodeTerrain)
         {
             case NodeTerrain.Mine:
-                GatherGold();
+                GatherResource(ResourceType.Gold);
                 break;
             case NodeTerrain.Tree:
-                GatherWood();
+                GatherResource(ResourceType.Wood);
                 break;
             case NodeTerrain.Lake:
-                GatherFood();
+                GatherResource(ResourceType.Food);
                 break;
             default:
                 throw new Exception("Gatherer: Gather, resource type not found");
         }
     }
 
-    private void GatherFood()
+    private void GatherResource(ResourceType resourceType)
     {
         if (stopwatch.Elapsed.TotalSeconds < 1) return;
 
-        CurrentFood++;
         LastTimeEat++;
+        int foodCost = 3;
+        if (TargetNode.Resource > 0) TargetNode.Resource--;
 
         lock (TargetNode)
         {
-            TargetNode.Resource--;
+            switch (resourceType)
+            {
+                case ResourceType.Gold:
+                    foodCost = GoldPerFood;
+                    CurrentGold++;
+                    break;
+                
+                case ResourceType.Wood:
+                    foodCost = WoodPerFood;
+                    CurrentWood++;
+                    break;
+                
+                case ResourceType.Food:
+                    foodCost = FoodPerFood;
+                    CurrentFood++;
+                    break;
+                
+                case ResourceType.None:
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(resourceType), resourceType, null);
+            }
         }
 
         stopwatch.Restart();
 
-        if (TargetNode.Resource <= 0) OnEmptyLake?.Invoke();
-
-        if (LastTimeEat < FoodPerFood) return;
-
-        CurrentFood--;
-        LastTimeEat = 0;
-    }
-
-    private void GatherWood()
-    {
-        if (stopwatch.Elapsed.TotalSeconds < 1) return;
-
-        CurrentWood++;
-        LastTimeEat++;
-
-        lock (TargetNode)
-        {
-            TargetNode.Resource--;
-        }
-
-        stopwatch.Restart();
-
-        if (TargetNode.Resource <= 0) OnEmptyTree?.Invoke();
-
-        if (LastTimeEat < WoodPerFood) return;
-
-        CurrentFood--;
-        LastTimeEat = 0;
-    }
-
-    private void GatherGold()
-    {
-        if (stopwatch.Elapsed.TotalSeconds < 1) return;
-
-        CurrentGold++;
-        LastTimeEat++;
-
-        lock (TargetNode)
-        {
-            TargetNode.Resource--;
-        }
-
-        stopwatch.Restart();
-
-        if (TargetNode.Resource <= 0) OnEmptyMine?.Invoke();
-
-        if (LastTimeEat < GoldPerFood) return;
+        if (LastTimeEat < foodCost) return;
 
         CurrentFood--;
         LastTimeEat = 0;

@@ -83,8 +83,18 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             this.agentType = agentType;
         }
 
+        Sim2DGraph graph = DataContainer.Graph;
+        float minX;
+        float maxX;
+        float minY;
+        float maxY;
+
         public virtual void Init()
         {
+            minX = graph.MinX;
+            maxX = graph.MaxX;
+            minY = graph.MinY;
+            maxY = graph.MaxY;
             Food = 0;
             Fsm = new FSM<Behaviours, Flags>();
             output = new float[brainTypes.Count][];
@@ -227,51 +237,51 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         protected virtual void Move()
         {
-            int brain = GetBrainTypeKeyByValue(BrainType.Movement);
+            // Cache the movement brain index. (Consider caching this in a readonly field if it never changes.)
+            int movementBrainIndex = GetBrainTypeKeyByValue(BrainType.Movement);
 
-            double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-            if (speed*elapsedSeconds < 1) return;
+            // Use a local copy of elapsed time in seconds.
+            float elapsed = (float)stopwatch.Elapsed.TotalSeconds;
 
-            IVector currentPos = new MyVector(CurrentNode.GetCoordinate().X, CurrentNode.GetCoordinate().Y);
-            currentPos = CalculateNewPosition(currentPos, output[brain], (float)elapsedSeconds);
+            // Only move if enough time has elapsed to cover at least one unit distance.
+            if (speed * elapsed < 1f)
+                return;
+            
+            // Get current node coordinate once and work on a local vector.
+            IVector currentCoord = CurrentNode.GetCoordinate();
+            // Assuming MyVector is a lightweight struct; if not, consider using your vector type directly.
+            MyVector currentPos = new MyVector(currentCoord.X, currentCoord.Y);
 
-            if (!DataContainer.Graph.IsWithinGraphBorders(currentPos))
+            // Inline calculation of the new position.
+            float[] brainOutput = output[movementBrainIndex];
+            if (brainOutput.Length < 2)
+                return;
+
+            currentPos.X += speed * elapsed * brainOutput[0];
+            currentPos.Y += speed * elapsed * brainOutput[1];
+
+            // Ensure the new position is within graph borders.
+            if (currentPos.X < minX)
+                currentPos.X = maxX - 1;
+            else if (currentPos.X >= maxX)
+                currentPos.X = minX + 1;
+
+            if (currentPos.Y < minY)
+                currentPos.Y = maxY - 1;
+            else if (currentPos.Y >= maxY)
+                currentPos.Y = minY + 1;
+
+            // Get the new node from the graph.
+            INode<IVector> newPosNode = DataContainer.GetNode(currentPos);
+            if (newPosNode != null)
             {
-                if (currentPos.X <= DataContainer.Graph.MinX)
-                {
-                    currentPos.X = DataContainer.Graph.MaxX - 1;
-                }
-
-                if (currentPos.X >= DataContainer.Graph.MaxX)
-                {
-                    currentPos.X = DataContainer.Graph.MinX + 1;
-                }
-
-                if (currentPos.Y <= DataContainer.Graph.MinY)
-                {
-                    currentPos.Y = DataContainer.Graph.MaxY - 1;
-                }
-
-                if (currentPos.Y >= DataContainer.Graph.MaxY)
-                {
-                    currentPos.Y = DataContainer.Graph.MinY + 1;
-                }
+                // Retrieve the coordinate once.
+                IVector newCoord = newPosNode.GetCoordinate();
+                SetPosition(newCoord);
             }
 
-            INode<IVector> newPos = DataContainer.GetNode(currentPos);
-            if (newPos != null) SetPosition(newPos.GetCoordinate());
-
+            // Restart the stopwatch for the next movement interval.
             stopwatch.Restart();
-        }
-
-        private IVector CalculateNewPosition(IVector targetPos, float[] brainOutput, float time)
-        {
-            if (brainOutput.Length < 2) return default;
-
-            targetPos.X += speed * time * brainOutput[0];
-            targetPos.Y += speed * time * brainOutput[1];
-
-            return targetPos;
         }
 
         protected int GetInputCount(BrainType brainType)
