@@ -370,6 +370,21 @@
             behaviourActions.TransitionBehaviour?.Invoke();
         }
 
+        public void ExecuteMainThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)
+        {
+            if (behaviourActions.MainThreadBehaviour != null &&
+                behaviourActions.MainThreadBehaviour.TryGetValue(executionOrder, out var actions))
+            {
+                foreach (Action action in actions)
+                {
+                    action.Invoke();
+                }
+
+                // Remove the executed actions so they can be garbage collected.
+                behaviourActions.MainThreadBehaviour.Remove(executionOrder);
+            }
+        }
+
         public int GetMainThreadCount()
         {
             int state;
@@ -408,40 +423,45 @@
                 : currentStateBehaviours.MultiThreadablesBehaviour.Count;
         }
 
-        public void ExecuteMainThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)
-        {
-            if (behaviourActions.MainThreadBehaviour != null)
-            {
-                if (behaviourActions.MainThreadBehaviour.ContainsKey(executionOrder))
-                {
-                    foreach (Action action in behaviourActions.MainThreadBehaviour[executionOrder])
-                    {
-                        action.Invoke();
-                    }
-
-                    behaviourActions.MainThreadBehaviour.Remove(executionOrder);
-                }
-            }
-        }
-
         public void ExecuteMultiThreadBehaviours(BehaviourActions behaviourActions, int executionOrder)
         {
-            if (behaviourActions.MultiThreadablesBehaviour == null)
+            var multiThreadables = behaviourActions.MultiThreadablesBehaviour;
+            if (multiThreadables == null)
                 return;
-            if (!behaviourActions.MultiThreadablesBehaviour.ContainsKey(executionOrder))
+    
+            if (!multiThreadables.TryGetValue(executionOrder, out var actions))
                 return;
-
-            Parallel.ForEach(behaviourActions.MultiThreadablesBehaviour, parallelOptions, behaviour =>
+    
+            int count = actions.Count;
+            if (count == 0)
             {
-                foreach (Action action in behaviour.Value)
+                multiThreadables.TryRemove(executionOrder, out _);
+                return;
+            }
+    
+            // If only one action, use TryPeek to avoid array allocation.
+            if (count == 1)
+            {
+                if (actions.TryPeek(out Action? singleAction))
                 {
-                    action.Invoke();
+                    singleAction?.Invoke();
                 }
-            });
-
-            behaviourActions.MultiThreadablesBehaviour.TryRemove(executionOrder, out _);
+            }
+            else
+            {
+                // For multiple actions, convert to an array and use Parallel.For.
+                Action[] actionsArray = actions.ToArray();
+                Parallel.For(0, actionsArray.Length, parallelOptions, i =>
+                {
+                    actionsArray[i]?.Invoke();
+                });
+            }
+    
+            // Remove the executed actions to free references.
+            multiThreadables.TryRemove(executionOrder, out _);
         }
 
+        
         public void MultiThreadTick(int executionOrder)
         {
             int state;
