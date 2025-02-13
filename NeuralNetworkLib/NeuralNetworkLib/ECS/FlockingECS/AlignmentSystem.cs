@@ -9,6 +9,7 @@ public class AlignmentSystem : ECSSystem
     private IDictionary<uint, TransformComponent> transformComponents = null;
     private IDictionary<uint, ACSComponent> ACSComponents = null;
     private IEnumerable<uint> queriedEntities = null;
+    private List<(TransformComponent transform, ACSComponent acs)> entityData;
 
     public override void Initialize()
     {
@@ -25,22 +26,21 @@ public class AlignmentSystem : ECSSystem
         queriedEntities ??= ECSManager.GetEntitiesWithComponentTypes(typeof(ACSComponent), typeof(TransformComponent));
         transformComponents ??= ECSManager.GetComponents<TransformComponent>();
         ACSComponents ??= ECSManager.GetComponents<ACSComponent>();
+        entityData = queriedEntities.Select(id => (transformComponents[id], ACSComponents[id])).ToList();
     }
 
     protected override void Execute(float deltaTime)
     {
-        Parallel.ForEach(queriedEntities, parallelOptions, boidId =>
+        Parallel.ForEach(entityData, parallelOptions, data =>
         {
-            if (transformComponents[boidId].NearBoids.Count == 0) return;
+            if (data.transform.NearBoids.Count == 0) return;
 
             IVector avg = MyVector.zero();
-            foreach (ITransform<IVector> b in transformComponents[boidId].NearBoids)
-            {
+            foreach (ITransform<IVector>? b in data.transform.NearBoids)
                 avg += b.forward;
-            }
 
-            avg /= transformComponents[boidId].NearBoids.Count;
-            ACSComponents[boidId].Alignment = EnsureValidVector(avg.Normalized());
+            avg /= data.transform.NearBoids.Count;
+            data.acs.Alignment = EnsureValidVector(avg.Normalized());
         });
     }
 

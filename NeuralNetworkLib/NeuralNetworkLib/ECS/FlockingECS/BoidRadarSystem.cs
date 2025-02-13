@@ -11,7 +11,7 @@ public class BoidRadarSystem : ECSSystem
     private IDictionary<uint, TransformComponent> transformComponents = null;
     private IDictionary<uint, ACSComponent> ACSComponents = null;
     private IEnumerable<uint> queriedEntities = null;
-
+    private List<(uint id, IVector position, ITransform<IVector> transform)> boidData;
     public override void Initialize()
     {
         parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = 32 };
@@ -32,41 +32,29 @@ public class BoidRadarSystem : ECSSystem
             typeof(TransformComponent), typeof(ACSComponent));
         transformComponents ??= ECSManager.GetComponents<TransformComponent>();
         ACSComponents ??= ECSManager.GetComponents<ACSComponent>();
+        boidData = queriedEntities
+            .Select(id => (id, transformComponents[id].Transform.position, transformComponents[id].Transform)).ToList();
     }
 
     protected override void Execute(float deltaTime)
     {
-        if (boidConfigComponents == null || transformComponents == null)
-        {
-            return;
-        }
-
         Parallel.ForEach(queriedEntities, parallelOptions, boidId =>
         {
-            ConcurrentBag<ITransform<IVector>> boidsInsideRadius = new();
-
-            float detectionRadiusSquared = boidConfigComponents[boidId].detectionRadius *
-                                           boidConfigComponents[boidId].detectionRadius;
-
+            BoidConfigComponent? boidConfig = boidConfigComponents[boidId];
+            float detectionRadiusSquared = boidConfig.detectionRadius * boidConfig.detectionRadius;
             IVector boidPosition = transformComponents[boidId].Transform.position;
 
-            foreach (uint nearBoidId in queriedEntities)
+            List<ITransform<IVector>> nearBoids = new List<ITransform<IVector>>();
+            foreach ((uint nearId, IVector? nearPos, ITransform<IVector> nearTransform) in boidData)
             {
-                if (transformComponents[nearBoidId].Transform.position == null || boidId == nearBoidId)
-                {
-                    continue;
-                }
+                if (boidId == nearId || nearPos == null) continue;
 
-                IVector nearBoidPosition = transformComponents[nearBoidId].Transform.position;
-                float distanceSquared = IVector.DistanceSquared(boidPosition, nearBoidPosition);
-
+                float distanceSquared = IVector.DistanceSquared(boidPosition, nearPos);
                 if (distanceSquared <= detectionRadiusSquared)
-                {
-                    boidsInsideRadius.Add(transformComponents[nearBoidId].Transform);
-                }
+                    nearBoids.Add(nearTransform);
             }
 
-            transformComponents[boidId].NearBoids = boidsInsideRadius.ToList();
+            transformComponents[boidId].NearBoids = nearBoids;
         });
     }
 

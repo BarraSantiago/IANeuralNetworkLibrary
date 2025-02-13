@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.ECS.Patron;
+﻿using System.Collections.Concurrent;
+using NeuralNetworkLib.ECS.Patron;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.ECS.FlockingECS;
@@ -6,9 +7,8 @@ namespace NeuralNetworkLib.ECS.FlockingECS;
 public class SeparationSystem : ECSSystem
 {
     private ParallelOptions parallelOptions;
-    private IDictionary<uint, TransformComponent> transformComponents = null;
-    private IDictionary<uint, ACSComponent> ACSComponents = null;
-    private IEnumerable<uint> queriedEntities = null;
+    private List<(TransformComponent transform, ACSComponent acs)> entityData;
+    private IEnumerable<uint> queriedEntities;
 
     public override void Initialize()
     {
@@ -18,35 +18,39 @@ public class SeparationSystem : ECSSystem
     public override void Deinitialize()
     {
         queriedEntities = null;
+        entityData = null;
     }
 
     protected override void PreExecute(float deltaTime)
     {
         queriedEntities ??= ECSManager.GetEntitiesWithComponentTypes(typeof(ACSComponent), typeof(TransformComponent));
-        transformComponents ??= ECSManager.GetComponents<TransformComponent>();
-        ACSComponents ??= ECSManager.GetComponents<ACSComponent>();
+        ConcurrentDictionary<uint, TransformComponent> transformComponents = ECSManager.GetComponents<TransformComponent>();
+        ConcurrentDictionary<uint, ACSComponent> ACSComponents = ECSManager.GetComponents<ACSComponent>();
+        
+        entityData = queriedEntities
+            .Select(id => (transform: transformComponents[id], acs: ACSComponents[id]))
+            .ToList();
     }
 
     protected override void Execute(float deltaTime)
     {
-        Parallel.ForEach(queriedEntities, parallelOptions, boidId =>
+        Parallel.ForEach(entityData, parallelOptions, data =>
         {
-            if (transformComponents[boidId].NearBoids.Count == 0) return;
+            if (data.transform.NearBoids.Count == 0) return;
 
             IVector avg = MyVector.zero();
-            foreach (ITransform<IVector> b in transformComponents[boidId].NearBoids)
+            foreach (ITransform<IVector> b in data.transform.NearBoids)
             {
-                avg += transformComponents[boidId].Transform.position - b.position;
+                avg += data.transform.Transform.position - b.position;
             }
 
-            avg /= transformComponents[boidId].NearBoids.Count;
-            ACSComponents[boidId].Separation = EnsureValidVector(avg.Normalized());
+            avg /= data.transform.NearBoids.Count;
+            data.acs.Separation = EnsureValidVector(avg.Normalized());
         });
     }
 
     protected override void PostExecute(float deltaTime)
     {
-        // Post-execution logic if needed
     }
 
     private IVector EnsureValidVector(IVector vector)
@@ -55,7 +59,6 @@ public class SeparationSystem : ECSSystem
         {
             return MyVector.zero();
         }
-
         return vector;
     }
 }

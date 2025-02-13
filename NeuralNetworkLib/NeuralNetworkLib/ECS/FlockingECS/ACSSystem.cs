@@ -10,6 +10,7 @@ public class ACSSystem : ECSSystem
     private IDictionary<uint, TransformComponent> transformComponents = null;
     private IDictionary<uint, ACSComponent> ACSComponents = null;
     private IEnumerable<uint> queriedEntities = null;
+    private List<(BoidConfigComponent config, ACSComponent acs)> entityData;
 
     public override void Initialize()
     {
@@ -31,17 +32,17 @@ public class ACSSystem : ECSSystem
             typeof(TransformComponent), typeof(ACSComponent));
         transformComponents ??= ECSManager.GetComponents<TransformComponent>();
         ACSComponents ??= ECSManager.GetComponents<ACSComponent>();
+        entityData = queriedEntities.Select(id => (boidConfigComponents[id], ACSComponents[id])).ToList();
     }
 
     protected override void Execute(float deltaTime)
     {
-        Parallel.ForEach(queriedEntities, parallelOptions, boidId =>
+        Parallel.ForEach(entityData, parallelOptions, data =>
         {
-            IVector ACS = (ACSComponents[boidId].Alignment * boidConfigComponents[boidId].alignmentOffset) +
-                          (ACSComponents[boidId].Cohesion * boidConfigComponents[boidId].cohesionOffset) +
-                          (ACSComponents[boidId].Separation * boidConfigComponents[boidId].separationOffset) +
-                          (ACSComponents[boidId].Direction * boidConfigComponents[boidId].directionOffset);
-            ACSComponents[boidId].ACS = EnsureValidVector(ACS.Normalized());
+            data.acs.ACS = EnsureValidVector(((data.acs.Alignment * data.config.alignmentOffset) +
+                                             (data.acs.Cohesion * data.config.cohesionOffset) +
+                                             (data.acs.Separation * data.config.separationOffset) +
+                                             (data.acs.Direction * data.config.directionOffset)).Normalized());
         });
     }
 

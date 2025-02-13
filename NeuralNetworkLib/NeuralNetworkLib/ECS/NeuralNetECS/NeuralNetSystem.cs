@@ -56,6 +56,7 @@ public sealed class NeuralNetSystem : ECSSystem
 
             for (int i = 0; i < brainAmount; i++)
             {
+                if(inputsArray[i] == null) return;
                 if (i >= neuralNet.Layers.Length || i >= inputsArray.Length) continue;
 
                 float[] currentInputs = inputsArray[i];

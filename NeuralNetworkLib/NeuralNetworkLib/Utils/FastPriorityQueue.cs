@@ -29,7 +29,7 @@
 
     public TNodeType Dequeue()
     {
-        var result = _heap[0].Node;
+        TNodeType result = _heap[0].Node;
         Swap(0, _heap.Count - 1);
         _indexMap.Remove(result);
         _heap.RemoveAt(_heap.Count - 1);
@@ -42,9 +42,9 @@
 
     public void UpdatePriority(TNodeType node, int newPriority)
     {
-        if (!_indexMap.TryGetValue(node, out var index)) return;
+        if (!_indexMap.TryGetValue(node, out int index)) return;
         
-        var oldPriority = _heap[index].Priority;
+        int oldPriority = _heap[index].Priority;
         _heap[index] = new NodeEntry { Node = node, Priority = newPriority };
         
         if (newPriority < oldPriority)
@@ -57,7 +57,7 @@
     {
         while (index > 0)
         {
-            var parentIndex = (index - 1) / 2;
+            int parentIndex = (index - 1) / 2;
             if (_heap[parentIndex].Priority <= _heap[index].Priority)
                 break;
             
@@ -70,11 +70,11 @@
     {
         while (true)
         {
-            var leftChild = 2 * index + 1;
+            int leftChild = 2 * index + 1;
             if (leftChild >= _heap.Count) return;
             
-            var rightChild = leftChild + 1;
-            var minChild = (rightChild < _heap.Count && _heap[rightChild].Priority < _heap[leftChild].Priority)
+            int rightChild = leftChild + 1;
+            int minChild = (rightChild < _heap.Count && _heap[rightChild].Priority < _heap[leftChild].Priority)
                 ? rightChild
                 : leftChild;
 
