@@ -4,6 +4,7 @@ using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.GraphDirectory;
 using NeuralNetworkLib.GraphDirectory.Voronoi;
+using NeuralNetworkLib.NeuralNetDirectory;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.DataManagement;
@@ -37,7 +38,8 @@ public class DataContainer
     public static AStarPath? CartPathfinder;
     public static Voronoi[] Voronois;
     public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi2;
-
+    public static FitnessStagnationManager FitnessStagnationManager = new();
+    
     private const string FilePath = "path/to/your/file.json";
 
     private static ParallelOptions parallelOptions = new ParallelOptions

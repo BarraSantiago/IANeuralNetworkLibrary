@@ -33,8 +33,6 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         Fsm.ForceTransition(Behaviours.Walk);
 
         onGather += Gather;
-        stopwatch = new Stopwatch();
-        stopwatch.Start();
     }
 
     protected override void FsmTransitions()
@@ -214,7 +212,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
     private void GatherResource(ResourceType resourceType)
     {
-        if (stopwatch.Elapsed.TotalSeconds < 1) return;
+        timer += Time;
+        if (timer < 1) return;
 
         LastTimeEat++;
         int foodCost = 3;
@@ -245,7 +244,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
             }
         }
 
-        stopwatch.Restart();
+        timer--;
 
         if (LastTimeEat < foodCost) return;
 

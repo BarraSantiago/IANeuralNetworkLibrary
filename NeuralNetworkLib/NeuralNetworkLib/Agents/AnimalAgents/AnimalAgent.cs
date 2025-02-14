@@ -58,22 +58,20 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         public FSM<Behaviours, Flags> Fsm;
         public int FoodLimit { get; protected set; } = 5;
         public int Food { get; protected set; } = 0;
-
-
-        protected Stopwatch stopwatch = new Stopwatch();
-        protected NodeTerrain foodTarget;
-        protected int speed = 3;
-        protected Action OnMove;
-        protected Action OnEat;
-        protected float dt;
-        protected const int NoTarget = -1;
-        protected TTransform transform = new TTransform();
-
-        Genome[] genomes;
         public float[][] output;
         public float[][] input;
         public Dictionary<int, BrainType> brainTypes = new Dictionary<int, BrainType>();
 
+        public static float Time = 0;
+        protected float timer = 0;
+        protected NodeTerrain foodTarget;
+        protected int speed = 3;
+        protected Action OnMove;
+        protected Action OnEat;
+        protected const int NoTarget = -1;
+        protected TTransform transform = new TTransform();
+        private Genome[] genomes;
+        
         public AnimalAgent()
         {
         }
@@ -104,9 +102,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                     DataContainer.InputCountCache[(brain, agentType)];
                 output[GetBrainTypeKeyByValue(brain)] = new float[inputsCount.OutputCount];
             }
-
-            stopwatch.Start();
-
+            
             OnMove += Move;
             OnEat += Eat;
 
@@ -143,13 +139,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             OnMove -= Move;
             OnEat -= Eat;
         }
-
-        public void Tick(float deltaTime)
-        {
-            dt = deltaTime;
-            Fsm.Tick();
-        }
-
+        
         public virtual void UpdateInputs()
         {
             FindFoodInputs();
@@ -237,28 +227,22 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         protected virtual void Move()
         {
-            // Cache the movement brain index. (Consider caching this in a readonly field if it never changes.)
             int movementBrainIndex = GetBrainTypeKeyByValue(BrainType.Movement);
 
-            // Use a local copy of elapsed time in seconds.
-            float elapsed = (float)stopwatch.Elapsed.TotalSeconds;
+            timer += Time;
 
-            // Only move if enough time has elapsed to cover at least one unit distance.
-            if (speed * elapsed < 1f)
+            if (speed * timer < 1f)
                 return;
-            
-            // Get current node coordinate once and work on a local vector.
+
             IVector currentCoord = CurrentNode.GetCoordinate();
-            // Assuming MyVector is a lightweight struct; if not, consider using your vector type directly.
             MyVector currentPos = new MyVector(currentCoord.X, currentCoord.Y);
 
-            // Inline calculation of the new position.
             float[] brainOutput = output[movementBrainIndex];
             if (brainOutput.Length < 2)
                 return;
 
-            currentPos.X += speed * elapsed * brainOutput[0];
-            currentPos.Y += speed * elapsed * brainOutput[1];
+            currentPos.X += speed * timer * brainOutput[0];
+            currentPos.Y += speed * timer * brainOutput[1];
 
             // Ensure the new position is within graph borders.
             if (currentPos.X < minX)
@@ -280,8 +264,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 SetPosition(newCoord);
             }
 
-            // Restart the stopwatch for the next movement interval.
-            stopwatch.Restart();
+            timer = 0;
         }
 
         protected int GetInputCount(BrainType brainType)

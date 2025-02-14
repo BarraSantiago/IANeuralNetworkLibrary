@@ -5,12 +5,9 @@ namespace NeuralNetworkLib.ECS.FlockingECS;
 
 public class ACSSystem : ECSSystem
 {
+    private (BoidConfigComponent config, ACSComponent acs)[] entityDataArray;
     private ParallelOptions parallelOptions;
-    private IDictionary<uint, BoidConfigComponent> boidConfigComponents = null;
-    private IDictionary<uint, TransformComponent> transformComponents = null;
-    private IDictionary<uint, ACSComponent> ACSComponents = null;
-    private IEnumerable<uint> queriedEntities = null;
-    private List<(BoidConfigComponent config, ACSComponent acs)> entityData;
+    private int entityCount;
 
     public override void Initialize()
     {
@@ -19,30 +16,35 @@ public class ACSSystem : ECSSystem
 
     public override void Deinitialize()
     {
-        boidConfigComponents = null;
-        queriedEntities = null;
-        transformComponents = null;
-        ACSComponents = null;
+        entityDataArray = null;
     }
+
 
     protected override void PreExecute(float deltaTime)
     {
-        boidConfigComponents ??= ECSManager.GetComponents<BoidConfigComponent>();
-        queriedEntities ??= ECSManager.GetEntitiesWithComponentTypes(typeof(BoidConfigComponent),
-            typeof(TransformComponent), typeof(ACSComponent));
-        transformComponents ??= ECSManager.GetComponents<TransformComponent>();
-        ACSComponents ??= ECSManager.GetComponents<ACSComponent>();
-        entityData = queriedEntities.Select(id => (boidConfigComponents[id], ACSComponents[id])).ToList();
+        (uint[] ids, BoidConfigComponent[] configs) = ECSManager.GetComponentsDirect<BoidConfigComponent>();
+        (_, ACSComponent[] acsComponents) = ECSManager.GetComponentsDirect<ACSComponent>();
+
+        entityCount = ids.Length;
+        if (entityDataArray == null || entityDataArray.Length < entityCount)
+            entityDataArray = new (BoidConfigComponent, ACSComponent)[entityCount];
+
+        for (int i = 0; i < entityCount; i++)
+        {
+            entityDataArray[i] = (configs[i], acsComponents[i]);
+        }
     }
 
     protected override void Execute(float deltaTime)
     {
-        Parallel.ForEach(entityData, parallelOptions, data =>
+        Parallel.For(0, entityCount, parallelOptions, i =>
         {
-            data.acs.ACS = EnsureValidVector(((data.acs.Alignment * data.config.alignmentOffset) +
-                                             (data.acs.Cohesion * data.config.cohesionOffset) +
-                                             (data.acs.Separation * data.config.separationOffset) +
-                                             (data.acs.Direction * data.config.directionOffset)).Normalized());
+            (BoidConfigComponent config, ACSComponent acs) = entityDataArray[i];
+            IVector ACS = (acs.Alignment * config.alignmentOffset) +
+                          (acs.Cohesion * config.cohesionOffset) +
+                          (acs.Separation * config.separationOffset) +
+                          (acs.Direction * config.directionOffset);
+            acs.ACS = EnsureValidVector(ACS.Normalized());
         });
     }
 

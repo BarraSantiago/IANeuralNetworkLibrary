@@ -6,12 +6,11 @@ namespace NeuralNetworkLib.ECS.Patron;
 
 public static class ECSManager
 {
-    private static readonly ParallelOptions parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 32 };
-
-    private static ConcurrentDictionary<uint, EcsEntity> entities;
-    private static ConcurrentDictionary<Type, ConcurrentDictionary<uint, EcsComponent>> components;
-    private static ConcurrentDictionary<Type, ConcurrentDictionary<uint, ECSFlag>> flags;
     private static ConcurrentDictionary<Type, ECSSystem> systems;
+    private static ConcurrentDictionary<Type, ConcurrentDictionary<uint, EcsComponent>> components;
+    private static ConcurrentDictionary<uint, EcsEntity> entities;
+    private static ConcurrentDictionary<Type, ConcurrentDictionary<uint, ECSFlag>> flags;
+    private static readonly ParallelOptions parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 32 };
 
     public static void Init()
     {
@@ -117,6 +116,50 @@ public static class ECSManager
     public static TComponentType GetComponent<TComponentType>(uint entityID) where TComponentType : EcsComponent
     {
         return components[typeof(TComponentType)][entityID] as TComponentType;
+    }
+    
+    private static readonly ThreadLocal<Dictionary<Type, (uint[] ids, Array components)>> componentBuffers =
+        new(() => new Dictionary<Type, (uint[], Array)>());
+
+    public static (uint[] ids, TComponentType[] components) GetComponentsDirect<TComponentType>() 
+        where TComponentType : EcsComponent
+    {
+        if (!components.TryGetValue(typeof(TComponentType), out ConcurrentDictionary<uint, EcsComponent>? componentDict))
+            return (Array.Empty<uint>(), Array.Empty<TComponentType>());
+
+        Dictionary<Type, (uint[] ids, Array components)>? buffers = componentBuffers.Value;
+        Type type = typeof(TComponentType);
+
+        if (!buffers.TryGetValue(type, out (uint[] ids, Array components) buffer))
+        {
+            buffer = (new uint[1024], new TComponentType[1024]);
+            buffers[type] = buffer;
+        }
+
+        int count = componentDict.Count;
+        
+        // Fix 1: Handle array resizing with explicit type
+        if (buffer.ids.Length < count)
+        {
+            Array.Resize(ref buffer.ids, count);
+            TComponentType[]? tempComponents = (TComponentType[])buffer.components;
+            Array.Resize(ref tempComponents, count);
+            buffer.components = tempComponents;
+        }
+
+        int i = 0;
+        TComponentType[]? componentsArray = (TComponentType[])buffer.components;
+        foreach (KeyValuePair<uint, EcsComponent> kvp in componentDict)
+        {
+            buffer.ids[i] = kvp.Key;
+            componentsArray[i] = (TComponentType)kvp.Value;
+            i++;
+        }
+
+        return (
+            buffer.ids.Take(count).ToArray(),
+            componentsArray.Take(count).ToArray()
+        );
     }
 
     public static void RemoveComponent<TComponentType>(uint entityID) where TComponentType : EcsComponent

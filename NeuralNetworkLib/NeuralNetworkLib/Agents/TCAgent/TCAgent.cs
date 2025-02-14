@@ -79,14 +79,15 @@ public class TcAgent<TVector, TTransform>
     public TownCenter TownCenter;
     public SimNode<IVector> CurrentNode;
     public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
-    
+    public static float Time;
+
+    protected float timer = 0;
     protected int speed = 6;
     protected Action OnMove;
     protected Action OnWait;
     protected int LastTimeEat = 0;
     protected int ResourceLimit = 15;
     protected int? PathNodeId;
-    protected Stopwatch stopwatch;
     protected TTransform transform = new TTransform();
     protected INode<IVector>? adjacentNode;
     protected List<SimNode<IVector>> Path;
@@ -106,16 +107,12 @@ public class TcAgent<TVector, TTransform>
 
     private SimNode<IVector> targetNode;
 
-    private void Update()
-    {
-        Fsm.Tick();
-    }
-
     public virtual void Init()
     {
         Fsm = new FSM<Behaviours, Flags>();
-        Fsm.OnStateChange += state => CurrentState = (Behaviours)Math.Clamp(state, 0, Enum.GetValues(typeof(Behaviours)).Length);
-        stopwatch = new Stopwatch();
+        Fsm.OnStateChange += state =>
+            CurrentState = (Behaviours)Math.Clamp(state, 0, Enum.GetValues(typeof(Behaviours)).Length);
+        Time = 0;
         Transform.position = TownCenter.Position.GetCoordinate();
         CurrentNode = TownCenter.Position;
         alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
@@ -134,7 +131,6 @@ public class TcAgent<TVector, TTransform>
         FsmBehaviours();
 
         FsmTransitions();
-        stopwatch.Start();
     }
 
     protected virtual void FsmBehaviours()
@@ -240,17 +236,19 @@ public class TcAgent<TVector, TTransform>
             return;
         }
 
-        if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) || 
+        if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) ||
             Approximately(CurrentNode.GetCoordinate(), TargetNode.GetCoordinate(), 0.001f)) return;
 
         if (Path.Count <= 0) return;
         //if (PathNodeId >= Path.Count) PathNodeId = 0;
 
-        double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+        timer += Time;
 
-        if (speed * elapsedSeconds < 1) return;
+        float relativeSpeed = speed * timer;
+        if (relativeSpeed < 1) return;
 
-        int distanceToMove = (int)(speed * elapsedSeconds);
+
+        int distanceToMove = (int)(relativeSpeed);
 
         PathNodeId += distanceToMove;
         PathNodeId = Math.Clamp((int)PathNodeId, 0, Path.Count - 1);
@@ -258,7 +256,7 @@ public class TcAgent<TVector, TTransform>
         CurrentNode = Path[(int)PathNodeId];
         Transform.position = CurrentNode.GetCoordinate();
         Transform.position += AcsVector;
-        stopwatch.Restart();
+        timer = (float)((relativeSpeed - Math.Truncate(relativeSpeed)) / speed);
     }
 
     protected SimNode<IVector> GetRetreatNode()
@@ -270,6 +268,7 @@ public class TcAgent<TVector, TTransform>
     protected virtual void Wait()
     {
     }
+
     private bool Approximately(IVector coord1, IVector coord2, float tolerance)
     {
         return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;

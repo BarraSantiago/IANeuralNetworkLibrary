@@ -150,7 +150,7 @@ public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
     {
         const int EatCooldown = 3;
 
-        if (stopwatch.Elapsed.TotalSeconds < EatCooldown) return;
+        if (timer < EatCooldown) return;
 
         base.Eat();
     }
@@ -162,7 +162,7 @@ public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
 
     protected override void EatTransitions()
     {
-        Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat, () => stopwatch.Reset());
+        Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat, () => timer = 0);
         Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk);
         Fsm.SetTransition(Behaviours.Eat, Flags.OnEscape, Behaviours.Walk);
         Fsm.SetTransition(Behaviours.Eat, Flags.OnAttack, Behaviours.Walk);
@@ -170,7 +170,7 @@ public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
 
     protected override void WalkTransitions()
     {
-        Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat, () => stopwatch.Reset());
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat, () => timer = 0);
         Fsm.SetTransition(Behaviours.Walk, Flags.OnEscape, Behaviours.Walk);
         Fsm.SetTransition(Behaviours.Walk, Flags.OnAttack, Behaviours.Walk);
         Fsm.SetTransition(Behaviours.Walk, Flags.OnSearchFood, Behaviours.Walk);

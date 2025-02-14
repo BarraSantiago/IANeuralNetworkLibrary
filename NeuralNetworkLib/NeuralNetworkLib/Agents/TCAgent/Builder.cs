@@ -113,7 +113,8 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         if (CurrentFood <= 0 || CurrentGold < TownCenter.WatchTowerBuildCost.Gold ||
             CurrentWood < TownCenter.WatchTowerBuildCost.Wood) return;
 
-        if (stopwatch.Elapsed.TotalSeconds < 1) return;
+        timer += Time;
+        if (timer < 1) return;
 
         CurrentGold -= TownCenter.WatchTowerBuildCost.Gold;
         CurrentWood -= TownCenter.WatchTowerBuildCost.Wood;
@@ -124,6 +125,6 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
             TargetNode.BuildWatchTower();
         }
 
-        stopwatch.Restart();
+        timer -= (float)Math.Floor(timer);
     }
 }

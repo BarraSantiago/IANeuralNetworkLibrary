@@ -19,7 +19,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             ResourceLimit = 30;
             base.Init();
             CurrentFood = 0;
-        
+
             Fsm.ForceTransition(Behaviours.GatherResources);
             onGather += Gather;
             onDeliver += DeliverResource;
@@ -58,6 +58,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk);
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnWait, Behaviours.Wait);
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnReturnResource, Behaviours.ReturnResources);
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
@@ -117,9 +118,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 () =>
                 {
                     returnResource = false;
-
                     TargetNode = GetTarget();
-                    ;
                 });
             Fsm.SetTransition(Behaviours.ReturnResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
@@ -144,7 +143,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             return new object[]
             {
                 CurrentGold, CurrentFood, CurrentWood,
-                resourceCarrying, ResourceLimit, onGather, Retreat
+                resourceCarrying, ResourceLimit, onGather, Retreat, TownCenter.Gold, TownCenter.Food, TownCenter.Wood
             };
         }
 
@@ -281,7 +280,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
                 (TcAgent<IVector, ITransform<IVector>>, ResourceType) agentResource = TownCenter.AgentsResources[0];
                 if (agentResource.Item1 == null || agentResource.Item2 == null) return TownCenter.Position;
-                
+
                 switch (agentResource.Item2)
                 {
                     case ResourceType.Gold:
@@ -291,6 +290,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                             TownCenter.AskForResources(agentResource.Item1, ResourceType.Gold);
                             return TownCenter.Position;
                         }
+
                         break;
                     case ResourceType.Wood:
                         if (TownCenter.Wood <= 0)
@@ -299,6 +299,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                             TownCenter.AskForResources(agentResource.Item1, ResourceType.Wood);
                             return TownCenter.Position;
                         }
+
                         break;
                     case ResourceType.Food:
                         if (TownCenter.Food <= 0)
@@ -307,6 +308,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                             TownCenter.AskForResources(agentResource.Item1, ResourceType.Food);
                             return TownCenter.Position;
                         }
+
                         break;
                     case ResourceType.None:
                     default:
