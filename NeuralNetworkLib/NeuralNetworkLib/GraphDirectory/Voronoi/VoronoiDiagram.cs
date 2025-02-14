@@ -44,8 +44,8 @@ public class VoronoiDiagram<TPoint2D>
                 // Compute the vector from other to this site.
                 TPoint2D diff = site.Position.Subtract(other.Position);
                 double normSq = diff.Dot(diff);
-                if (normSq < 1e-9)
-                    continue; // avoid division by zero for coincident sites
+                
+                if (normSq < 1e-9) continue; 
 
                 // Standard (unweighted) bisector would use the midpoint:
                 TPoint2D mid = site.Position.Add(other.Position).Divide(2.0);
@@ -188,28 +188,32 @@ public class VoronoiDiagram<TPoint2D>
     /// </param>
     public void BalanceWeights(int iterations, double step = 0.1)
     {
-        // Compute target node weight per cell.
         double totalNodeWeight = Nodes.Sum(n => n.Weight);
         double targetWeight = totalNodeWeight / Sites.Count;
 
         for (int iter = 0; iter < iterations; iter++)
         {
-            // Recompute cells and their node weights.
-            ComputeCells();
-            ComputeCellWeights();
-
-            // Adjust the power weight for each site based on the difference.
-            foreach (Site<TPoint2D>? site in Sites)
+            // Update sequentially to avoid interference between sites
+            foreach (Site<TPoint2D> site in Sites)
             {
+                // Recompute cells and weights for current state
+                ComputeCells();
+                ComputeCellWeights();
+            
                 double diff = site.CellWeight - targetWeight;
-                // If cell weight is above target, increase PowerWeight to shrink the cell;
-                // if below target, decrease PowerWeight to expand the cell.
-                site.PowerWeight += step * diff;
+            
+                // Apply damped adjustment to avoid overshooting
+                double adjustedStep = step * (1.0 - (double)iter / iterations); // Reduce step over time
+                site.PowerWeight += adjustedStep * diff;
+
+                // Prevent extreme PowerWeight values
+                site.PowerWeight = Math.Max(-1e3, Math.Min(1e3, site.PowerWeight));
             }
         }
 
-        // Final update.
+        // Final computation with stabilized weights
         ComputeCells();
         ComputeCellWeights();
     }
+    
 }

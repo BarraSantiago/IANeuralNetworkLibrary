@@ -24,6 +24,22 @@ namespace NeuralNetworkLib.DataManagement
     {
         public static Action<bool> OnSpecificLoaded;
 
+        
+        public static void DeleteBrainFiles(AgentTypes agentType, BrainType brainType, string directoryPath)
+        {
+            string agentTypeDirectory = Path.Combine(directoryPath, agentType.ToString());
+            string brainTypeDirectory = Path.Combine(agentTypeDirectory, brainType.ToString());
+
+            if (Directory.Exists(brainTypeDirectory))
+            {
+                string[] files = Directory.GetFiles(brainTypeDirectory);
+                foreach (string file in files)
+                {
+                    File.Delete(file);
+                }
+            }
+        }
+        
         public static void SaveNeurons(List<AgentNeuronData> agentsData, string directoryPath, int generation)
         {
             if (agentsData == null)

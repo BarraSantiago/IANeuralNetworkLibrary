@@ -14,10 +14,12 @@ public class FitnessStagnationManager
     // TODO in each epoch, fitness data should be updated
     private List<AgentFitnessData> fitnessData = new();
 
-    // TODO Esto deberia empezar a partir de 1000 generaciones y revisar si hubo avances comparando las primeras
+    // TODO Esto deberia empezar a partir de 300 generaciones y revisar si hubo avances comparando las primeras
     // generaciones con las ultimas.
     private const int GenerationsPerCheck = 100;
+    private const int MinGenerationsAmount = 200;
     private const double StagnationThreshold = 0.1;
+    private const string DirectoryPath = "NeuronData";
 
 
     public void AddFitnessData(AgentTypes agentType, BrainType brainType, float averageFitness)
@@ -40,19 +42,23 @@ public class FitnessStagnationManager
     public void AnalyzeData()
     {
         bool stagnation = false;
+        List<(AgentTypes agentType, BrainType brainType)> keys = new List<(AgentTypes agentType, BrainType brainType)>();
         foreach (AgentFitnessData agentData in fitnessData)
         {
-            if (agentData.FitnessData.Count < GenerationsPerCheck) continue;
+            if (agentData.FitnessData.Count - MinGenerationsAmount < GenerationsPerCheck) continue;
 
             if (!CalculateStagnation(agentData.FitnessData)) continue;
 
             for (int i = 0; i < DataContainer.inputCounts.Length; i++)
             {
-                if (DataContainer.inputCounts[i].AgentType != agentData.AgentType ||
-                    DataContainer.inputCounts[i].BrainType != agentData.BrainType) continue;
+                NeuronInputCount inputCount = DataContainer.inputCounts[i];
+                if (inputCount.AgentType != agentData.AgentType ||
+                    inputCount.BrainType != agentData.BrainType) continue;
 
-                List<int> oldLayers = DataContainer.inputCounts[i].HiddenLayersInputs.ToList();
+                List<int> oldLayers = inputCount.HiddenLayersInputs.ToList();
 
+                seguir esto
+                if(oldLayers.Count > inputCount.InputCount) {}
                 for (int j = 0; j < oldLayers.Count; j++)
                 {
                     oldLayers[j]++;
@@ -60,11 +66,12 @@ public class FitnessStagnationManager
 
                 // TODO Modificar esto teniendo en cuenta inputs y outputs de la red para modificar las hidden layers
                 oldLayers.Add(oldLayers[0]);
-
+                
                 DataContainer.inputCounts[i].HiddenLayersInputs = oldLayers.ToArray();
                 agentData.FitnessData.Clear();
 
                 stagnation = true;
+                keys.Add((agentData.AgentType, agentData.BrainType));
             }
         }
 
@@ -77,6 +84,10 @@ public class FitnessStagnationManager
         const string filePath = "path/to/your/file.json";
 
         NeuronInputCountManager.SaveNeuronInputCounts(inputCounts, filePath);
+        foreach ((AgentTypes agentType, BrainType brainType) tuple in keys)
+        {
+            NeuronDataSystem.DeleteBrainFiles(tuple.agentType, tuple.brainType, DirectoryPath);
+        }
     }
 
     private bool CalculateStagnation(List<float> fitness)
