@@ -98,7 +98,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             output = new float[brainTypes.Count][];
             foreach (BrainType brain in brainTypes.Values)
             {
-                NeuronInputCount inputsCount =
+                BrainConfiguration inputsCount =
                     DataContainer.InputCountCache[(brain, agentType)];
                 output[GetBrainTypeKeyByValue(brain)] = new float[inputsCount.OutputCount];
             }

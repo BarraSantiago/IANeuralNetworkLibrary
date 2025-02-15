@@ -54,14 +54,14 @@ public sealed class NeuralNetSystem : ECSSystem
             float[][] inputsArray = inputComponents[entityId].inputs;
             int brainAmount = brainAmountComponents[entityId].BrainAmount;
 
-            for (int i = 0; i < brainAmount; i++)
+            Parallel.For(0, brainAmount, parallelOptions, i =>
             {
-                if(inputsArray[i] == null) return;
-                if (i >= neuralNet.Layers.Length || i >= inputsArray.Length) continue;
+                if (inputsArray[i] == null) return;
+                if (i >= neuralNet.Layers.Length || i >= inputsArray.Length) return;
 
                 float[] currentInputs = inputsArray[i];
                 NeuronLayer[] layers = neuralNet.Layers[i];
-                    
+
                 for (int j = 0; j < layers.Length; j++)
                 {
                     currentInputs = Synapsis(layers[j], currentInputs);
@@ -71,7 +71,7 @@ public sealed class NeuralNetSystem : ECSSystem
                 {
                     outputComp.Outputs[i] = currentInputs;
                 }
-            }
+            });
         });
     }
 
@@ -81,7 +81,7 @@ public sealed class NeuralNetSystem : ECSSystem
         float[] outputs = new float[neuronCount];
         int totalOperations = neuronCount * inputs.Length;
 
-        bool useParallel = totalOperations > 10_000; // Tune based on your workload
+        bool useParallel = totalOperations > 1000; // Tune based on your workload
 
         if (useParallel)
         {

@@ -12,13 +12,13 @@ namespace NeuralNetworkLib.DataManagement;
 using AStarPath = AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>;
 using Voronoi = VoronoiDiagram<Point2D>;
 
-public struct NeuronInputCount
+public struct BrainConfiguration
 {
     public AgentTypes AgentType;
     public BrainType BrainType;
     public int InputCount;
     public int OutputCount;
-    public int[] HiddenLayersInputs;
+    public int[] HiddenLayers;
 }
 
 public class DataContainer
@@ -29,8 +29,8 @@ public class DataContainer
     public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TcAgents = new();
 
     public static FlockingManager FlockingManager = new();
-    public static Dictionary<(BrainType, AgentTypes), NeuronInputCount> InputCountCache;
-    public static NeuronInputCount[]? inputCounts;
+    public static Dictionary<(BrainType, AgentTypes), BrainConfiguration> InputCountCache;
+    public static BrainConfiguration[]? inputCounts;
     public static Dictionary<int, BrainType> HerbBrainTypes = new();
     public static Dictionary<int, BrainType> CarnBrainTypes = new();
     public static AStarPath? GathererPathfinder;
@@ -40,7 +40,7 @@ public class DataContainer
     public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi2;
     public static FitnessStagnationManager FitnessStagnationManager = new();
     
-    private const string FilePath = "path/to/your/file.json";
+    private const string FilePath = "BrainConfigurations.json";
 
     private static ParallelOptions parallelOptions = new ParallelOptions
     {
@@ -61,12 +61,17 @@ public class DataContainer
 
         LoadInputCount();
 
-        InputCountCache = inputCounts.ToDictionary(input => (brainType: input.BrainType, agentType: input.AgentType));
+        UpdateInputCache();
 
         InitPathfinder(ref GathererPathfinder, 0, 0);
         InitPathfinder(ref CartPathfinder, 50, 15);
         InitPathfinder(ref BuilderPathfinder, 30, 0);
         InitVoronois();
+    }
+
+    public static void UpdateInputCache()
+    {
+        InputCountCache = inputCounts.ToDictionary(input => (brainType: input.BrainType, agentType: input.AgentType));
     }
 
 
@@ -78,30 +83,30 @@ public class DataContainer
         {
             inputCounts = new[]
             {
-                new NeuronInputCount
+                new BrainConfiguration
                 {
                     AgentType = AgentTypes.Carnivore, BrainType = BrainType.Movement, InputCount = 5,
-                    OutputCount = 3, HiddenLayersInputs = new[] { 3 }
+                    OutputCount = 3, HiddenLayers = new[] { 3 }
                 },
-                new NeuronInputCount
+                new BrainConfiguration
                 {
                     AgentType = AgentTypes.Carnivore, BrainType = BrainType.Attack, InputCount = 4,
-                    OutputCount = 1, HiddenLayersInputs = new[] { 1 }
+                    OutputCount = 1, HiddenLayers = new[] { 1 }
                 },
-                new NeuronInputCount
+                new BrainConfiguration
                 {
                     AgentType = AgentTypes.Herbivore, BrainType = BrainType.Eat, InputCount = 4, OutputCount = 1,
-                    HiddenLayersInputs = new[] { 1 }
+                    HiddenLayers = new[] { 1 }
                 },
-                new NeuronInputCount
+                new BrainConfiguration
                 {
                     AgentType = AgentTypes.Herbivore, BrainType = BrainType.Movement, InputCount = 8,
-                    OutputCount = 2, HiddenLayersInputs = new[] { 3 }
+                    OutputCount = 2, HiddenLayers = new[] { 3 }
                 },
-                new NeuronInputCount
+                new BrainConfiguration
                 {
                     AgentType = AgentTypes.Herbivore, BrainType = BrainType.Escape, InputCount = 4, OutputCount = 1,
-                    HiddenLayersInputs = new[] { 1 }
+                    HiddenLayers = new[] { 1 }
                 },
             };
         }

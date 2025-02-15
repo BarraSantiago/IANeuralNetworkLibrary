@@ -98,15 +98,15 @@ public class TownCenter
 
     #region UnitSpawn
 
-    public void ManageSpawning()
+    public bool ManageSpawning()
     {
-        if(_gathererCount >= maxGatherers && _builderCount >= maxBuilders && _cartCount >= maxCarts) return;
+        if(_gathererCount >= maxGatherers && _builderCount >= maxBuilders && _cartCount >= maxCarts) return false;
         
-        if (Gold < GathererCost.Gold || Wood < GathererCost.Wood || Food < GathererCost.Food) return;
+        if (Gold < GathererCost.Gold || Wood < GathererCost.Wood || Food < GathererCost.Food) return false;
 
         if (_gathererCount % 3 == 0 && !HasEnoughResources(BuilderCost.Sum(CartCost.Sum(GathererCost))))
         {
-            return;
+            return false;
         }
 
         if (_gathererCount < maxGatherers) SpawnGatherer();
@@ -116,6 +116,8 @@ public class TownCenter
             if(_builderCount < maxBuilders) SpawnBuilder();
             if(_cartCount < maxCarts) SpawnCart();
         }
+
+        return true;
     }
 
     private void SpawnCart()
