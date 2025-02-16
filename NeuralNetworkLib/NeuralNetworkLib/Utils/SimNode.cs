@@ -152,7 +152,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         return Equals((SimNode<Coordinate>)obj);
     }
 
-    public IVector GetAdjacentNode()
+    public IVector? GetAdjacentNode()
     {
         foreach (IVector neighbor in neighbors)
         {

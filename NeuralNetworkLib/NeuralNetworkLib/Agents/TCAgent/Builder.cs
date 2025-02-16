@@ -4,6 +4,7 @@ using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
 
 namespace NeuralNetworkLib.Agents.TCAgent;
+
 using Voronoi = VoronoiDiagram<Point2D>;
 
 public class Builder : TcAgent<IVector, ITransform<IVector>>
@@ -16,10 +17,10 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         AgentType = AgentTypes.Builder;
         base.Init();
         plainsVoronoi = DataContainer.Voronois[(int)NodeTerrain.Empty];
-            
+
         IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
         TargetNode = DataContainer.GetNode(node);
-            
+
         Fsm.ForceTransition(Behaviours.Walk);
         CurrentState = Behaviours.Walk;
         onBuild += Build;
@@ -36,7 +37,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 
     protected override void FsmBehaviours()
     {
-        Fsm.AddBehaviour<BuilderGathererWalkState>(Behaviours.Walk, WalkTickParameters);
+        Fsm.AddBehaviour<BuilderWalkState>(Behaviours.Walk, WalkTickParameters);
         Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
         Fsm.AddBehaviour<BuildState>(Behaviours.Build, BuildTickParameters);
     }
@@ -46,7 +47,17 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
     protected override void WalkTransitions()
     {
         base.WalkTransitions();
-        Fsm.SetTransition(Behaviours.Walk, Flags.OnBuild, Behaviours.Build);
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnBuild, Behaviours.Build, () =>
+        {
+            IVector? coord = TargetNode.GetAdjacentNode();
+            if (coord == null)
+            {
+                throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
+            }
+            adjacentNode = DataContainer.GetNode(coord);
+            adjacentNode.IsOccupied = true;
+            CurrentNode = DataContainer.GetNode(adjacentNode.GetCoordinate());
+        });
     }
 
     private void BuildTransitions()
@@ -54,6 +65,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         Fsm.SetTransition(Behaviours.Build, Flags.OnRetreat, Behaviours.Walk,
             () =>
             {
+                CurrentNode.IsOccupied = false;
                 TargetNode = GetRetreatNode();
                 TownCenter.RefugeeCount++;
             });
@@ -77,6 +89,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         Fsm.SetTransition(Behaviours.Build, Flags.OnTargetLost, Behaviours.Walk,
             () =>
             {
+                CurrentNode.IsOccupied = false;
                 IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
                 TargetNode = DataContainer.GetNode(node);
             });

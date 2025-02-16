@@ -52,7 +52,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         protected bool CheckRetreat(bool retreat, SimNode<IVector> targetNode) =>
             retreat && (targetNode?.NodeTerrain != NodeTerrain.TownCenter);
 
-        protected bool IsInvalidState(SimNode<IVector> currentNode, SimNode<IVector> targetNode,
+        protected virtual bool IsInvalidState(SimNode<IVector> currentNode, SimNode<IVector> targetNode,
             List<SimNode<IVector>> path) =>
             currentNode == null || targetNode == null || (path != null && path.Count == 0) ||
             (targetNode.Resource <= 0 && IsResourceNode(targetNode)) ||
@@ -101,7 +101,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         }
     }
 
-    public class CartGathererWalkState : GathererWalkState
+    public class CartWalkState : GathererWalkState
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
@@ -148,7 +148,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 return;
             }
 
-            if (currentNode.NodeTerrain == NodeTerrain.TownCenter)
+            if (targetNode.NodeTerrain == NodeTerrain.TownCenter)
             {
                 OnFlag?.Invoke(Flags.OnGather);
                 return;
@@ -156,13 +156,15 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             OnFlag?.Invoke(Flags.OnTargetReach);
         }
-
+        protected override bool IsInvalidState(SimNode<IVector> currentNode, SimNode<IVector> targetNode,
+            List<SimNode<IVector>> path) =>
+            currentNode == null || targetNode == null || (path != null && path.Count == 0);
         protected bool CheckRetreat(bool retreat, SimNode<IVector> targetNode) =>
             retreat && (targetNode?.NodeTerrain != NodeTerrain.TownCenter &&
                         targetNode?.NodeTerrain != NodeTerrain.WatchTower);
     }
 
-    public class BuilderGathererWalkState : GathererWalkState
+    public class BuilderWalkState : GathererWalkState
     {
         private static readonly NodeTerrain[] ValidBuilderTerrains =
         {

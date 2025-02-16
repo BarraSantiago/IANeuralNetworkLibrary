@@ -1,8 +1,7 @@
-﻿using NeuralNetworkLib.Agents.TCAgent;
-using NeuralNetworkLib.DataManagement;
+﻿using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.Utils;
 
-namespace NeuralNetworkLib.Entities;
+namespace NeuralNetworkLib.Agents.TCAgent;
 
 public struct CreationCost
 {
@@ -100,8 +99,8 @@ public class TownCenter
 
     public bool ManageSpawning()
     {
-        if(_gathererCount >= maxGatherers && _builderCount >= maxBuilders && _cartCount >= maxCarts) return false;
-        
+        if (_gathererCount >= maxGatherers && _builderCount >= maxBuilders && _cartCount >= maxCarts) return false;
+
         if (Gold < GathererCost.Gold || Wood < GathererCost.Wood || Food < GathererCost.Food) return false;
 
         if (_gathererCount % 3 == 0 && !HasEnoughResources(BuilderCost.Sum(CartCost.Sum(GathererCost))))
@@ -113,8 +112,8 @@ public class TownCenter
 
         if (_gathererCount % 3 == 0)
         {
-            if(_builderCount < maxBuilders) SpawnBuilder();
-            if(_cartCount < maxCarts) SpawnCart();
+            if (_builderCount < maxBuilders) SpawnBuilder();
+            if (_cartCount < maxCarts) SpawnCart();
         }
 
         return true;
@@ -158,10 +157,8 @@ public class TownCenter
         {
             switch (_watchTowerConstructions.First().NodeTerrain)
             {
-                case NodeTerrain.Construction when
-                    _watchTowerConstructions.First().GetAdjacentNode() != null:
-                    IVector coord = _watchTowerConstructions.First().GetAdjacentNode();
-                    return DataContainer.GetNode(coord);
+                case NodeTerrain.Construction when _watchTowerConstructions.Any(simNode => simNode.GetAdjacentNode() != null):
+                    return _watchTowerConstructions.First(simNode => simNode.GetAdjacentNode() != null);
                 case NodeTerrain.WatchTower:
                     _watchTowerPositions.Add(_watchTowerConstructions.First());
                     _watchTowerConstructions.RemoveAt(0);
