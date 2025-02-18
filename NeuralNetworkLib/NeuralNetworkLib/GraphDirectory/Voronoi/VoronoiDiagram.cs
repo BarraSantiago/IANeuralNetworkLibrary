@@ -1,11 +1,5 @@
 namespace NeuralNetworkLib.GraphDirectory.Voronoi;
 
-/// <summary>
-/// A generic Voronoi (power) diagram.
-/// The cell for each site is computed by clipping the bounding polygon with
-/// half–planes defined by the weighted (power) distance.
-/// Weight balancing is achieved by adjusting each site's PowerWeight.
-/// </summary>
 public class VoronoiDiagram<TPoint2D>
     where TPoint2D : IEquatable<TPoint2D>, IPoint2D<TPoint2D>, new()
 {
@@ -13,7 +7,7 @@ public class VoronoiDiagram<TPoint2D>
     public List<Node<TPoint2D>> Nodes { get; set; }
 
     /// <summary>
-    /// The bounding polygon (typically convex, e.g. a rectangle) in which the cells are computed.
+    /// The bounding polygon in which the cells are computed.
     /// </summary>
     public List<TPoint2D> BoundingPolygon { get; set; }
 
@@ -25,41 +19,29 @@ public class VoronoiDiagram<TPoint2D>
     }
 
     /// <summary>
-    /// Computes the cell (as a polygon) for each site using the power diagram definition.
-    /// For each pair of sites, the half–plane is defined by:
-    ///    ||p - s_i||^2 - w_i <= ||p - s_j||^2 - w_j,
-    /// which can be rewritten as (p - A) · (s_i - s_j) >= 0, with A computed below.
+    /// Computes the cell polygons using the standard power diagram method.
+    /// Each cell is computed by starting with the full bounding polygon and then
+    /// clipping it with half–planes determined by the bisector between the site and every other site.
     /// </summary>
-    public void ComputeCells()
+    public void ComputeCellsStandard()
     {
-        foreach (Site<TPoint2D>? site in Sites)
+        foreach (Site<TPoint2D> site in Sites)
         {
-            // Start with the full bounding polygon.
             List<TPoint2D> cell = new List<TPoint2D>(BoundingPolygon);
-            foreach (Site<TPoint2D>? other in Sites)
+            foreach (Site<TPoint2D> other in Sites)
             {
                 if (other == site)
                     continue;
 
-                // Compute the vector from other to this site.
                 TPoint2D diff = site.Position.Subtract(other.Position);
                 double normSq = diff.Dot(diff);
-                
-                if (normSq < 1e-9) continue; 
+                if (normSq < 1e-9)
+                    continue;
 
-                // Standard (unweighted) bisector would use the midpoint:
                 TPoint2D mid = site.Position.Add(other.Position).Divide(2.0);
-
-                // With power weights, we shift the bisector.
-                // Let the half–plane be defined by (p - A) · (site.Position - other.Position) >= 0.
-                // Choose A = mid + correction, with:
-                //    correction = diff * ((other.PowerWeight - site.PowerWeight) / (2 * normSq)).
                 double correctionFactor = (other.PowerWeight - site.PowerWeight) / (2.0 * normSq);
                 TPoint2D correction = diff.Multiply(correctionFactor);
                 TPoint2D A = mid.Add(correction);
-
-                // Use diff as the normal.
-                // The half–plane for site is: (p - A) · diff >= 0.
                 cell = ClipPolygonWithLine(cell, A, diff);
                 if (cell.Count == 0)
                     break;
@@ -70,69 +52,103 @@ public class VoronoiDiagram<TPoint2D>
     }
 
     /// <summary>
-    /// Clips a polygon with a half–plane defined by a boundary point and a boundary normal.
-    /// Points p satisfying (p - boundaryPoint) · boundaryNormal >= 0 are kept.
-    /// Uses the Sutherland–Hodgman algorithm.
+    /// Computes the cell polygons with a feedback mechanism.
+    /// In each feedback iteration the error (cellWeight - targetWeight) is computed for each site.
+    /// When clipping the candidate cell, the bisector is shifted by a term proportional to the difference
+    /// in error between two sites. Sites with too heavy a cell will have their boundaries pushed inward.
     /// </summary>
-    private List<TPoint2D> ClipPolygonWithLine(List<TPoint2D> polygon, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
+    /// <param name="targetWeight">The desired weight for each cell (typically total node weight divided by number of sites).</param>
+    /// <param name="feedbackCoefficient">
+    /// A coefficient that scales the feedback term. For many problems a starting value of around 0.0001 is suggested.
+    /// </param>
+    public void ComputeCellsWithFeedback(double targetWeight, double feedbackCoefficient, int iterations)
     {
-        List<TPoint2D> output = new List<TPoint2D>();
-        if (polygon.Count == 0)
-            return output;
+        // First, compute the standard cells.
+        ComputeCellsStandard();
 
-        TPoint2D prev = polygon[polygon.Count - 1];
-        bool prevInside = (prev.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
-        foreach (TPoint2D? curr in polygon)
+        // Run a few feedback iterations.
+        for (int iter = 0; iter < iterations; iter++)
         {
-            bool currInside = (curr.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
-            if (currInside)
+            // Update each site's cell weight.
+            ComputeCellWeights();
+
+            // Compute error for each site.
+            Dictionary<Site<TPoint2D>, double> errors = new Dictionary<Site<TPoint2D>, double>();
+            foreach (var site in Sites)
             {
-                if (!prevInside)
+                double error = site.CellWeight - targetWeight;
+                errors[site] = error;
+            }
+
+            // Recompute each cell using feedback adjustments.
+            foreach (Site<TPoint2D> site in Sites)
+            {
+                List<TPoint2D> cell = new List<TPoint2D>(BoundingPolygon);
+                foreach (Site<TPoint2D> other in Sites)
                 {
-                    TPoint2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
-                    output.Add(intersection);
+                    if (other == site)
+                        continue;
+
+                    TPoint2D diff = site.Position.Subtract(other.Position);
+                    double normSq = diff.Dot(diff);
+                    if (normSq < 1e-9)
+                        continue;
+
+                    TPoint2D mid = site.Position.Add(other.Position).Divide(2.0);
+                    double baseCorrection = (other.PowerWeight - site.PowerWeight) / (2.0 * normSq);
+                    double errorDiff = errors[site] - errors[other];
+                    double feedbackTerm = feedbackCoefficient * errorDiff / (2.0 * Math.Sqrt(normSq));
+                    double totalCorrectionFactor = baseCorrection + feedbackTerm;
+
+                    // Optionally clamp the correction factor to avoid extreme shifts.
+                    double maxCorrectionFactor = 10.0;
+                    totalCorrectionFactor = Math.Max(-maxCorrectionFactor,
+                        Math.Min(maxCorrectionFactor, totalCorrectionFactor));
+
+                    TPoint2D correction = diff.Multiply(totalCorrectionFactor);
+                    TPoint2D A = mid.Add(correction);
+                    cell = ClipPolygonWithLine(cell, A, diff);
+                    if (cell.Count == 0)
+                        break;
                 }
 
-                output.Add(curr);
+                site.CellPolygon = cell;
             }
-            else if (prevInside)
-            {
-                TPoint2D intersection = LineIntersection(prev, curr, boundaryPoint, boundaryNormal);
-                output.Add(intersection);
-            }
-
-            prev = curr;
-            prevInside = currInside;
         }
-
-        return output;
     }
 
     /// <summary>
-    /// Computes the intersection between the segment (from A to B) and the line defined by:
-    /// (p - boundaryPoint) · boundaryNormal = 0.
+    /// Computes the node weight contained within each site's cell.
     /// </summary>
-    private TPoint2D LineIntersection(TPoint2D A, TPoint2D B, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
+    public void ComputeCellWeights()
     {
-        TPoint2D AB = B.Subtract(A);
-        double t = (boundaryPoint.Subtract(A)).Dot(boundaryNormal) / AB.Dot(boundaryNormal);
-        return A.Add(AB.Multiply(t));
+        foreach (Site<TPoint2D> site in Sites)
+        {
+            double total = 0;
+            foreach (Node<TPoint2D> node in Nodes)
+            {
+                if (PointInPolygon(node.Position, site.CellPolygon))
+                    total += node.Weight;
+            }
+
+            site.CellWeight = total;
+        }
     }
 
     /// <summary>
-    /// Determines whether point p is inside the polygon (using a ray–casting algorithm).
+    /// Standard point-in-polygon test using the ray-casting algorithm.
     /// </summary>
     public bool PointInPolygon(TPoint2D p, List<TPoint2D> polygon)
     {
         bool inside = false;
-        int n = polygon.Count;
-        if (n == 0) return false;
+        int count = polygon.Count;
+        if (count < 3)
+            return false;
 
-        for (int i = 0, j = n - 1; i < n; j = i++)
+        for (int i = 0, j = count - 1; i < count; j = i++)
         {
             TPoint2D pi = polygon[i];
             TPoint2D pj = polygon[j];
-            // Check if p is between the y-coordinates of the edge, and then use the x-coordinate.
             if (((pi.Y > p.Y) != (pj.Y > p.Y)) &&
                 (p.X < (pj.X - pi.X) * (p.Y - pi.Y) / (pj.Y - pi.Y) + pi.X))
             {
@@ -144,27 +160,72 @@ public class VoronoiDiagram<TPoint2D>
     }
 
     /// <summary>
-    /// Computes the total node weight for each site's cell.
+    /// Clips a polygon with the half-plane defined by the line (through boundaryPoint with normal boundaryNormal).
+    /// Only points for which (p - boundaryPoint)·boundaryNormal >= 0 are retained.
+    /// Uses a Sutherland-Hodgman style algorithm.
     /// </summary>
-    public void ComputeCellWeights()
+    private List<TPoint2D> ClipPolygonWithLine(List<TPoint2D> polygon, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
     {
-        foreach (Site<TPoint2D>? site in Sites)
+        List<TPoint2D> output = new List<TPoint2D>();
+        if (polygon.Count == 0)
+            return output;
+
+        TPoint2D prev = polygon[polygon.Count - 1];
+        bool prevInside = (prev.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
+
+        foreach (TPoint2D curr in polygon)
         {
-            double total = 0.0;
-            foreach (Node<TPoint2D>? node in Nodes)
+            bool currInside = (curr.Subtract(boundaryPoint)).Dot(boundaryNormal) >= 0;
+            if (currInside)
             {
-                if (PointInPolygon(node.Position, site.CellPolygon))
-                    total += node.Weight;
+                if (!prevInside)
+                {
+                    TPoint2D intersection = ComputeIntersection(prev, curr, boundaryPoint, boundaryNormal);
+                    output.Add(intersection);
+                }
+
+                output.Add(curr);
+            }
+            else if (prevInside)
+            {
+                TPoint2D intersection = ComputeIntersection(prev, curr, boundaryPoint, boundaryNormal);
+                output.Add(intersection);
             }
 
-            site.CellWeight = total;
+            prev = curr;
+            prevInside = currInside;
         }
+
+        return output;
     }
 
     /// <summary>
-    /// Returns the site (point of interest) whose cell contains the given point.
-    /// If no cell contains the point, returns the site with the closest Position.
+    /// Computes the intersection point between a segment (start to end) and the line defined by boundaryPoint and boundaryNormal.
     /// </summary>
+    private TPoint2D ComputeIntersection(TPoint2D start, TPoint2D end, TPoint2D boundaryPoint, TPoint2D boundaryNormal)
+    {
+        TPoint2D direction = end.Subtract(start);
+        double t = (boundaryPoint.Subtract(start)).Dot(boundaryNormal) / direction.Dot(boundaryNormal);
+        return start.Add(direction.Multiply(t));
+    }
+
+    /// <summary>
+    /// Balances the cells by computing a target weight (total node weight divided by the number of sites)
+    /// and then running the feedback-based cell computation.
+    /// </summary>
+    /// <param name="feedbackCoefficient">
+    /// A coefficient that scales the feedback adjustment. A starting value of 0.0001 is suggested,
+    /// but you may need to tune it based on your data.
+    /// </param>
+    public void BalanceCells(double feedbackCoefficient, int iterations)
+    {
+        double totalNodeWeight = Nodes.Sum(n => n.Weight);
+        double targetWeight = totalNodeWeight / Sites.Count;
+        ComputeCellsWithFeedback(targetWeight, feedbackCoefficient, iterations);
+        // Final weight computation after rebalancing
+        ComputeCellWeights();
+    }
+
     public Site<TPoint2D> GetClosestPointOfInterest(TPoint2D agentPosition)
     {
         foreach (Site<TPoint2D>? site in Sites)
@@ -175,45 +236,4 @@ public class VoronoiDiagram<TPoint2D>
 
         return Sites.OrderBy(site => site.Position.DistanceTo(agentPosition)).FirstOrDefault();
     }
-
-    /// <summary>
-    /// Adjusts each site's PowerWeight (without modifying its fixed Position) so that its cell's total node weight
-    /// approaches the target weight. This is done iteratively. Increasing a site's PowerWeight will shrink its cell,
-    /// and vice versa.
-    /// </summary>
-    /// <param name="iterations">Number of balancing iterations.</param>
-    /// <param name="step">
-    /// The adjustment factor for the PowerWeight update.
-    /// A typical value might be 0.1.
-    /// </param>
-    public void BalanceWeights(int iterations, double step = 0.1)
-    {
-        double totalNodeWeight = Nodes.Sum(n => n.Weight);
-        double targetWeight = totalNodeWeight / Sites.Count;
-
-        for (int iter = 0; iter < iterations; iter++)
-        {
-            // Update sequentially to avoid interference between sites
-            foreach (Site<TPoint2D> site in Sites)
-            {
-                // Recompute cells and weights for current state
-                ComputeCells();
-                ComputeCellWeights();
-            
-                double diff = site.CellWeight - targetWeight;
-            
-                // Apply damped adjustment to avoid overshooting
-                double adjustedStep = step * (1.0 - (double)iter / iterations); // Reduce step over time
-                site.PowerWeight += adjustedStep * diff;
-
-                // Prevent extreme PowerWeight values
-                site.PowerWeight = Math.Max(-1e3, Math.Min(1e3, site.PowerWeight));
-            }
-        }
-
-        // Final computation with stabilized weights
-        ComputeCells();
-        ComputeCellWeights();
-    }
-    
 }

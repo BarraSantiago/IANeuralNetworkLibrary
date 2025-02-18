@@ -172,7 +172,6 @@ public class DataContainer
 
             List<Site<Point2D>> sites = GetSites(terrain);
             Voronois[(int)terrain] = new Voronoi(sites, allNodes, boundingPolygon);
-            Voronois[(int)terrain].ComputeCells();
             Voronois[(int)terrain].ComputeCellWeights();
             // TODO Fix this
             //Voronois[(int)terrain].BalanceWeights(iterations: 5, step: 0.2);
@@ -218,7 +217,6 @@ public class DataContainer
         if (Voronois == null) return;
 
         Voronois[(int)terrain] = new VoronoiDiagram<Point2D>(GetSites(terrain), allNodes, boundingPolygon);
-        Voronois[(int)terrain].ComputeCells();
         Voronois[(int)terrain].ComputeCellWeights();
         // TODO Fix this
         //Voronois[(int)terrain].BalanceWeights(iterations: 7, step: 0.2);
