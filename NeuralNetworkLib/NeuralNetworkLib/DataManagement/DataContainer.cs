@@ -39,7 +39,7 @@ public class DataContainer
     public static Voronoi[] Voronois;
     public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi2;
     public static FitnessStagnationManager FitnessStagnationManager = new();
-    
+
     private const string FilePath = "BrainConfigurations.json";
 
     private static ParallelOptions parallelOptions = new ParallelOptions
@@ -164,14 +164,14 @@ public class DataContainer
 
 
         Voronois = new VoronoiDiagram<Point2D>[Enum.GetValues(typeof(NodeTerrain)).Length];
-
+        VoronoiDiagram<Point2D>.Nodes = allNodes;
 
         foreach (NodeTerrain terrain in Enum.GetValues(typeof(NodeTerrain)))
         {
             if (terrain is NodeTerrain.Construction or NodeTerrain.WatchTower or NodeTerrain.Empty) continue;
 
             List<Site<Point2D>> sites = GetSites(terrain);
-            Voronois[(int)terrain] = new Voronoi(sites, allNodes, boundingPolygon);
+            Voronois[(int)terrain] = new Voronoi(sites, boundingPolygon);
             Voronois[(int)terrain].ComputeCellWeights();
             // TODO Fix this
             //Voronois[(int)terrain].BalanceWeights(iterations: 5, step: 0.2);
@@ -216,7 +216,7 @@ public class DataContainer
     {
         if (Voronois == null) return;
 
-        Voronois[(int)terrain] = new VoronoiDiagram<Point2D>(GetSites(terrain), allNodes, boundingPolygon);
+        Voronois[(int)terrain].ComputeCellsStandard();
         Voronois[(int)terrain].ComputeCellWeights();
         // TODO Fix this
         //Voronois[(int)terrain].BalanceWeights(iterations: 7, step: 0.2);

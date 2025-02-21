@@ -18,9 +18,9 @@ public sealed class NeuralNetSystem : ECSSystem
 
     public override void Initialize()
     {
-        parallelOptions = new ParallelOptions 
-        { 
-            MaxDegreeOfParallelism = Environment.ProcessorCount 
+        parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = Environment.ProcessorCount
         };
     }
 
@@ -45,8 +45,9 @@ public sealed class NeuralNetSystem : ECSSystem
 
     protected override void Execute(float deltaTime)
     {
-        OrderablePartitioner<uint>? partitioner = Partitioner.Create(queriedEntities, EnumerablePartitionerOptions.NoBuffering);
-            
+        OrderablePartitioner<uint>? partitioner =
+            Partitioner.Create(queriedEntities, EnumerablePartitionerOptions.NoBuffering);
+
         Parallel.ForEach(partitioner, parallelOptions, entityId =>
         {
             NeuralNetComponent? neuralNet = neuralNetworkComponents[entityId];
@@ -85,10 +86,8 @@ public sealed class NeuralNetSystem : ECSSystem
 
         if (useParallel)
         {
-            Parallel.For(0, neuronCount, parallelOptions, j =>
-            {
-                ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j);
-            });
+            Parallel.For(0, neuronCount, parallelOptions,
+                j => { ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j); });
         }
         else
         {
@@ -108,6 +107,8 @@ public sealed class NeuralNetSystem : ECSSystem
         outputs[index] = FastTanh(sum);
     }
 
+    private static readonly ThreadLocal<float[]> vectorBuffer = new(() => new float[Vector<float>.Count]);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float ComputeWeightedSum(Neuron neuron, ReadOnlySpan<float> inputs)
     {
@@ -120,11 +121,16 @@ public sealed class NeuralNetSystem : ECSSystem
             Vector<float> sumVector = Vector<float>.Zero;
             int vectorSize = Vector<float>.Count;
             int i = 0;
+            float[] buffer = vectorBuffer.Value;
 
             for (; i <= inputLength - vectorSize; i += vectorSize)
             {
-                Vector<float> weightVec = new Vector<float>(weights.Slice(i).ToArray());
-                Vector<float> inputVec = new Vector<float>(inputs.Slice(i).ToArray());
+                weights.Slice(i, vectorSize).CopyTo(buffer);
+                Vector<float> weightVec = new Vector<float>(buffer);
+
+                inputs.Slice(i, vectorSize).CopyTo(buffer);
+                Vector<float> inputVec = new Vector<float>(buffer);
+
                 sumVector += weightVec * inputVec;
             }
 
@@ -156,5 +162,7 @@ public sealed class NeuralNetSystem : ECSSystem
         return p / q;
     }
 
-    protected override void PostExecute(float deltaTime) { }
+    protected override void PostExecute(float deltaTime)
+    {
+    }
 }
