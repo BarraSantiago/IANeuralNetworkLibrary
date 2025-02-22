@@ -64,8 +64,8 @@ public class DataContainer
         UpdateInputCache();
 
         InitPathfinder(ref GathererPathfinder, 0, 0);
-        InitPathfinder(ref CartPathfinder, 50, 15);
-        InitPathfinder(ref BuilderPathfinder, 30, 0);
+        InitPathfinder(ref CartPathfinder, 5, 1);
+        InitPathfinder(ref BuilderPathfinder, 5, 0);
         InitVoronois();
     }
 
@@ -114,8 +114,8 @@ public class DataContainer
 
     private static void InitPathfinder(ref AStarPath? pathfinder, int mountainCost = 0, int sandCost = 0)
     {
-        const int normalCost = 100;
-        const int maxModCost = 30;
+        const int normalCost = 5;
+        const int maxModCost = 10;
 
         foreach (SimNode<IVector> node in Graph.NodesType)
         {
@@ -123,7 +123,7 @@ public class DataContainer
             switch (node.NodeType)
             {
                 case NodeType.Lake:
-                    node.SetCost(100);
+                    node.SetCost(normalCost);
                     node.isBlocked = true;
                     break;
                 case NodeType.Mountain:
