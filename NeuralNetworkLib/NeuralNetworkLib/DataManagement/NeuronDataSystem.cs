@@ -17,7 +17,13 @@ namespace NeuralNetworkLib.DataManagement
         Eat,
         Attack,
         Escape,
-        Flocking
+        Flocking,
+        ReturnResources,
+        Deliver,
+        GetResources,
+        Wait,
+        Build,
+        Gather
     }
 
     public static class NeuronDataSystem

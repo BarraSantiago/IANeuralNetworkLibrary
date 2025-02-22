@@ -126,6 +126,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
     #endregion
 
 
+    #region Params
+
     protected override object[] WaitTickParameters()
     {
         object[] objects = { Retreat, CurrentNode, OnWait, CurrentFood };
@@ -145,7 +147,43 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         return new object[] { adjacentNode };
     }
 
+    #endregion
 
+    #region Inputs
+
+    protected override void ExtraInputs()
+    {
+        base.ExtraInputs();
+        GatherInputs();
+    }
+    
+    protected void GatherInputs()
+    {
+        int brain = GetBrainTypeKeyByValue(BrainType.Gather);
+        int inputCount = GetInputCount(BrainType.Gather);
+        input[brain] = new float[inputCount];
+        
+        input[brain][0] = CurrentFood;
+        input[brain][1] = CurrentGold;
+        input[brain][2] = CurrentWood;
+        input[brain][3] = (int)ResourceGathering;
+        input[brain][4] = ResourceLimit;
+        input[brain][5] = TargetNode.Resource;
+        
+        
+    }
+    
+    protected override void WaitInputs()
+    {
+        base.WaitInputs();
+        int brain = GetBrainTypeKeyByValue(BrainType.Wait);
+        
+        input[brain][4] = CurrentFood;
+
+    }
+
+    #endregion
+    
     protected override void Wait()
     {
         base.Wait();
@@ -227,17 +265,17 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                     foodCost = GoldPerFood;
                     CurrentGold++;
                     break;
-                
+
                 case ResourceType.Wood:
                     foodCost = WoodPerFood;
                     CurrentWood++;
                     break;
-                
+
                 case ResourceType.Food:
                     foodCost = FoodPerFood;
                     CurrentFood++;
                     break;
-                
+
                 case ResourceType.None:
                 default:
                     throw new ArgumentOutOfRangeException(nameof(resourceType), resourceType, null);

@@ -70,7 +70,6 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
         protected Action OnEat;
         protected const int NoTarget = -1;
         protected TTransform transform = new TTransform();
-        private Genome[] genomes;
         
         public AnimalAgent()
         {

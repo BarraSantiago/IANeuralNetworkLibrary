@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.GraphDirectory;
@@ -44,6 +45,11 @@ public class TcAgent<TVector, TTransform>
     where TVector : IVector, IEquatable<TVector>
     where TTransform : ITransform<IVector>, new()
 {
+    
+    public float[][] output;
+    public float[][] input;
+    public Dictionary<int, BrainType> brainTypes = new Dictionary<int, BrainType>();
+
     public virtual TTransform Transform
     {
         get => transform;
@@ -91,6 +97,7 @@ public class TcAgent<TVector, TTransform>
     protected INode<IVector>? adjacentNode;
     protected List<SimNode<IVector>> Path;
     protected static Voronoi alarmVoronoi;
+    protected const int NoTarget = -1;
 
     protected SimNode<IVector> TargetNode
     {
@@ -108,6 +115,13 @@ public class TcAgent<TVector, TTransform>
 
     public virtual void Init()
     {
+        output = new float[brainTypes.Count][];
+        foreach (BrainType brain in brainTypes.Values)
+        {
+            BrainConfiguration inputsCount = DataContainer.InputCountCache[(brain, AgentType)];
+            output[GetBrainTypeKeyByValue(brain)] = new float[inputsCount.OutputCount];
+        }
+        
         Fsm = new FSM<Behaviours, Flags>();
         Fsm.OnStateChange += state =>
             CurrentState = (Behaviours)Math.Clamp(state, 0, Enum.GetValues(typeof(Behaviours)).Length);
@@ -228,6 +242,98 @@ public class TcAgent<TVector, TTransform>
 
     #endregion
 
+    #region NeuralNet
+
+    public virtual void UpdateInputs()
+    {
+        MovementInputs();
+        WaitInputs();
+        ExtraInputs();
+    }
+
+    protected virtual void MovementInputs()
+    {
+        int brain = GetBrainTypeKeyByValue(BrainType.Movement);
+        int inputCount = GetInputCount(BrainType.Movement);
+
+        input[brain] = new float[inputCount];
+        input[brain][0] = CurrentNode.GetCoordinate().X;
+        input[brain][1] = CurrentNode.GetCoordinate().Y;
+
+
+        if (targetNode == null)
+        {
+            input[brain][2] = NoTarget;
+            input[brain][3] = NoTarget;
+        }
+        else
+        {
+            input[brain][2] = targetNode.X;
+            input[brain][3] = targetNode.Y;
+        }
+    }
+
+    protected void FlockingInputs()
+    {
+        int brain = GetBrainTypeKeyByValue(BrainType.Flocking);
+        int inputCount = GetInputCount(BrainType.Flocking );
+
+        input[brain] = new float[inputCount];
+    }
+    
+    protected static readonly NodeTerrain[] SafeRetreatTerrains = { NodeTerrain.TownCenter, NodeTerrain.WatchTower };
+    protected virtual void WaitInputs()
+    {
+        int brain = GetBrainTypeKeyByValue(BrainType.Wait);
+        int inputCount = GetInputCount(BrainType.Wait);
+        input[brain] = new float[inputCount];
+            
+        input[brain][0] = CurrentNode.GetCoordinate().X;
+        input[brain][1] = CurrentNode.GetCoordinate().Y;
+        input[brain][2] = Retreat ? 1 : 0;
+        input[brain][3] = Array.IndexOf(SafeRetreatTerrains, CurrentNode.NodeTerrain) == -1 ? 0 : 1;
+            
+    }
+    
+    protected virtual void ExtraInputs()
+    {
+    }
+    
+    protected int GetInputCount(BrainType brainType)
+    {
+        return InputCountCache.GetInputCount(AgentType, brainType);
+    }
+    protected void CalculateInputs()
+    {
+        int brainTypesCount = brainTypes.Count;
+        input = new float[brainTypesCount][];
+        output = new float[brainTypesCount][];
+
+        for (int i = 0; i < brainTypesCount; i++)
+        {
+            BrainType brainType = brainTypes[i];
+            input[i] = new float[GetInputCount(brainType)];
+            int outputCount = DataContainer.InputCountCache[(brainType, AgentType)].OutputCount;
+            output[i] = new float[outputCount];
+        }
+    }
+    
+    public int GetBrainTypeKeyByValue(BrainType value)
+    {
+        foreach (KeyValuePair<int, BrainType> kvp in brainTypes)
+        {
+            if (EqualityComparer<BrainType>.Default.Equals(kvp.Value, value))
+            {
+                return kvp.Key;
+            }
+        }
+
+        throw new KeyNotFoundException(
+            $"The BrainType value '{value}' is not present in the '{AgentType}' brainTypes dictionary.");
+    }
+
+    #endregion
+    
     protected virtual void Move()
     {
         if (CurrentNode == null || TargetNode == null || Path == null)
@@ -272,4 +378,6 @@ public class TcAgent<TVector, TTransform>
     {
         return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;
     }
+    
+    
 }

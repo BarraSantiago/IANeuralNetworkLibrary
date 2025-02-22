@@ -54,6 +54,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
             {
                 throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
             }
+
             adjacentNode = DataContainer.GetNode(coord);
             adjacentNode.IsOccupied = true;
             CurrentNode = DataContainer.GetNode(adjacentNode.GetCoordinate());
@@ -109,6 +110,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 
     #endregion
 
+    #region Params
 
     protected object[] BuildTickParameters()
     {
@@ -120,6 +122,40 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         return new object[] { Retreat, CurrentFood, CurrentGold, CurrentWood, CurrentNode, TargetNode, OnWait };
     }
 
+    #endregion
+
+    #region Inputs
+
+    protected override void ExtraInputs()
+    {
+        base.ExtraInputs();
+        BuildInputs();
+    }
+
+    private void BuildInputs()
+    {
+        int brain = GetBrainTypeKeyByValue(BrainType.Build);
+        int inputCount = GetInputCount(BrainType.Build);
+        input[brain] = new float[inputCount];
+            
+        input[brain][4] = CurrentGold;
+        input[brain][5] = CurrentFood;
+        input[brain][6] = CurrentWood;
+        input[brain][7] = TargetNode.Resource >= 100 ? 1 : 0;
+    }
+
+    protected override void WaitInputs()
+    {
+        base.WaitInputs();
+        int brain = GetBrainTypeKeyByValue(BrainType.Wait);
+        
+        input[brain][4] = CurrentFood;
+        input[brain][5] = CurrentGold;
+        input[brain][6] = CurrentWood;
+    }
+
+    #endregion
+    
     private void Build()
     {
         if (TargetNode.NodeTerrain != NodeTerrain.Construction) return;

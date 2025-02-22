@@ -24,8 +24,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             behaviours.AddMultiThreadableBehaviours(0, onWait);
 
-            behaviours.SetTransitionBehaviour(() =>
-                ProcessTransitions(retreat, food, gold, wood, currentNode, targetNode));
+            behaviours.SetTransitionBehaviour(() => ProcessTransitions(retreat, food, gold, wood, currentNode, targetNode));
 
             return behaviours;
         }
@@ -42,10 +41,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             if (food > 0 && gold >= GoldCost && wood >= WoodCost)
             {
-                if (targetNode.NodeTerrain == NodeTerrain.Construction)
-                    OnFlag?.Invoke(Flags.OnBuild);
-                else
-                    OnFlag?.Invoke(Flags.OnTargetLost);
+                OnFlag?.Invoke(targetNode.NodeTerrain == NodeTerrain.Construction ? Flags.OnBuild : Flags.OnTargetLost);
             }
         }
 
@@ -78,16 +74,12 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             behaviours.AddMultiThreadableBehaviours(0, onWait);
 
-            behaviours.SetTransitionBehaviour(() =>
-                ProcessTransitions(retreat, currentNode, currentFood));
+            behaviours.SetTransitionBehaviour(() => ProcessTransitions(retreat, currentNode, currentFood));
 
             return behaviours;
         }
 
-        private void ProcessTransitions(
-            bool retreat,
-            SimNode<IVector> currentNode,
-            int currentFood)
+        private void ProcessTransitions(bool retreat, SimNode<IVector> currentNode, int currentFood)
         {
             if (retreat)
             {
