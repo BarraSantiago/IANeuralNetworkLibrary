@@ -108,6 +108,77 @@ public class DataContainer
                     AgentType = AgentTypes.Herbivore, BrainType = BrainType.Escape, InputCount = 4, OutputCount = 1,
                     HiddenLayers = new[] { 1 }
                 },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Builder, BrainType = BrainType.Build, InputCount = 5, OutputCount = 2,
+                    HiddenLayers = new[] { 3 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Builder, BrainType = BrainType.Wait, InputCount = 7, OutputCount = 1,
+                    HiddenLayers = new[] { 3 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Builder, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 2,
+                    HiddenLayers = new[] { 3 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Builder, BrainType = BrainType.Flocking, InputCount = 16, OutputCount = 4,
+                    HiddenLayers = new[] {  12, 8, 6, 4 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Movement, InputCount = 6, OutputCount = 2,
+                    HiddenLayers = new[] { 3 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Flocking, InputCount = 16, OutputCount = 4,
+                    HiddenLayers = new[] {  12, 8, 6, 4 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Deliver, InputCount = 4, OutputCount = 2,
+                    HiddenLayers = new[] { 3 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.ReturnResources, InputCount = 3, OutputCount = 2,
+                    HiddenLayers = new[] { 2 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Wait, InputCount = 4, OutputCount = 1,
+                    HiddenLayers = new[] { 2 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.GetResources, InputCount = 7, OutputCount = 3,
+                    HiddenLayers = new[] { 4 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 2,
+                    HiddenLayers = new[] { 3 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Flocking, InputCount = 16, OutputCount = 4,
+                    HiddenLayers = new[] {  12, 8, 6, 4 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Wait, InputCount = 5, OutputCount = 1,
+                    HiddenLayers = new[] { 2 }
+                },
+                new BrainConfiguration
+                {
+                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Gather, InputCount = 6, OutputCount = 3,
+                    HiddenLayers = new[] { 4 }
+                },
+                
             };
         }
     }
