@@ -2,6 +2,8 @@
 using NeuralNetworkLib.Agents.SimAgents;
 using NeuralNetworkLib.Agents.States.TCStates;
 using NeuralNetworkLib.DataManagement;
+using NeuralNetworkLib.ECS.FlockingECS;
+using NeuralNetworkLib.ECS.Patron;
 using NeuralNetworkLib.GraphDirectory;
 using NeuralNetworkLib.GraphDirectory.Voronoi;
 using NeuralNetworkLib.Utils;
@@ -45,7 +47,6 @@ public class TcAgent<TVector, TTransform>
     where TVector : IVector, IEquatable<TVector>
     where TTransform : ITransform<IVector>, new()
 {
-    
     public float[][] output;
     public float[][] input;
     public Dictionary<int, BrainType> brainTypes = new Dictionary<int, BrainType>();
@@ -121,7 +122,7 @@ public class TcAgent<TVector, TTransform>
             BrainConfiguration inputsCount = DataContainer.InputCountCache[(brain, AgentType)];
             output[GetBrainTypeKeyByValue(brain)] = new float[inputsCount.OutputCount];
         }
-        
+        CalculateInputs();
         Fsm = new FSM<Behaviours, Flags>();
         Fsm.OnStateChange += state =>
             CurrentState = (Behaviours)Math.Clamp(state, 0, Enum.GetValues(typeof(Behaviours)).Length);
@@ -244,10 +245,11 @@ public class TcAgent<TVector, TTransform>
 
     #region NeuralNet
 
-    public virtual void UpdateInputs()
+    public virtual void UpdateInputs(ACSComponent acsComponent)
     {
         MovementInputs();
         WaitInputs();
+        FlockingInputs(acsComponent);
         ExtraInputs();
     }
 
@@ -272,37 +274,96 @@ public class TcAgent<TVector, TTransform>
             input[brain][3] = targetNode.Y;
         }
     }
-
-    protected void FlockingInputs()
+    
+    protected void FlockingInputs(ACSComponent acsComponent)
     {
         int brain = GetBrainTypeKeyByValue(BrainType.Flocking);
-        int inputCount = GetInputCount(BrainType.Flocking );
+        int inputCount = GetInputCount(BrainType.Flocking);
 
         input[brain] = new float[inputCount];
+        
+        input[brain][0] = Transform.position.X;
+        input[brain][1] = Transform.position.Y;
+
+        if (targetNode != null)
+        {
+            IVector direction = (targetNode.GetCoordinate() - Transform.position).Normalized();
+            input[brain][2] = direction.X;
+            input[brain][3] = direction.Y;
+        }
+        else
+        {
+            input[brain][2] = NoTarget;
+            input[brain][3] = NoTarget;
+        }
+
+
+        IVector avgNeighborPosition = acsComponent.Direction;
+        input[brain][4] = float.IsNaN(avgNeighborPosition.X) ? NoTarget : avgNeighborPosition.X;
+        input[brain][5] = float.IsNaN(avgNeighborPosition.Y) ? NoTarget : avgNeighborPosition.Y;
+        
+        IVector separationVector = acsComponent.Separation;
+        input[brain][8] = float.IsNaN(separationVector.X) ? NoTarget : separationVector.X;
+        input[brain][9] = float.IsNaN(separationVector.Y) ? NoTarget : separationVector.Y;
+
+        IVector alignmentVector = acsComponent.Alignment;
+        if (alignmentVector == null || float.IsNaN(alignmentVector.X) || float.IsNaN(alignmentVector.Y))
+        {
+            input[brain][10] = NoTarget;
+            input[brain][11] = NoTarget;
+        }
+        else
+        {
+            input[brain][10] = alignmentVector.X;
+            input[brain][11] = alignmentVector.Y;
+        }
+
+        IVector cohesionVector = acsComponent.Cohesion;
+        if (cohesionVector == null || float.IsNaN(cohesionVector.X) || float.IsNaN(cohesionVector.Y))
+        {
+            input[brain][12] = NoTarget;
+            input[brain][13] = NoTarget;
+        }
+        else
+        {
+            input[brain][12] = cohesionVector.X;
+            input[brain][13] = cohesionVector.Y;
+        }
+
+        if (targetNode == null)
+        {
+            input[brain][14] = NoTarget;
+            input[brain][15] = NoTarget;
+            return;
+        }
+
+        input[brain][14] = targetNode.X;
+        input[brain][15] = targetNode.Y;
     }
-    
+
     protected static readonly NodeTerrain[] SafeRetreatTerrains = { NodeTerrain.TownCenter, NodeTerrain.WatchTower };
+
     protected virtual void WaitInputs()
     {
         int brain = GetBrainTypeKeyByValue(BrainType.Wait);
         int inputCount = GetInputCount(BrainType.Wait);
         input[brain] = new float[inputCount];
-            
+
         input[brain][0] = CurrentNode.GetCoordinate().X;
         input[brain][1] = CurrentNode.GetCoordinate().Y;
         input[brain][2] = Retreat ? 1 : 0;
         input[brain][3] = Array.IndexOf(SafeRetreatTerrains, CurrentNode.NodeTerrain) == -1 ? 0 : 1;
-            
     }
-    
+
     protected virtual void ExtraInputs()
     {
     }
-    
+
     protected int GetInputCount(BrainType brainType)
     {
         return InputCountCache.GetInputCount(AgentType, brainType);
     }
+
     protected void CalculateInputs()
     {
         int brainTypesCount = brainTypes.Count;
@@ -317,7 +378,7 @@ public class TcAgent<TVector, TTransform>
             output[i] = new float[outputCount];
         }
     }
-    
+
     public int GetBrainTypeKeyByValue(BrainType value)
     {
         foreach (KeyValuePair<int, BrainType> kvp in brainTypes)
@@ -333,7 +394,7 @@ public class TcAgent<TVector, TTransform>
     }
 
     #endregion
-    
+
     protected virtual void Move()
     {
         if (CurrentNode == null || TargetNode == null || Path == null)
@@ -378,6 +439,4 @@ public class TcAgent<TVector, TTransform>
     {
         return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;
     }
-    
-    
 }
