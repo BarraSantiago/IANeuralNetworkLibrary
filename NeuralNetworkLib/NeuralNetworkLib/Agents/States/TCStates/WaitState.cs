@@ -88,8 +88,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 return;
             }
 
-            if (currentFood >= MinFood)
-                OnFlag?.Invoke(Flags.OnGather);
+            if (currentFood >= MinFood) OnFlag?.Invoke(Flags.OnGather);
         }
 
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)

@@ -28,6 +28,7 @@ public static class ECSManager
         systems.TryAdd(typeof(AlignmentSystem), Activator.CreateInstance(typeof(AlignmentSystem)) as ECSSystem);
         systems.TryAdd(typeof(CohesionSystem),  Activator.CreateInstance(typeof(CohesionSystem)) as ECSSystem);
         systems.TryAdd(typeof(SeparationSystem),Activator.CreateInstance(typeof(SeparationSystem)) as ECSSystem);
+        systems.TryAdd(typeof(DirectionSystem), Activator.CreateInstance(typeof(DirectionSystem)) as ECSSystem);
         systems.TryAdd(typeof(ACSSystem),       Activator.CreateInstance(typeof(ACSSystem)) as ECSSystem);
             
         foreach (KeyValuePair<Type, ECSSystem> system in systems) system.Value.Initialize();
@@ -46,6 +47,20 @@ public static class ECSManager
         Parallel.ForEach(systems, parallelOptions, system => { system.Value.Run(deltaTime); });
     }
 
+    public static void RunFlocking(float deltaTime)
+    {
+        systems[typeof(BoidRadarSystem)].Run(deltaTime);
+        systems[typeof(AlignmentSystem)].Run(deltaTime);
+        systems[typeof(CohesionSystem)].Run(deltaTime);
+        systems[typeof(SeparationSystem)].Run(deltaTime);
+        systems[typeof(DirectionSystem)].Run(deltaTime);
+    }
+    
+    public static void RunSystem(float deltaTime, Type systemType)
+    {
+        systems[systemType].Run(deltaTime);
+    }
+    
     public static uint CreateEntity()
     {
         entities ??= new ConcurrentDictionary<uint, EcsEntity>();

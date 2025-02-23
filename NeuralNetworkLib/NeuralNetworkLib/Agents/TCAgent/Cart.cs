@@ -191,6 +191,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             input[brain][0] = CurrentGold;
             input[brain][1] = CurrentFood;
             input[brain][2] = CurrentWood;
+            input[brain][3] = !CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) ? -1 : 1;
         }
 
         private void GetResourcesInputs()
@@ -201,15 +202,13 @@ namespace NeuralNetworkLib.Agents.TCAgent
             int inputCount = GetInputCount(BrainType.GetResources);
             input[brain] = new float[inputCount];
 
-            input[brain][0] = CurrentGold;
-            input[brain][1] = CurrentFood;
-            input[brain][2] = CurrentWood;
-            input[brain][3] = TownCenter.Gold;
-            input[brain][4] = TownCenter.Food;
-            input[brain][5] = TownCenter.Wood;
-            input[brain][6] = minResourceAmount;
-            input[brain][7] = maxResourceAmount;
-            input[brain][8] = resourceCarrying == ResourceType.None ? 0 : 1;
+            input[brain][0] = CurrentGold + CurrentFood + CurrentWood;
+            input[brain][1] = TownCenter.Gold;
+            input[brain][2] = TownCenter.Food;
+            input[brain][3] = TownCenter.Wood;
+            input[brain][4] = minResourceAmount;
+            input[brain][5] = maxResourceAmount;
+            input[brain][6] = resourceCarrying == ResourceType.None ? -1 : 1;
         }
 
 

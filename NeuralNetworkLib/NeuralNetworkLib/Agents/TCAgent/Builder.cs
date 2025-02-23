@@ -138,10 +138,11 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         int inputCount = GetInputCount(BrainType.Build);
         input[brain] = new float[inputCount];
             
-        input[brain][4] = CurrentGold;
-        input[brain][5] = CurrentFood;
-        input[brain][6] = CurrentWood;
-        input[brain][7] = TargetNode.Resource >= 100 ? 1 : 0;
+        input[brain][0] = CurrentGold;
+        input[brain][1] = CurrentFood;
+        input[brain][2] = CurrentWood;
+        input[brain][3] = TargetNode.Resource >= 100 ? 1 : -1;
+        input[brain][4] = TargetNode.NodeTerrain != NodeTerrain.Construction? 1 : -1;
     }
 
     protected override void WaitInputs()

@@ -169,10 +169,16 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         input[brain][3] = (int)ResourceGathering;
         input[brain][4] = ResourceLimit;
         input[brain][5] = TargetNode.Resource;
-        
-        
+        input[brain][6] = ValidGatherTarget()? 1 : -1;
+
     }
-    
+
+    private bool ValidGatherTarget()
+    {
+        return !(TargetNode.Resource <= 0 || TargetNode.NodeTerrain != NodeTerrain.Tree ||
+                TargetNode.NodeTerrain != NodeTerrain.Mine || TargetNode.NodeTerrain != NodeTerrain.Lake ||
+                ResourceGathering == ResourceType.None);
+    }
     protected override void WaitInputs()
     {
         base.WaitInputs();

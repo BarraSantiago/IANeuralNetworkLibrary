@@ -20,15 +20,15 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (gold <= 0 && wood <= 0 && food <= 0)
-                {
-                    OnFlag?.Invoke(Flags.OnHunger);
-                    return;
-                }
-                
                 if (retreat)
                 {
                     OnFlag?.Invoke(Flags.OnRetreat);
+                    return;
+                }
+                
+                if (gold <= 0 && wood <= 0 && food <= 0)
+                {
+                    OnFlag?.Invoke(Flags.OnHunger);
                     return;
                 }
             });
