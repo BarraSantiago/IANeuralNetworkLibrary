@@ -115,7 +115,7 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Builder, BrainType = BrainType.Wait, InputCount = 7, OutputCount = 1,
+                    AgentType = AgentTypes.Builder, BrainType = BrainType.Wait, InputCount = 7, OutputCount = 2,
                     HiddenLayers = new[] { 3 }
                 },
                 new BrainConfiguration
@@ -130,7 +130,7 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.Movement, InputCount = 6, OutputCount = 2,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Movement, InputCount = 6, OutputCount = 3,
                     HiddenLayers = new[] { 3 }
                 },
                 new BrainConfiguration
@@ -145,7 +145,7 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.ReturnResources, InputCount = 3, OutputCount = 2,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.ReturnResources, InputCount = 3, OutputCount = 1,
                     HiddenLayers = new[] { 2 }
                 },
                 new BrainConfiguration
@@ -155,12 +155,12 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.GetResources, InputCount = 7, OutputCount = 3,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.GetResources, InputCount = 7, OutputCount = 2,
                     HiddenLayers = new[] { 4 }
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 2,
+                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 3,
                     HiddenLayers = new[] { 3 }
                 },
                 new BrainConfiguration

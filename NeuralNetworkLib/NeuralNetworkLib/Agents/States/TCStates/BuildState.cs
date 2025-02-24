@@ -10,11 +10,9 @@ public class BuildState : State
         BehaviourActions behaviours = new BehaviourActions();
 
         bool retreat = Convert.ToBoolean(parameters[0]);
-        int food = Convert.ToInt32(parameters[1]);
-        int gold = Convert.ToInt32(parameters[2]);
-        int wood = Convert.ToInt32(parameters[3]);
-        Action OnBuild = parameters[4] as Action;
-        SimNode<IVector>? targetNode = (SimNode<IVector>?)parameters[5];
+        Action OnBuild = parameters[1] as Action;
+        float[] outputs = parameters[2] as float[];
+
 
         behaviours.AddMultiThreadableBehaviours(0, () =>
         {
@@ -23,21 +21,18 @@ public class BuildState : State
 
         behaviours.SetTransitionBehaviour(() =>
         {
-            const int goldCost = 2;
-            const int woodCost = 4;
             if (retreat)
             {
                 OnFlag?.Invoke(Flags.OnRetreat);
                 return;
             }
 
-            if (food <= 0 || gold < goldCost || wood < woodCost)
+            if (outputs[0] > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnHunger);
                 return;
             }
-
-            if (targetNode.Resource >= 100 || targetNode.NodeTerrain != NodeTerrain.Construction)
+            if (outputs[1] > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnTargetLost);
                 return;

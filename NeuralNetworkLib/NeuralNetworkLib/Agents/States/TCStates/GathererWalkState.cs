@@ -20,17 +20,16 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             SimNode<IVector> targetNode = parameters[1] as SimNode<IVector>;
             bool retreat = (bool)parameters[2];
             Action onMove = parameters[3] as Action;
-            List<SimNode<IVector>> path = parameters[4] as List<SimNode<IVector>>;
+            float[] outputs = parameters[4] as float[];
 
 
             behaviours.AddMultiThreadableBehaviours(0, onMove);
 
-            behaviours.SetTransitionBehaviour(() => ProcessTransitions(currentNode, targetNode, retreat, path));
+            behaviours.SetTransitionBehaviour(() => ProcessTransitions(currentNode, targetNode, retreat, outputs));
             return behaviours;
         }
 
-        private void ProcessTransitions(SimNode<IVector> currentNode, SimNode<IVector> targetNode, bool retreat,
-            List<SimNode<IVector>> path)
+        private void ProcessTransitions(SimNode<IVector> currentNode, SimNode<IVector> targetNode, bool retreat, float[] outputs)
         {
             if (CheckRetreat(retreat, targetNode))
             {
@@ -38,7 +37,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 return;
             }
 
-            if (IsInvalidState(currentNode, targetNode, path))
+            if (IsInvalidState(currentNode, targetNode))
             {
                 OnFlag?.Invoke(Flags.OnTargetLost);
                 return;
@@ -46,21 +45,36 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             if (!IsAdjacentOrNear(currentNode, targetNode)) return;
 
+            if (outputs[0] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnGather);
+                return;
+            }
+
+            if (outputs[1] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnWait);
+                return;
+            }
+
+            if (outputs[2] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnTargetLost);
+                return;
+            }
+
             HandleValidTarget(targetNode);
         }
 
         protected bool CheckRetreat(bool retreat, SimNode<IVector> targetNode) =>
             retreat && (targetNode?.NodeTerrain != NodeTerrain.TownCenter);
 
-        protected virtual bool IsInvalidState(SimNode<IVector> currentNode, SimNode<IVector> targetNode,
-            List<SimNode<IVector>> path) =>
-            currentNode == null || targetNode == null || (path != null && path.Count == 0) ||
-            (targetNode.Resource <= 0 && IsResourceNode(targetNode)) ||
+        protected virtual bool IsInvalidState(SimNode<IVector> currentNode, SimNode<IVector> targetNode) =>
+            currentNode == null || targetNode == null || (targetNode.Resource <= 0 && IsResourceNode(targetNode)) ||
             Array.IndexOf(InvalidTargetTerrains, targetNode.NodeTerrain) >= 0;
 
-        private bool IsResourceNode(SimNode<IVector> node) => node.NodeTerrain == NodeTerrain.Mine ||
-                                                              node.NodeTerrain == NodeTerrain.Tree ||
-                                                              node.NodeTerrain == NodeTerrain.Lake;
+        private bool IsResourceNode(SimNode<IVector> node) =>
+            node.NodeTerrain is NodeTerrain.Mine or NodeTerrain.Tree or NodeTerrain.Lake;
 
         protected bool IsAdjacentOrNear(SimNode<IVector> currentNode, SimNode<IVector> targetNode) =>
             currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()) ||
@@ -111,22 +125,17 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             SimNode<IVector> targetNode = parameters[1] as SimNode<IVector>;
             bool retreat = (bool)parameters[2];
             Action onMove = parameters[3] as Action;
-            bool returnResource = (bool)parameters[4];
-            List<SimNode<IVector>> path = parameters[5] as List<SimNode<IVector>>;
+            float[] outputs = parameters[4] as float[];
 
             behaviours.AddMultiThreadableBehaviours(0, onMove);
 
             behaviours.SetTransitionBehaviour(() =>
-                ProcessCartTransitions(currentNode, targetNode, retreat, returnResource, path));
+                ProcessCartTransitions(currentNode, targetNode, retreat, outputs));
             return behaviours;
         }
 
-        private void ProcessCartTransitions(
-            SimNode<IVector> currentNode,
-            SimNode<IVector> targetNode,
-            bool retreat,
-            bool returnResource,
-            List<SimNode<IVector>> path)
+        private void ProcessCartTransitions(SimNode<IVector> currentNode, SimNode<IVector> targetNode, bool retreat,
+            float[] outputs)
         {
             if (CheckRetreat(retreat, targetNode))
             {
@@ -134,7 +143,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 return;
             }
 
-            if (IsInvalidState(currentNode, targetNode, path))
+            if (IsInvalidState(currentNode, targetNode))
             {
                 OnFlag?.Invoke(Flags.OnTargetLost);
                 return;
@@ -142,23 +151,28 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             if (!IsAdjacentOrNear(currentNode, targetNode)) return;
 
-            if (returnResource && targetNode.NodeTerrain == NodeTerrain.TownCenter)
+            if (outputs[0] > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnReturnResource);
                 return;
             }
 
-            if (targetNode.NodeTerrain == NodeTerrain.TownCenter)
+            if (outputs[1] > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnGather);
                 return;
             }
 
-            OnFlag?.Invoke(Flags.OnTargetReach);
+            if (outputs[2] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnTargetReach);
+                return;
+            }
         }
-        protected override bool IsInvalidState(SimNode<IVector> currentNode, SimNode<IVector> targetNode,
-            List<SimNode<IVector>> path) =>
-            currentNode == null || targetNode == null || (path != null && path.Count == 0);
+
+        protected bool IsInvalidState(SimNode<IVector> currentNode, SimNode<IVector> targetNode) =>
+            currentNode == null || targetNode == null;
+
         protected bool CheckRetreat(bool retreat, SimNode<IVector> targetNode) =>
             retreat && (targetNode?.NodeTerrain != NodeTerrain.TownCenter &&
                         targetNode?.NodeTerrain != NodeTerrain.WatchTower);
@@ -182,19 +196,16 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             SimNode<IVector> targetNode = parameters[1] as SimNode<IVector>;
             bool retreat = (bool)parameters[2];
             Action onMove = parameters[3] as Action;
-            List<SimNode<IVector>> path = parameters[4] as List<SimNode<IVector>>;
+            float[] outputs = parameters[4] as float[];
 
             behaviours.AddMultiThreadableBehaviours(0, onMove);
 
-            behaviours.SetTransitionBehaviour(() => ProcessBuilderTransitions(currentNode, targetNode, retreat, path));
+            behaviours.SetTransitionBehaviour(() => ProcessBuilderTransitions(currentNode, targetNode, retreat, outputs));
             return behaviours;
         }
 
-        private void ProcessBuilderTransitions(
-            SimNode<IVector> currentNode,
-            SimNode<IVector> targetNode,
-            bool retreat,
-            List<SimNode<IVector>> path)
+        private void ProcessBuilderTransitions(SimNode<IVector> currentNode, SimNode<IVector> targetNode, bool retreat,
+            float[] outputs)
         {
             if (CheckRetreat(retreat, targetNode))
             {
@@ -202,7 +213,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 return;
             }
 
-            if (IsInvalidBuilderState(currentNode, targetNode, path))
+            if (IsInvalidBuilderState(currentNode, targetNode))
             {
                 OnFlag?.Invoke(Flags.OnTargetLost);
                 return;
@@ -210,18 +221,21 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             if (!IsAdjacentOrNear(currentNode, targetNode)) return;
 
-            if (targetNode.NodeTerrain is NodeTerrain.TownCenter or NodeTerrain.WatchTower)
+            if (outputs[0] > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnWait);
                 return;
             }
 
-            OnFlag?.Invoke(Flags.OnBuild);
+            if (outputs[1] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnBuild);
+                return;
+            }
         }
 
-        private bool IsInvalidBuilderState(SimNode<IVector> currentNode, SimNode<IVector> targetNode,
-            List<SimNode<IVector>> path) => currentNode == null || targetNode == null ||
-                                            (path != null && path.Count == 0) ||
-                                            Array.IndexOf(ValidBuilderTerrains, targetNode.NodeTerrain) == -1;
+        private bool IsInvalidBuilderState(SimNode<IVector> currentNode, SimNode<IVector> targetNode) =>
+            currentNode == null || targetNode == null ||
+            Array.IndexOf(ValidBuilderTerrains, targetNode.NodeTerrain) == -1;
     }
 }

@@ -7,11 +7,9 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
-            int gold = Convert.ToInt32(parameters[0]);
-            int food = Convert.ToInt32(parameters[1]);
-            int wood = Convert.ToInt32(parameters[2]);
-            Action onReturnResource = parameters[3] as Action;
-            bool retreat = Convert.ToBoolean(parameters[4]);
+            Action onReturnResource = parameters[0] as Action;
+            bool retreat = Convert.ToBoolean(parameters[1]);
+            float[] outputs = parameters[2] as float[];
             
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
@@ -25,8 +23,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     OnFlag?.Invoke(Flags.OnRetreat);
                     return;
                 }
-                
-                if (gold <= 0 && wood <= 0 && food <= 0)
+                if (outputs[0] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnHunger);
                     return;

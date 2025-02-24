@@ -8,12 +8,23 @@ namespace NeuralNetworkLib.Agents.TCAgent
     public class Cart : TcAgent<IVector, ITransform<IVector>>
     {
         public ResourceType resourceCarrying;
-        private TcAgent<IVector, ITransform<IVector>> _target;
+        public TcAgent<IVector, ITransform<IVector>> _target;
         private Action onGather;
         private Action onDeliver;
         private Action onReturnResource;
         private bool returnResource;
 
+        private int movementBrain;
+        private int movementInputCount;
+        private int WaitBrain;
+        private int WaitInputCount;
+        private int GetResourcesBrain;
+        private int GetResourcesInputCount;
+        private int DeliverBrain;
+        private int DeliverInputCount;
+        private int ReturnResourcesBrain;
+        private int ReturnResourcesInputCount;
+        
         public override void Init()
         {
             AgentType = AgentTypes.Cart;
@@ -27,6 +38,17 @@ namespace NeuralNetworkLib.Agents.TCAgent
             onGather += Gather;
             onDeliver += DeliverResource;
             onReturnResource += ReturnResource;
+            
+            movementBrain = GetBrainTypeKeyByValue(BrainType.Movement);
+            movementInputCount = GetInputCount(BrainType.Movement);
+            WaitBrain = GetBrainTypeKeyByValue(BrainType.Wait);
+            WaitInputCount = GetInputCount(BrainType.Wait);
+            GetResourcesBrain = GetBrainTypeKeyByValue(BrainType.GetResources);
+            GetResourcesInputCount = GetInputCount(BrainType.GetResources);
+            DeliverBrain = GetBrainTypeKeyByValue(BrainType.Deliver);
+            DeliverInputCount = GetInputCount(BrainType.Deliver);
+            ReturnResourcesBrain = GetBrainTypeKeyByValue(BrainType.ReturnResources);
+            ReturnResourcesInputCount = GetInputCount(BrainType.ReturnResources);
         }
 
 
@@ -122,38 +144,24 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         #region Params
 
-        protected override object[] WalkTickParameters()
-        {
-            object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, returnResource, Path };
-            return objects;
-        }
-
         protected override object[] GatherTickParameters()
         {
-            return new object[]
-            {
-                CurrentGold, CurrentFood, CurrentWood,
-                resourceCarrying, ResourceLimit, onGather, Retreat, TownCenter.Gold, TownCenter.Food, TownCenter.Wood
-            };
+            return new object[] { Retreat, onGather, output[GetResourcesBrain] };
         }
 
         private object[] DeliverTickParameters()
         {
-            return new object[]
-            {
-                CurrentFood, CurrentGold, CurrentWood, resourceCarrying, onDeliver, Retreat, CurrentNode,
-                _target.CurrentNode
-            };
+            return new object[] { onDeliver, Retreat, output[DeliverBrain] };
         }
 
         private object[] ReturnTickParameters()
         {
-            return new object[] { CurrentFood, CurrentGold, CurrentWood, onReturnResource, Retreat };
+            return new object[] { onReturnResource, Retreat, output[ReturnResourcesBrain] };
         }
 
         protected override object[] WaitTickParameters()
         {
-            object[] objects = { Retreat, CurrentNode, OnWait, returnResource };
+            object[] objects = { Retreat, CurrentNode, OnWait, output[WaitBrain] };
             return objects;
         }
 
@@ -170,91 +178,81 @@ namespace NeuralNetworkLib.Agents.TCAgent
             GetResourcesInputs();
             WaitInputs();
         }
-
+        
         private void ReturnResourcesInputs()
         {
-            int brain = GetBrainTypeKeyByValue(BrainType.ReturnResources);
-            int inputCount = GetInputCount(BrainType.ReturnResources);
-            input[brain] = new float[inputCount];
+            input[ReturnResourcesBrain] = new float[ReturnResourcesInputCount];
 
-            input[brain][0] = CurrentGold;
-            input[brain][1] = CurrentFood;
-            input[brain][2] = CurrentWood;
+            input[ReturnResourcesBrain][0] = CurrentGold;
+            input[ReturnResourcesBrain][1] = CurrentFood;
+            input[ReturnResourcesBrain][2] = CurrentWood;
         }
-
+      
         private void DeliverInputs()
         {
-            int brain = GetBrainTypeKeyByValue(BrainType.Deliver);
-            int inputCount = GetInputCount(BrainType.Deliver);
-            input[brain] = new float[inputCount];
+            input[DeliverBrain] = new float[DeliverInputCount];
 
-            input[brain][0] = CurrentGold;
-            input[brain][1] = CurrentFood;
-            input[brain][2] = CurrentWood;
-            input[brain][3] = !CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) ? -1 : 1;
+            input[DeliverBrain][0] = CurrentGold;
+            input[DeliverBrain][1] = CurrentFood;
+            input[DeliverBrain][2] = CurrentWood;
+            input[DeliverBrain][3] = !CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) ? -1 : 1;
         }
-
+       
         private void GetResourcesInputs()
         {
             const int minResourceAmount = 3;
             const int maxResourceAmount = 30;
-            int brain = GetBrainTypeKeyByValue(BrainType.GetResources);
-            int inputCount = GetInputCount(BrainType.GetResources);
-            input[brain] = new float[inputCount];
+            input[GetResourcesBrain] = new float[GetResourcesInputCount];
 
-            input[brain][0] = CurrentGold + CurrentFood + CurrentWood;
-            input[brain][1] = TownCenter.Gold;
-            input[brain][2] = TownCenter.Food;
-            input[brain][3] = TownCenter.Wood;
-            input[brain][4] = minResourceAmount;
-            input[brain][5] = maxResourceAmount;
-            input[brain][6] = resourceCarrying == ResourceType.None ? -1 : 1;
+            input[GetResourcesBrain][0] = CurrentGold + CurrentFood + CurrentWood;
+            input[GetResourcesBrain][1] = TownCenter.Gold;
+            input[GetResourcesBrain][2] = TownCenter.Food;
+            input[GetResourcesBrain][3] = TownCenter.Wood;
+            input[GetResourcesBrain][4] = minResourceAmount;
+            input[GetResourcesBrain][5] = maxResourceAmount;
+            input[GetResourcesBrain][6] = resourceCarrying == ResourceType.None ? -1 : 1;
         }
-
-
+      
         protected override void WaitInputs()
         {
-            int brain = GetBrainTypeKeyByValue(BrainType.Wait);
-            int inputCount = GetInputCount(BrainType.Wait);
-            input[brain] = new float[inputCount];
+            input[WaitBrain] = new float[WaitInputCount];
 
-            input[brain][0] = CurrentNode.GetCoordinate().X;
-            input[brain][1] = CurrentNode.GetCoordinate().Y;
-            input[brain][2] = Retreat ? 1 : 0;
-            input[brain][3] = Array.IndexOf(SafeRetreatTerrains, CurrentNode.NodeTerrain) == -1 ? 0 : 1;
+            input[WaitBrain][0] = CurrentNode.GetCoordinate().X;
+            input[WaitBrain][1] = CurrentNode.GetCoordinate().Y;
+            input[WaitBrain][2] = Retreat ? 1 : 0;
+            input[WaitBrain][3] = Array.IndexOf(SafeRetreatTerrains, CurrentNode.NodeTerrain) == -1 ? 0 : 1;
         }
 
+       
         protected override void MovementInputs()
         {
-            int brain = GetBrainTypeKeyByValue(BrainType.Movement);
-            int inputCount = GetInputCount(BrainType.Movement);
 
-            input[brain] = new float[inputCount];
-            input[brain][0] = CurrentNode.GetCoordinate().X;
-            input[brain][1] = CurrentNode.GetCoordinate().Y;
+            input[movementBrain] = new float[movementInputCount];
+            input[movementBrain][0] = CurrentNode.GetCoordinate().X;
+            input[movementBrain][1] = CurrentNode.GetCoordinate().Y;
 
             AnimalAgent<IVector, ITransform<IVector>>? target =
                 DataContainer.GetNearestEntity(AgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
-                input[brain][2] = NoTarget;
-                input[brain][3] = NoTarget;
+                input[movementBrain][2] = NoTarget;
+                input[movementBrain][3] = NoTarget;
             }
             else
             {
-                input[brain][2] = target.CurrentNode.GetCoordinate().X;
-                input[brain][3] = target.CurrentNode.GetCoordinate().Y;
+                input[movementBrain][2] = target.CurrentNode.GetCoordinate().X;
+                input[movementBrain][3] = target.CurrentNode.GetCoordinate().Y;
             }
 
             if (TargetNode == null)
             {
-                input[brain][4] = NoTarget;
-                input[brain][5] = NoTarget;
+                input[movementBrain][4] = NoTarget;
+                input[movementBrain][5] = NoTarget;
             }
             else
             {
-                input[brain][4] = TargetNode.GetCoordinate().X;
-                input[brain][5] = TargetNode.GetCoordinate().Y;
+                input[movementBrain][4] = TargetNode.GetCoordinate().X;
+                input[movementBrain][5] = TargetNode.GetCoordinate().Y;
             }
         }
 

@@ -8,17 +8,10 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
-            int gold = Convert.ToInt32(parameters[0]);
-            int food = Convert.ToInt32(parameters[1]);
-            int wood = Convert.ToInt32(parameters[2]);
-            ResourceType currentResource = (ResourceType) parameters[3];
-            Action onDeliverResource = parameters[4] as Action;
-            bool retreat = Convert.ToBoolean(parameters[5]);
-            SimNode<IVector> currentNode = parameters[6] as SimNode<IVector>;
-            SimNode<IVector> targetNode = parameters[7] as SimNode<IVector>;
+            Action onDeliverResource = parameters[0] as Action;
+            bool retreat = Convert.ToBoolean(parameters[1]);
+            float[] outputs = parameters[2] as float[];
 
-            
-            
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
                 onDeliverResource?.Invoke();    
@@ -32,34 +25,13 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                switch (currentResource)
+                if (outputs[0] > 0.5f)
                 {
-                    case ResourceType.Gold:
-                        if (gold <= 0)
-                        {
-                            OnFlag?.Invoke(Flags.OnHunger);
-                            return;
-                        }
-                        break;
-                    case ResourceType.Wood:
-                        if (wood <= 0)
-                        {
-                            OnFlag?.Invoke(Flags.OnHunger);
-                            return;
-                        }
-                        break;
-                    case ResourceType.Food:
-                        if (food <= 0)
-                        {
-                            OnFlag?.Invoke(Flags.OnHunger);
-                            return;
-                        }
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    OnFlag?.Invoke(Flags.OnHunger);
+                    return;
                 }
                 
-                if (!currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()))
+                if (outputs[1] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;

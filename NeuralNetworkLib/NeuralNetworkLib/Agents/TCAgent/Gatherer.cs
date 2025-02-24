@@ -19,7 +19,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
     private static Voronoi FoodVoronoi;
     private static Voronoi WoodVoronoi;
     private static Voronoi GoldVoronoi;
-
+    private int GatherBrain = 0;
+    private int GatherInputCount = 0;
     public override void Init()
     {
         AgentType = AgentTypes.Gatherer;
@@ -33,6 +34,9 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         Fsm.ForceTransition(Behaviours.Walk);
 
         onGather += Gather;
+
+        GatherBrain = GetBrainTypeKeyByValue(BrainType.Gather);
+        GatherInputCount = GetInputCount(BrainType.Gather);
     }
 
     protected override void FsmTransitions()
@@ -156,20 +160,18 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         base.ExtraInputs();
         GatherInputs();
     }
-    
+
     protected void GatherInputs()
     {
-        int brain = GetBrainTypeKeyByValue(BrainType.Gather);
-        int inputCount = GetInputCount(BrainType.Gather);
-        input[brain] = new float[inputCount];
+        input[GatherBrain] = new float[GatherInputCount];
         
-        input[brain][0] = CurrentFood;
-        input[brain][1] = CurrentGold;
-        input[brain][2] = CurrentWood;
-        input[brain][3] = (int)ResourceGathering;
-        input[brain][4] = ResourceLimit;
-        input[brain][5] = TargetNode.Resource;
-        input[brain][6] = ValidGatherTarget()? 1 : -1;
+        input[GatherBrain][0] = CurrentFood;
+        input[GatherBrain][1] = CurrentGold;
+        input[GatherBrain][2] = CurrentWood;
+        input[GatherBrain][3] = (int)ResourceGathering;
+        input[GatherBrain][4] = ResourceLimit;
+        input[GatherBrain][5] = TargetNode.Resource;
+        input[GatherBrain][6] = ValidGatherTarget()? 1 : -1;
 
     }
 
@@ -182,9 +184,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
     protected override void WaitInputs()
     {
         base.WaitInputs();
-        int brain = GetBrainTypeKeyByValue(BrainType.Wait);
-        
-        input[brain][4] = CurrentFood;
+
+        input[WaitBrain][4] = CurrentFood;
 
     }
 

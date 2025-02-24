@@ -24,7 +24,7 @@ public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
     private static Voronoi StumpVoronoi;
     private int hp;
     private const int InitialHp = 1;
-    private INode<IVector> FoodPosition;
+    public INode<IVector> FoodPosition;
 
     public override void Init()
     {

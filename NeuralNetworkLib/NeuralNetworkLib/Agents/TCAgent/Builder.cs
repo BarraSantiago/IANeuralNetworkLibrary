@@ -11,6 +11,8 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 {
     private Action onBuild;
     private static Voronoi plainsVoronoi;
+    private int BuildBrain;
+    private int BuildInputCount;
 
     public override void Init()
     {
@@ -24,6 +26,9 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         Fsm.ForceTransition(Behaviours.Walk);
         CurrentState = Behaviours.Walk;
         onBuild += Build;
+
+        BuildBrain = GetBrainTypeKeyByValue(BrainType.Build);
+        BuildInputCount = GetInputCount(BrainType.Build);
     }
 
     protected override void FsmTransitions()
@@ -114,12 +119,18 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 
     protected object[] BuildTickParameters()
     {
-        return new object[] { Retreat, CurrentFood, CurrentGold, CurrentWood, onBuild, TargetNode };
+        return new object[] { Retreat, onBuild, output[BuildBrain] };
     }
 
     protected override object[] WaitTickParameters()
     {
-        return new object[] { Retreat, CurrentFood, CurrentGold, CurrentWood, CurrentNode, TargetNode, OnWait };
+        return new object[] { Retreat, CurrentNode, OnWait, output[WaitBrain] };
+    }
+
+    protected override object[] WalkTickParameters()
+    {
+        object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, output[movementBrain] };
+        return objects;
     }
 
     #endregion
@@ -134,29 +145,26 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 
     private void BuildInputs()
     {
-        int brain = GetBrainTypeKeyByValue(BrainType.Build);
-        int inputCount = GetInputCount(BrainType.Build);
-        input[brain] = new float[inputCount];
-            
-        input[brain][0] = CurrentGold;
-        input[brain][1] = CurrentFood;
-        input[brain][2] = CurrentWood;
-        input[brain][3] = TargetNode.Resource >= 100 ? 1 : -1;
-        input[brain][4] = TargetNode.NodeTerrain != NodeTerrain.Construction? 1 : -1;
+        input[BuildBrain] = new float[BuildInputCount];
+
+        input[BuildBrain][0] = CurrentGold;
+        input[BuildBrain][1] = CurrentFood;
+        input[BuildBrain][2] = CurrentWood;
+        input[BuildBrain][3] = TargetNode.Resource >= 100 ? 1 : -1;
+        input[BuildBrain][4] = TargetNode.NodeTerrain != NodeTerrain.Construction ? 1 : -1;
     }
 
     protected override void WaitInputs()
     {
         base.WaitInputs();
-        int brain = GetBrainTypeKeyByValue(BrainType.Wait);
-        
-        input[brain][4] = CurrentFood;
-        input[brain][5] = CurrentGold;
-        input[brain][6] = CurrentWood;
+
+        input[WaitBrain][4] = CurrentFood;
+        input[WaitBrain][5] = CurrentGold;
+        input[WaitBrain][6] = CurrentWood;
     }
 
     #endregion
-    
+
     private void Build()
     {
         if (TargetNode.NodeTerrain != NodeTerrain.Construction) return;

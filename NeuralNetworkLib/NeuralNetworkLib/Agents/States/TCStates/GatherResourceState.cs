@@ -12,13 +12,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             BehaviourActions behaviours = new BehaviourActions();
 
             bool retreat = Convert.ToBoolean(parameters[0]);
-            int food = Convert.ToInt32(parameters[1]);
-            int gold = Convert.ToInt32(parameters[2]);
-            int wood = Convert.ToInt32(parameters[3]);
-            int resourceLimit = Convert.ToInt32(parameters[4]);
-            ResourceType currentResource = (ResourceType)parameters[5];
-            Action OnGather = parameters[6] as Action;
-            SimNode<IVector> targetNode = parameters[7] as SimNode<IVector>;
+            Action OnGather = parameters[1] as Action;
+            float[] outputs = parameters[2] as float[];
 
             behaviours.AddMultiThreadableBehaviours(0, () => { OnGather?.Invoke(); });
 
@@ -30,33 +25,17 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                if (gold >= resourceLimit)
+                if (outputs[0] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnFull);
                     return;
                 }
-
-                if (wood >= resourceLimit)
-                {
-                    OnFlag?.Invoke(Flags.OnFull);
-                    return;
-                }
-
-                if (currentResource == ResourceType.Food && food >= resourceLimit)
-                {
-                    OnFlag?.Invoke(Flags.OnFull);
-                    return;
-                }
-
-                if (targetNode.Resource <= 0 || targetNode.NodeTerrain != NodeTerrain.Tree ||
-                    targetNode.NodeTerrain != NodeTerrain.Mine || targetNode.NodeTerrain != NodeTerrain.Lake ||
-                    currentResource == ResourceType.None)
+                if (outputs[1] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
                 }
-
-                if (food <= 0)
+                if (outputs[2] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnHunger);
                     return;

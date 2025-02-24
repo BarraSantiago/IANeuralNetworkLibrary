@@ -8,43 +8,44 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         private static readonly int GoldCost = 2;
         private static readonly int WoodCost = 4;
 
-        private static readonly NodeTerrain[] SafeRetreatTerrains =
-            { NodeTerrain.TownCenter, NodeTerrain.WatchTower };
+        private static readonly NodeTerrain[] SafeRetreatTerrains = { NodeTerrain.TownCenter, NodeTerrain.WatchTower };
 
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
             bool retreat = (bool)parameters[0];
-            int? food = Convert.ToInt32(parameters[1]);
-            int? gold = Convert.ToInt32(parameters[2]);
-            int? wood = Convert.ToInt32(parameters[3]);
-            SimNode<IVector> currentNode = (SimNode<IVector>)parameters[4];
-            SimNode<IVector> targetNode = (SimNode<IVector>)parameters[5];
-            Action onWait = parameters[6] as Action;
+            SimNode<IVector> currentNode = (SimNode<IVector>)parameters[1];
+            Action onWait = parameters[2] as Action;
+            float[] outputs = parameters[3] as float[];
+
 
             behaviours.AddMultiThreadableBehaviours(0, onWait);
 
-            behaviours.SetTransitionBehaviour(() => ProcessTransitions(retreat, food, gold, wood, currentNode, targetNode));
+            behaviours.SetTransitionBehaviour(() =>
+            {
+                if (retreat)
+                {
+                    if (Array.IndexOf(SafeRetreatTerrains, currentNode.NodeTerrain) == -1)
+                        OnFlag?.Invoke(Flags.OnRetreat);
+                    return;
+                }
+
+                if (outputs[0] > 0.5f)
+                {
+                    OnFlag?.Invoke(Flags.OnBuild);
+                    return;
+                }
+
+                if (outputs[1] > 0.5f)
+                {
+                    OnFlag?.Invoke(Flags.OnTargetLost);
+                    return;
+                }
+            });
 
             return behaviours;
         }
-
-        private void ProcessTransitions(bool retreat, int? food, int? gold, int? wood, SimNode<IVector> currentNode,
-            SimNode<IVector> targetNode)
-        {
-            if (retreat)
-            {
-                if (Array.IndexOf(SafeRetreatTerrains, currentNode.NodeTerrain) == -1)
-                    OnFlag?.Invoke(Flags.OnRetreat);
-                return;
-            }
-
-            if (food > 0 && gold >= GoldCost && wood >= WoodCost)
-            {
-                OnFlag?.Invoke(targetNode.NodeTerrain == NodeTerrain.Construction ? Flags.OnBuild : Flags.OnTargetLost);
-            }
-        }
-
+        
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
         {
             return default;
@@ -58,8 +59,6 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
     public class GathererWaitState : State
     {
-        private const int MinFood = 5;
-
         private static readonly NodeTerrain[] SafeRetreatTerrains =
             { NodeTerrain.TownCenter, NodeTerrain.WatchTower };
 
@@ -70,16 +69,17 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             bool retreat = (bool)parameters[0];
             SimNode<IVector> currentNode = (SimNode<IVector>)parameters[1];
             Action onWait = parameters[2] as Action;
-            int currentFood = Convert.ToInt32(parameters[3]);
+            float[] outputs = parameters[3] as float[];
+
 
             behaviours.AddMultiThreadableBehaviours(0, onWait);
 
-            behaviours.SetTransitionBehaviour(() => ProcessTransitions(retreat, currentNode, currentFood));
+            behaviours.SetTransitionBehaviour(() => ProcessTransitions(retreat, currentNode, outputs));
 
             return behaviours;
         }
 
-        private void ProcessTransitions(bool retreat, SimNode<IVector> currentNode, int currentFood)
+        private void ProcessTransitions(bool retreat, SimNode<IVector> currentNode, float[] outputs)
         {
             if (retreat)
             {
@@ -87,8 +87,11 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     OnFlag?.Invoke(Flags.OnRetreat);
                 return;
             }
-
-            if (currentFood >= MinFood) OnFlag?.Invoke(Flags.OnGather);
+            if (outputs[0] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnGather);
+                return;
+            }
         }
 
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
@@ -114,15 +117,16 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             bool retreat = (bool)parameters[0];
             SimNode<IVector> currentNode = (SimNode<IVector>)parameters[1];
             Action onWait = parameters[2] as Action;
+            float[] outputs = parameters[3] as float[];
 
             behaviours.AddMultiThreadableBehaviours(0, onWait);
 
-            behaviours.SetTransitionBehaviour(() => ProcessTransitions(retreat, currentNode));
-            
+            behaviours.SetTransitionBehaviour(() => ProcessTransitions(retreat, currentNode, outputs));
+
             return behaviours;
         }
 
-        private void ProcessTransitions(bool retreat, SimNode<IVector> currentNode)
+        private void ProcessTransitions(bool retreat, SimNode<IVector> currentNode, float[] outputs)
         {
             if (retreat)
             {
@@ -130,7 +134,10 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                 return;
             }
 
-            OnFlag?.Invoke(Flags.OnReturnResource);
+            if (outputs[0] > 0.5f)
+            {
+                OnFlag?.Invoke(Flags.OnReturnResource);
+            }
         }
 
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
