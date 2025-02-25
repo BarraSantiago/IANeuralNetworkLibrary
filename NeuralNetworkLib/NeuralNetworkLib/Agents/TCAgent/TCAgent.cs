@@ -104,6 +104,13 @@ public class TcAgent<TVector, TTransform>
     protected int WaitBrain;
     protected int WaitInputCount;
 
+    float minX;
+    float maxX;
+    float minY;
+    float maxY;
+
+    Sim2DGraph graph = DataContainer.Graph;
+
     public SimNode<IVector> TargetNode
     {
         get => targetNode;
@@ -120,6 +127,10 @@ public class TcAgent<TVector, TTransform>
 
     public virtual void Init()
     {
+        minX = graph.MinX;
+        maxX = graph.MaxX;
+        minY = graph.MinY;
+        maxY = graph.MaxY;
         output = new float[brainTypes.Count][];
         foreach (BrainType brain in brainTypes.Values)
         {
@@ -403,32 +414,39 @@ public class TcAgent<TVector, TTransform>
 
     protected virtual void Move()
     {
-        if (CurrentNode == null || TargetNode == null || Path == null)
-        {
-            return;
-        }
-
-        if (CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) ||
-            Approximately(CurrentNode.GetCoordinate(), TargetNode.GetCoordinate(), 0.001f)) return;
-
-        if (Path.Count <= 0) return;
-        //if (PathNodeId >= Path.Count) PathNodeId = 0;
-
         timer += Time;
 
-        float relativeSpeed = speed * timer;
-        if (relativeSpeed < 1) return;
+        if (speed * timer < 1f)
+            return;
 
+        IVector currentCoord = CurrentNode.GetCoordinate();
+        MyVector currentPos = new MyVector(currentCoord.X, currentCoord.Y);
 
-        int distanceToMove = (int)(relativeSpeed);
+        float[] brainOutput = output[movementBrain];
+        if (brainOutput.Length < 2)
+            return;
 
-        PathNodeId += distanceToMove;
-        PathNodeId = Math.Clamp((int)PathNodeId, 0, Path.Count - 1);
+        currentPos.X += speed * timer * brainOutput[0];
+        currentPos.Y += speed * timer * brainOutput[1];
 
-        CurrentNode = Path[(int)PathNodeId];
-        Transform.position = CurrentNode.GetCoordinate();
-        Transform.position += AcsVector;
-        timer = (float)((relativeSpeed - Math.Truncate(relativeSpeed)) / speed);
+        if (currentPos.X < minX)
+            currentPos.X = maxX - 1;
+        else if (currentPos.X >= maxX)
+            currentPos.X = minX + 1;
+
+        if (currentPos.Y < minY)
+            currentPos.Y = maxY - 1;
+        else if (currentPos.Y >= maxY)
+            currentPos.Y = minY + 1;
+
+        INode<IVector> newPosNode = DataContainer.GetNode(currentPos);
+        if (newPosNode != null)
+        {
+            IVector newCoord = newPosNode.GetCoordinate();
+            SetPosition(newCoord);
+        }
+
+        timer = 0;
     }
 
     protected SimNode<IVector> GetRetreatNode()
@@ -441,8 +459,10 @@ public class TcAgent<TVector, TTransform>
     {
     }
 
-    private bool Approximately(IVector coord1, IVector coord2, float tolerance)
+    public virtual void SetPosition(IVector position)
     {
-        return Math.Abs(coord1.X - coord2.X) <= tolerance && Math.Abs(coord1.Y - coord2.Y) <= tolerance;
+        if (!DataContainer.Graph.IsWithinGraphBorders(position)) return;
+        Transform = (TTransform)new ITransform<IVector>(position);
+        CurrentNode = DataContainer.GetNode(position);
     }
 }
