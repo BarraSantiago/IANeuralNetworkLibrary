@@ -14,6 +14,8 @@ public class FitnessManager<TVector, TTransform>
 {
     private static Dictionary<uint, AnimalAgent<TVector, TTransform>> _animalAgents;
     private static Dictionary<uint, TcAgent<TVector, TTransform>> _tcAgents;
+    const float reward = 10;
+    const float punishment = 0.90f;
 
     public FitnessManager(Dictionary<uint, AnimalAgent<TVector, TTransform>> animalAgents)
     {
@@ -24,11 +26,34 @@ public class FitnessManager<TVector, TTransform>
     {
         foreach (KeyValuePair<uint, AnimalAgent<TVector, TTransform>> agent in _animalAgents)
         {
-            CalculateFitness(agent.Value.agentType, agent.Key);
+            CalculateAnimalsFitness(agent.Value.agentType, agent.Key);
+        }
+
+        foreach (KeyValuePair<uint, TcAgent<TVector, TTransform>> agent in _tcAgents)
+        {
+            CalculateTcFitness(agent.Value.AgentType, agent.Key);
         }
     }
 
-    public void CalculateFitness(AgentTypes agentType, uint agentId)
+    private void CalculateTcFitness(AgentTypes agentType, uint agentId)
+    {
+        switch (agentType)
+        {
+            case AgentTypes.Gatherer:
+                GathererFitnessCalculator(agentId);
+                break;
+            case AgentTypes.Cart:
+                CartFitnessCalculator(agentId);
+                break;
+            case AgentTypes.Builder:
+                BuilderFitnessCalculator(agentId);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(agentType), agentType, null);
+        }
+    }
+
+    public void CalculateAnimalsFitness(AgentTypes agentType, uint agentId)
     {
         switch (agentType)
         {
@@ -68,9 +93,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void HerbivoreEscapeFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         Herbivore<IVector, ITransform<IVector>> agent =
             _animalAgents[agentId] as Herbivore<IVector, ITransform<IVector>>;
         AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
@@ -94,9 +116,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void HerbivoreMovementFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         Herbivore<TVector, TTransform> agent = _animalAgents[agentId] as Herbivore<TVector, TTransform>;
         AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
             DataContainer.GetNearestEntity(AgentTypes.Carnivore, agent.Transform.position);
@@ -150,9 +169,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void CarnivoreAttackFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         Carnivore<TVector, TTransform> agent = (Carnivore<TVector, TTransform>)_animalAgents[agentId];
         AnimalAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
             DataContainer.GetNearestEntity(AgentTypes.Herbivore, agent.Transform.position);
@@ -177,9 +193,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void CarnivoreMovementFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         AnimalAgent<TVector, TTransform> agent = _animalAgents[agentId];
         (uint, bool) nearestPrey = DataContainer.GetNearestPrey(agent.Transform.position);
 
@@ -225,12 +238,9 @@ public class FitnessManager<TVector, TTransform>
 
     private void BuilderBuildFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
-        if (agent.CurrentFood > 0 && agent is { CurrentGold: > 2, CurrentWood: > 4 } )
+        if (agent.CurrentFood > 0 && agent is { CurrentGold: > 2, CurrentWood: > 4 })
         {
             Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Build);
         }
@@ -242,9 +252,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void BuilderWaitFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
         if (agent.Retreat && agent.CurrentNode is { NodeTerrain: NodeTerrain.TownCenter or NodeTerrain.WatchTower })
         {
@@ -262,9 +269,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void BuilderMovementFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
         IVector target = agent.TargetNode.GetCoordinate();
@@ -311,8 +315,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void FlockingFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
         const float safeDistance = 0.7f;
 
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
@@ -365,9 +367,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void CartMovementFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         Cart agent = _tcAgents[agentId] as Cart;
         AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
             DataContainer.GetNearestEntity(AgentTypes.Carnivore, agent.Transform.position);
@@ -397,21 +396,18 @@ public class FitnessManager<TVector, TTransform>
 
     private void CartGatherFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         Cart agent = _tcAgents[agentId] as Cart;
-        if(agent.CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
+        if (agent.CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
         switch (agent.resourceCarrying)
         {
             case ResourceType.Gold:
-                HandleResource(agent.CurrentGold, 30, agent.TownCenter.Gold, 2);
+                HandleResource(agentId, agent.CurrentGold, 30, agent.TownCenter.Gold, 2);
                 break;
             case ResourceType.Wood:
-                HandleResource(agent.CurrentWood, 30, agent.TownCenter.Wood, 2);
+                HandleResource(agentId, agent.CurrentWood, 30, agent.TownCenter.Wood, 2);
                 break;
             case ResourceType.Food:
-                HandleResource(agent.CurrentFood, 30, agent.TownCenter.Food, 3);
+                HandleResource(agentId, agent.CurrentFood, 30, agent.TownCenter.Food, 3);
                 break;
             case ResourceType.None:
                 Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Gather);
@@ -419,31 +415,25 @@ public class FitnessManager<TVector, TTransform>
             default:
                 break;
         }
-
-        if (agent.CurrentFood < 30 || agent.CurrentGold < 30 || agent.CurrentWood < 30)
-        {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Gather);
-        }
     }
-    private void HandleResource(int resource, int resourceLimit, int tcResource, int minResource)
+
+    private void HandleResource(uint agentId, int resource, int resourceLimit, int tcResource, int minResource)
     {
-        if (resource >= resourceLimit || tcResource <= 0 && resource >= minResource)
+        if (resource < resourceLimit || tcResource > 0 && resource < minResource)
         {
-            OnFlag?.Invoke(Flags.OnFull);
+            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
         }
-        else if (tcResource <= 0 && resource < minResource)
+        else if (tcResource <= 0)
         {
-            OnFlag?.Invoke(Flags.OnReturnResource);
+            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
         }
     }
 
     private void CartDeliverFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
-        TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
-        if (agent.CurrentFood > 0 || agent.CurrentGold > 0  || agent.CurrentWood > 0 )
+        Cart agent = _tcAgents[agentId] as Cart;
+        if ((agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0) &&
+            agent.CurrentNode.GetCoordinate().Adyacent(agent._target.CurrentNode.GetCoordinate()))
         {
             Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Deliver);
         }
@@ -455,14 +445,12 @@ public class FitnessManager<TVector, TTransform>
 
     private void CartReturnResourcesFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
         IVector target = agent.TargetNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agentId, target) && (agent.CurrentFood > 0 || agent.CurrentGold > 0  || agent.CurrentWood > 0 ))
+        if (IsMovingTowardsTarget(agentId, target) &&
+            (agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0))
         {
             Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.ReturnResources);
         }
@@ -474,9 +462,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void CartWaitFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
         if (agent.Retreat)
         {
@@ -514,9 +499,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void GathererWaitFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
         if (agent.Retreat && agent.CurrentNode is { NodeTerrain: NodeTerrain.TownCenter or NodeTerrain.WatchTower })
         {
@@ -534,9 +516,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void GathererMovementFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
         IVector target = agent.TargetNode.GetCoordinate();
@@ -553,11 +532,9 @@ public class FitnessManager<TVector, TTransform>
 
     private void GathererGatherFC(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         Gatherer agent = _tcAgents[agentId] as Gatherer;
-        if (agent is { CurrentFood: <= 0 } or{ CurrentFood: >= 15, ResourceGathering: ResourceType.Food } or { CurrentGold: >= 15 } or { CurrentWood: >= 15 })
+        if (agent is { CurrentFood: <= 0 } or { CurrentFood: >= 15, ResourceGathering: ResourceType.Food } or
+            { CurrentGold: >= 15 } or { CurrentWood: >= 15 })
         {
             Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Gather);
         }
@@ -570,9 +547,6 @@ public class FitnessManager<TVector, TTransform>
 
     private void EatFitnessCalculator(uint agentId)
     {
-        const float reward = 10;
-        const float punishment = 0.90f;
-
         AnimalAgent<TVector, TTransform> agent = _animalAgents[agentId];
 
         if (agent.Food <= 0) return;
