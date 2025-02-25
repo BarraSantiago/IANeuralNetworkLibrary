@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.Agents.AnimalAgents;
+﻿using System.Collections.Concurrent;
+using NeuralNetworkLib.Agents.AnimalAgents;
 using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.ECS.FlockingECS;
@@ -14,9 +15,12 @@ public class FitnessManager<TVector, TTransform>
 {
     private static Dictionary<uint, AnimalAgent<TVector, TTransform>> _animalAgents;
     private static Dictionary<uint, TcAgent<TVector, TTransform>> _tcAgents;
+    private readonly ConcurrentDictionary<(BrainType, AgentTypes), int> _brainTypeKeyCache = new();
+
     const float reward = 10;
     const float punishment = 0.90f;
-
+    private const float MaxFitnessMod = 2f;
+    private const float FitnessModIncrement = 1.1f;
     public FitnessManager(Dictionary<uint, AnimalAgent<TVector, TTransform>> animalAgents)
     {
         _animalAgents = animalAgents;
@@ -24,29 +28,33 @@ public class FitnessManager<TVector, TTransform>
 
     public void Tick()
     {
-        foreach (KeyValuePair<uint, AnimalAgent<TVector, TTransform>> agent in _animalAgents)
+        Parallel.ForEach(_animalAgents.Keys, agentId =>
         {
-            CalculateAnimalsFitness(agent.Value.agentType, agent.Key);
-        }
+            AnimalAgent<TVector, TTransform>? agent = _animalAgents[agentId];
+            CalculateAnimalsFitness(agent.agentType, agentId);
+        });
 
-        foreach (KeyValuePair<uint, TcAgent<TVector, TTransform>> agent in _tcAgents)
+        Parallel.ForEach(_tcAgents.Keys, agentId =>
         {
-            CalculateTcFitness(agent.Value.AgentType, agent.Key);
-        }
+            TcAgent<TVector, TTransform>? agent = _tcAgents[agentId];
+            CalculateTcFitness(agent.AgentType, agentId);
+        });
     }
 
     private void CalculateTcFitness(AgentTypes agentType, uint agentId)
     {
+        NeuralNetComponent nnComponent = ECSManager.GetComponent<NeuralNetComponent>(agentId);
+        
         switch (agentType)
         {
             case AgentTypes.Gatherer:
-                GathererFitnessCalculator(agentId);
+                GathererFitnessCalculator(agentId, nnComponent);
                 break;
             case AgentTypes.Cart:
-                CartFitnessCalculator(agentId);
+                CartFitnessCalculator(agentId, nnComponent);
                 break;
             case AgentTypes.Builder:
-                BuilderFitnessCalculator(agentId);
+                BuilderFitnessCalculator(agentId, nnComponent);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(agentType), agentType, null);
@@ -55,33 +63,35 @@ public class FitnessManager<TVector, TTransform>
 
     public void CalculateAnimalsFitness(AgentTypes agentType, uint agentId)
     {
+        NeuralNetComponent nnComponent = ECSManager.GetComponent<NeuralNetComponent>(agentId);
+
         switch (agentType)
         {
             case AgentTypes.Carnivore:
-                CarnivoreFitnessCalculator(agentId);
+                CarnivoreFitnessCalculator(agentId, nnComponent);
                 break;
             case AgentTypes.Herbivore:
-                HerbivoreFitnessCalculator(agentId);
+                HerbivoreFitnessCalculator(agentId, nnComponent);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(agentType), agentType, null);
         }
     }
 
-    private void HerbivoreFitnessCalculator(uint agentId)
+    private void HerbivoreFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
         foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
                 case BrainType.Movement:
-                    HerbivoreMovementFC(agentId);
+                    HerbivoreMovementFC(agentId, nnComponent);
                     break;
                 case BrainType.Eat:
-                    EatFitnessCalculator(agentId);
+                    EatFitnessCalculator(agentId, nnComponent);
                     break;
                 case BrainType.Escape:
-                    HerbivoreEscapeFC(agentId);
+                    HerbivoreEscapeFC(agentId, nnComponent);
                     break;
                 case BrainType.Attack:
                 case BrainType.Flocking:
@@ -91,7 +101,7 @@ public class FitnessManager<TVector, TTransform>
         }
     }
 
-    private void HerbivoreEscapeFC(uint agentId)
+    private void HerbivoreEscapeFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Herbivore<IVector, ITransform<IVector>> agent =
             _animalAgents[agentId] as Herbivore<IVector, ITransform<IVector>>;
@@ -105,16 +115,16 @@ public class FitnessManager<TVector, TTransform>
 
         if (!IsMovingTowardsTarget(agentId, targetPosition))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Escape);
+            Reward(nnComponent, reward, BrainType.Escape);
         }
 
         if (agent?.Hp < 2)
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Escape);
+            Punish(nnComponent, punishment, BrainType.Escape);
         }
     }
 
-    private void HerbivoreMovementFC(uint agentId)
+    private void HerbivoreMovementFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Herbivore<TVector, TTransform> agent = _animalAgents[agentId] as Herbivore<TVector, TTransform>;
         AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
@@ -126,37 +136,37 @@ public class FitnessManager<TVector, TTransform>
 
         if (!IsMovingTowardsTarget(agentId, targetPosition))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
+            Reward(nnComponent, reward, BrainType.Movement);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
 
         if (IsMovingTowardsTarget(agentId, target))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
+            Reward(nnComponent, reward, BrainType.Movement);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
     }
 
-    private void CarnivoreFitnessCalculator(uint agentId)
+    private void CarnivoreFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
         foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
                 case BrainType.Attack:
-                    CarnivoreAttackFC(agentId);
+                    CarnivoreAttackFC(agentId, nnComponent);
                     break;
                 case BrainType.Eat:
-                    EatFitnessCalculator(agentId);
+                    EatFitnessCalculator(agentId, nnComponent);
                     break;
                 case BrainType.Movement:
-                    CarnivoreMovementFC(agentId);
+                    CarnivoreMovementFC(agentId, nnComponent);
                     break;
                 case BrainType.Escape:
                 case BrainType.Flocking:
@@ -167,7 +177,7 @@ public class FitnessManager<TVector, TTransform>
     }
 
 
-    private void CarnivoreAttackFC(uint agentId)
+    private void CarnivoreAttackFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Carnivore<TVector, TTransform> agent = (Carnivore<TVector, TTransform>)_animalAgents[agentId];
         AnimalAgent<IVector, ITransform<IVector>> nearestHerbivoreNode =
@@ -183,15 +193,15 @@ public class FitnessManager<TVector, TTransform>
             float damageRewardMod = (float)agent.DamageDealt * 2 / 5;
             float rewardMod = killRewardMod * attackedRewardMod * damageRewardMod;
 
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward * rewardMod, BrainType.Attack);
+            Reward(nnComponent, reward * rewardMod, BrainType.Attack);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Attack);
+            Punish(nnComponent, punishment, BrainType.Attack);
         }
     }
 
-    private void CarnivoreMovementFC(uint agentId)
+    private void CarnivoreMovementFC(uint agentId, NeuralNetComponent nnComponent)
     {
         AnimalAgent<TVector, TTransform> agent = _animalAgents[agentId];
         (uint, bool) nearestPrey = DataContainer.GetNearestPrey(agent.Transform.position);
@@ -204,31 +214,31 @@ public class FitnessManager<TVector, TTransform>
         {
             float rewardMod = movingToPrey ? 1.15f : 0.9f;
 
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward * rewardMod, BrainType.Movement);
+            Reward(nnComponent, reward * rewardMod, BrainType.Movement);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
     }
 
-    private void BuilderFitnessCalculator(uint agentId)
+    private void BuilderFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
         foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
                 case BrainType.Build:
-                    BuilderBuildFC(agentId);
+                    BuilderBuildFC(agentId, nnComponent);
                     break;
                 case BrainType.Wait:
-                    BuilderWaitFC(agentId);
+                    BuilderWaitFC(agentId, nnComponent);
                     break;
                 case BrainType.Movement:
-                    BuilderMovementFC(agentId);
+                    BuilderMovementFC(agentId, nnComponent);
                     break;
                 case BrainType.Flocking:
-                    FlockingFC(agentId);
+                    FlockingFC(agentId, nnComponent);
                     break;
                 default:
                     throw new ArgumentException("Builder doesn't have a brain type: ", nameof(brainType));
@@ -236,38 +246,38 @@ public class FitnessManager<TVector, TTransform>
         }
     }
 
-    private void BuilderBuildFC(uint agentId)
+    private void BuilderBuildFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
         if (agent.CurrentFood > 0 && agent is { CurrentGold: > 2, CurrentWood: > 4 })
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Build);
+            Reward(nnComponent, reward, BrainType.Build);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Build);
+            Punish(nnComponent, punishment, BrainType.Build);
         }
     }
 
-    private void BuilderWaitFC(uint agentId)
+    private void BuilderWaitFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
         if (agent.Retreat && agent.CurrentNode is { NodeTerrain: NodeTerrain.TownCenter or NodeTerrain.WatchTower })
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Wait);
+            Reward(nnComponent, reward, BrainType.Wait);
         }
         else if (agent is { CurrentFood: <= 0, CurrentGold: <= 2, CurrentWood: <= 4 })
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Wait);
+            Reward(nnComponent, reward, BrainType.Wait);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Wait);
+            Punish(nnComponent, punishment, BrainType.Wait);
         }
     }
 
-    private void BuilderMovementFC(uint agentId)
+    private void BuilderMovementFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
@@ -275,37 +285,37 @@ public class FitnessManager<TVector, TTransform>
 
         if (IsMovingTowardsTarget(agentId, target))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
+            Reward(nnComponent, reward, BrainType.Movement);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
     }
 
-    private void CartFitnessCalculator(uint agentId)
+    private void CartFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
         foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
                 case BrainType.Movement:
-                    CartMovementFC(agentId);
+                    CartMovementFC(agentId, nnComponent);
                     break;
                 case BrainType.Gather:
-                    CartGatherFC(agentId);
+                    CartGatherFC(agentId, nnComponent);
                     break;
                 case BrainType.Deliver:
-                    CartDeliverFC(agentId);
+                    CartDeliverFC(agentId, nnComponent);
                     break;
                 case BrainType.ReturnResources:
-                    CartReturnResourcesFC(agentId);
+                    CartReturnResourcesFC(agentId, nnComponent);
                     break;
                 case BrainType.Wait:
-                    CartWaitFC(agentId);
+                    CartWaitFC(agentId, nnComponent);
                     break;
                 case BrainType.Flocking:
-                    FlockingFC(agentId);
+                    FlockingFC(agentId, nnComponent);
                     break;
                 default:
                     throw new ArgumentException("Cart doesn't have a brain type: ", nameof(brainType));
@@ -313,7 +323,7 @@ public class FitnessManager<TVector, TTransform>
         }
     }
 
-    private void FlockingFC(uint agentId)
+    private void FlockingFC(uint agentId, NeuralNetComponent nnComponent)
     {
         const float safeDistance = 0.7f;
 
@@ -356,16 +366,16 @@ public class FitnessManager<TVector, TTransform>
 
         if (isMaintainingDistance || isAligningWithFlock || IsMovingTowardsTarget(agentId, targetPosition))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Flocking);
+            Reward(nnComponent, reward, BrainType.Flocking);
         }
 
         if (isColliding || !IsMovingTowardsTarget(agentId, targetPosition))
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Flocking);
+            Punish(nnComponent, punishment, BrainType.Flocking);
         }
     }
 
-    private void CartMovementFC(uint agentId)
+    private void CartMovementFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Cart agent = _tcAgents[agentId] as Cart;
         AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
@@ -377,73 +387,73 @@ public class FitnessManager<TVector, TTransform>
 
         if (!IsMovingTowardsTarget(agentId, predatorPosition))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
+            Reward(nnComponent, reward, BrainType.Movement);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
 
         if (IsMovingTowardsTarget(agentId, target))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
+            Reward(nnComponent, reward, BrainType.Movement);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
     }
 
-    private void CartGatherFC(uint agentId)
+    private void CartGatherFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Cart agent = _tcAgents[agentId] as Cart;
         if (agent.CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
         switch (agent.resourceCarrying)
         {
             case ResourceType.Gold:
-                HandleResource(agentId, agent.CurrentGold, 30, agent.TownCenter.Gold, 2);
+                HandleResource(nnComponent, agent.CurrentGold, 30, agent.TownCenter.Gold, 2);
                 break;
             case ResourceType.Wood:
-                HandleResource(agentId, agent.CurrentWood, 30, agent.TownCenter.Wood, 2);
+                HandleResource(nnComponent, agent.CurrentWood, 30, agent.TownCenter.Wood, 2);
                 break;
             case ResourceType.Food:
-                HandleResource(agentId, agent.CurrentFood, 30, agent.TownCenter.Food, 3);
+                HandleResource(nnComponent, agent.CurrentFood, 30, agent.TownCenter.Food, 3);
                 break;
             case ResourceType.None:
-                Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Gather);
+                Punish(nnComponent, punishment, BrainType.Gather);
                 break;
             default:
-                break;
+                throw new ArgumentException("Cart Gatherer, not a resource type");
         }
     }
 
-    private void HandleResource(uint agentId, int resource, int resourceLimit, int tcResource, int minResource)
+    private void HandleResource(NeuralNetComponent nnComponent, int resource, int resourceLimit, int tcResource, int minResource)
     {
         if (resource < resourceLimit || tcResource > 0 && resource < minResource)
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
+            Reward(nnComponent, reward, BrainType.Movement);
         }
         else if (tcResource <= 0)
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
     }
 
-    private void CartDeliverFC(uint agentId)
+    private void CartDeliverFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Cart agent = _tcAgents[agentId] as Cart;
         if ((agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0) &&
             agent.CurrentNode.GetCoordinate().Adyacent(agent._target.CurrentNode.GetCoordinate()))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Deliver);
+            Reward(nnComponent, reward, BrainType.Deliver);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Deliver);
+            Punish(nnComponent, punishment, BrainType.Deliver);
         }
     }
 
-    private void CartReturnResourcesFC(uint agentId)
+    private void CartReturnResourcesFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
@@ -452,44 +462,44 @@ public class FitnessManager<TVector, TTransform>
         if (IsMovingTowardsTarget(agentId, target) &&
             (agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.ReturnResources);
+            Reward(nnComponent, reward, BrainType.ReturnResources);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.ReturnResources);
+            Punish(nnComponent, punishment, BrainType.ReturnResources);
         }
     }
 
-    private void CartWaitFC(uint agentId)
+    private void CartWaitFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
         if (agent.Retreat)
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Wait);
+            Reward(nnComponent, reward, BrainType.Wait);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Wait);
+            Punish(nnComponent, punishment, BrainType.Wait);
         }
     }
 
-    private void GathererFitnessCalculator(uint agentId)
+    private void GathererFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
         foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
                 case BrainType.Wait:
-                    GathererWaitFC(agentId);
+                    GathererWaitFC(agentId, nnComponent);
                     break;
                 case BrainType.Movement:
-                    GathererGatherFC(agentId);
+                    GathererGatherFC(agentId, nnComponent);
                     break;
                 case BrainType.Gather:
-                    GathererMovementFC(agentId);
+                    GathererMovementFC(agentId, nnComponent);
                     break;
                 case BrainType.Flocking:
-                    FlockingFC(agentId);
+                    FlockingFC(agentId, nnComponent);
                     break;
                 default:
                     throw new ArgumentException("Gatherer doesn't have a brain type: ", nameof(brainType));
@@ -497,24 +507,24 @@ public class FitnessManager<TVector, TTransform>
         }
     }
 
-    private void GathererWaitFC(uint agentId)
+    private void GathererWaitFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
         if (agent.Retreat && agent.CurrentNode is { NodeTerrain: NodeTerrain.TownCenter or NodeTerrain.WatchTower })
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Wait);
+            Reward(nnComponent, reward, BrainType.Wait);
         }
         else if (agent is { CurrentFood: <= 0 })
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Wait);
+            Reward(nnComponent, reward, BrainType.Wait);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Wait);
+            Punish(nnComponent, punishment, BrainType.Wait);
         }
     }
 
-    private void GathererMovementFC(uint agentId)
+    private void GathererMovementFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
@@ -522,37 +532,37 @@ public class FitnessManager<TVector, TTransform>
 
         if (IsMovingTowardsTarget(agentId, target))
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Movement);
+            Reward(nnComponent, reward, BrainType.Movement);
         }
         else
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Movement);
+            Punish(nnComponent, punishment, BrainType.Movement);
         }
     }
 
-    private void GathererGatherFC(uint agentId)
+    private void GathererGatherFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Gatherer agent = _tcAgents[agentId] as Gatherer;
         if (agent is { CurrentFood: <= 0 } or { CurrentFood: >= 15, ResourceGathering: ResourceType.Food } or
             { CurrentGold: >= 15 } or { CurrentWood: >= 15 })
         {
-            Punish(ECSManager.GetComponent<NeuralNetComponent>(agentId), punishment, BrainType.Gather);
+            Punish(nnComponent, punishment, BrainType.Gather);
         }
         else
         {
-            Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward, BrainType.Gather);
+            Reward(nnComponent, reward, BrainType.Gather);
         }
     }
 
 
-    private void EatFitnessCalculator(uint agentId)
+    private void EatFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
         AnimalAgent<TVector, TTransform> agent = _animalAgents[agentId];
 
         if (agent.Food <= 0) return;
 
         float rewardMod = (float)agent.Food * 2 / agent.FoodLimit;
-        Reward(ECSManager.GetComponent<NeuralNetComponent>(agentId), reward * rewardMod, BrainType.Eat);
+        Reward(nnComponent, reward * rewardMod, BrainType.Eat);
     }
 
     private bool IsMovingTowardsTarget(uint agentId, IVector targetPosition)
@@ -571,18 +581,31 @@ public class FitnessManager<TVector, TTransform>
 
     private void Reward(NeuralNetComponent neuralNetComponent, float reward, BrainType brainType)
     {
-        int id = DataContainer.GetBrainTypeKeyByValue(brainType, neuralNetComponent.Layers[0][0].AgentType);
-        neuralNetComponent.FitnessMod[id] = IncreaseFitnessMod(neuralNetComponent.FitnessMod[id]);
-        neuralNetComponent.Fitness[id] += reward * neuralNetComponent.FitnessMod[id];
+        (BrainType brainType, AgentTypes AgentType) key = (brainType, neuralNetComponent.Layers[0][0].AgentType);
+        if (!_brainTypeKeyCache.TryGetValue(key, out int id))
+        {
+            id = DataContainer.GetBrainTypeKeyByValue(brainType, neuralNetComponent.Layers[0][0].AgentType);
+            _brainTypeKeyCache[key] = id;
+        }
+        
+        ref float fitnessMod = ref neuralNetComponent.FitnessMod[id];
+        fitnessMod = Math.Min(fitnessMod * FitnessModIncrement, MaxFitnessMod);
+        neuralNetComponent.Fitness[id] += reward * fitnessMod;
     }
 
     private void Punish(NeuralNetComponent neuralNetComponent, float punishment, BrainType brainType)
     {
         const float mod = 0.9f;
-        int id = DataContainer.GetBrainTypeKeyByValue(brainType, neuralNetComponent.Layers[0][0].AgentType);
+        (BrainType brainType, AgentTypes AgentType) key = (brainType, neuralNetComponent.Layers[0][0].AgentType);
+        if (!_brainTypeKeyCache.TryGetValue(key, out int id))
+        {
+            id = DataContainer.GetBrainTypeKeyByValue(brainType, neuralNetComponent.Layers[0][0].AgentType);
+            _brainTypeKeyCache[key] = id;
+        }
 
-        neuralNetComponent.FitnessMod[id] *= mod;
-        neuralNetComponent.Fitness[id] /= punishment + 0.05f * neuralNetComponent.FitnessMod[id];
+        ref float fitnessMod = ref neuralNetComponent.FitnessMod[id];
+        fitnessMod *= mod;
+        neuralNetComponent.Fitness[id] /= punishment + 0.05f * fitnessMod;
     }
 
     private float IncreaseFitnessMod(float fitnessMod)
