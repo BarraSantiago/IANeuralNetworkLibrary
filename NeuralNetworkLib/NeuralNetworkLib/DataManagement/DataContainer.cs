@@ -33,6 +33,9 @@ public class DataContainer
     public static BrainConfiguration[]? inputCounts;
     public static Dictionary<int, BrainType> HerbBrainTypes = new();
     public static Dictionary<int, BrainType> CarnBrainTypes = new();
+    public static Dictionary<int, BrainType> CartBrainTypes = new();
+    public static Dictionary<int, BrainType> BuilBrainTypes = new();
+    public static Dictionary<int, BrainType> GathBrainTypes = new();
     public static AStarPath? GathererPathfinder;
     public static AStarPath? BuilderPathfinder;
     public static AStarPath? CartPathfinder;
@@ -51,6 +54,9 @@ public class DataContainer
     {
         HerbBrainTypes = new Dictionary<int, BrainType>();
         CarnBrainTypes = new Dictionary<int, BrainType>();
+        CartBrainTypes = new Dictionary<int, BrainType>();
+        BuilBrainTypes = new Dictionary<int, BrainType>();
+        GathBrainTypes = new Dictionary<int, BrainType>();
 
         HerbBrainTypes[0] = BrainType.Eat;
         HerbBrainTypes[1] = BrainType.Movement;
@@ -58,6 +64,24 @@ public class DataContainer
 
         CarnBrainTypes[0] = BrainType.Movement;
         CarnBrainTypes[1] = BrainType.Attack;
+        
+        CartBrainTypes[0] = BrainType.Flocking;
+        CartBrainTypes[1] = BrainType.Movement;
+        CartBrainTypes[2] = BrainType.Wait;
+        CartBrainTypes[3] = BrainType.GetResources;
+        CartBrainTypes[4] = BrainType.Deliver;
+        CartBrainTypes[5] = BrainType.ReturnResources;
+        
+        GathBrainTypes[0] = BrainType.Flocking;
+        GathBrainTypes[1] = BrainType.Movement;
+        GathBrainTypes[2] = BrainType.Wait;
+        GathBrainTypes[3] = BrainType.Gather;
+
+        BuilBrainTypes[0] = BrainType.Flocking;
+        BuilBrainTypes[1] = BrainType.Movement;
+        BuilBrainTypes[2] = BrainType.Wait;
+        BuilBrainTypes[3] = BrainType.Build;
+
 
         LoadInputCount();
 
