@@ -107,11 +107,6 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         private object[] AttackTickParameters()
         {
-            //if (output.Length < 3 || output[GetBrainTypeKeyByValue(BrainType.Movement)].Length < 2)
-            //{
-            //    return Array.Empty<object>();
-            //}
-
             object[] objects =
             {
                 OnAttack,

@@ -243,7 +243,6 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             currentPos.X += speed * timer * brainOutput[0];
             currentPos.Y += speed * timer * brainOutput[1];
 
-            // Ensure the new position is within graph borders.
             if (currentPos.X < minX)
                 currentPos.X = maxX - 1;
             else if (currentPos.X >= maxX)
@@ -254,11 +253,9 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             else if (currentPos.Y >= maxY)
                 currentPos.Y = minY + 1;
 
-            // Get the new node from the graph.
             INode<IVector> newPosNode = DataContainer.GetNode(currentPos);
             if (newPosNode != null)
             {
-                // Retrieve the coordinate once.
                 IVector newCoord = newPosNode.GetCoordinate();
                 SetPosition(newCoord);
             }
