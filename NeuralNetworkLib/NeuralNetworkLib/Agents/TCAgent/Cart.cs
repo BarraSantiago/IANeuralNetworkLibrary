@@ -51,6 +51,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
             ReturnResourcesInputCount = GetInputCount(BrainType.ReturnResources);
         }
 
+        public override void Reset()
+        {
+            base.Reset();
+            TargetNode = GetTarget();
+            Fsm.ForceTransition(Behaviours.GatherResources);
+        }
 
         protected override void FsmBehaviours()
         {

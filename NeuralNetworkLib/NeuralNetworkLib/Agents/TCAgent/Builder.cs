@@ -30,6 +30,16 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         BuildBrain = GetBrainTypeKeyByValue(BrainType.Build);
         BuildInputCount = GetInputCount(BrainType.Build);
     }
+    
+    public override void Reset()
+    {
+        base.Reset();
+        
+        IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
+        TargetNode = DataContainer.GetNode(node);
+        Fsm.ForceTransition(Behaviours.Walk);
+    }
+
 
     protected override void FsmTransitions()
     {

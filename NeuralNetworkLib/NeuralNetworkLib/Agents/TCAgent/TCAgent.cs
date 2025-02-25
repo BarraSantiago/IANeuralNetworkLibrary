@@ -170,6 +170,15 @@ public class TcAgent<TVector, TTransform>
 
     }
 
+    public virtual void Reset()
+    {
+        CalculateInputs();
+
+        CurrentFood = 3;
+        CurrentGold = 0;
+        CurrentWood = 0;
+    }
+
     protected virtual void FsmBehaviours()
     {
         Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);

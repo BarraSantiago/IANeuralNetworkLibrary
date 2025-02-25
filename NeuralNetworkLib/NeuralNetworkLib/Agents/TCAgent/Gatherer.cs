@@ -39,6 +39,14 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         GatherInputCount = GetInputCount(BrainType.Gather);
     }
 
+    public override void Reset()
+    {
+        base.Reset();
+        ResourceGathering = TownCenter.GetResourceNeeded();
+        TargetNode = GetTarget(ResourceGathering);
+        Fsm.ForceTransition(Behaviours.Walk);
+    }
+
     protected override void FsmTransitions()
     {
         base.FsmTransitions();
