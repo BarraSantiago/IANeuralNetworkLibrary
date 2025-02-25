@@ -119,17 +119,17 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 
     protected object[] BuildTickParameters()
     {
-        return new object[] { Retreat, onBuild, output[BuildBrain] };
+        return new object[] { Retreat, onBuild, output[WaitBrain][0], output[movementBrain][2] };
     }
 
     protected override object[] WaitTickParameters()
     {
-        return new object[] { Retreat, CurrentNode, OnWait, output[WaitBrain] };
+        return new object[] { Retreat, CurrentNode, OnWait, output[BuildBrain][0], output[movementBrain][2] };
     }
 
     protected override object[] WalkTickParameters()
     {
-        object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, output[movementBrain] };
+        object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, output[WaitBrain][0], output[BuildBrain][0] };
         return objects;
     }
 

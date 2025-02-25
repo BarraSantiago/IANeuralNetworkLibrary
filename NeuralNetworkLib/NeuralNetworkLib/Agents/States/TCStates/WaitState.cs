@@ -16,7 +16,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             bool retreat = (bool)parameters[0];
             SimNode<IVector> currentNode = (SimNode<IVector>)parameters[1];
             Action onWait = parameters[2] as Action;
-            float[] outputs = parameters[3] as float[];
+            float buildOutput = (float)parameters[3];
+            float walkOutput = (float)parameters[4];
 
 
             behaviours.AddMultiThreadableBehaviours(0, onWait);
@@ -30,13 +31,13 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                if (outputs[0] > 0.5f)
+                if (buildOutput > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnBuild);
                     return;
                 }
 
-                if (outputs[1] > 0.5f)
+                if (walkOutput > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
@@ -45,7 +46,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             return behaviours;
         }
-        
+
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
         {
             return default;
@@ -69,7 +70,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             bool retreat = (bool)parameters[0];
             SimNode<IVector> currentNode = (SimNode<IVector>)parameters[1];
             Action onWait = parameters[2] as Action;
-            float[] outputs = parameters[3] as float[];
+            float outputs = (float)parameters[3];
 
 
             behaviours.AddMultiThreadableBehaviours(0, onWait);
@@ -79,7 +80,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             return behaviours;
         }
 
-        private void ProcessTransitions(bool retreat, SimNode<IVector> currentNode, float[] outputs)
+        private void ProcessTransitions(bool retreat, SimNode<IVector> currentNode, float outputs)
         {
             if (retreat)
             {
@@ -87,7 +88,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     OnFlag?.Invoke(Flags.OnRetreat);
                 return;
             }
-            if (outputs[0] > 0.5f)
+
+            if (outputs > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnGather);
                 return;

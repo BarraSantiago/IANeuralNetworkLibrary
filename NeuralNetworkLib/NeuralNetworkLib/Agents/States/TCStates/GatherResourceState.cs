@@ -25,17 +25,17 @@ namespace NeuralNetworkLib.Agents.States.TCStates
                     return;
                 }
 
-                if (outputs[0] > 0.5f)
+                if (outputs[1] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnFull);
                     return;
                 }
-                if (outputs[1] > 0.5f)
+                if (outputs[2] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnTargetLost);
                     return;
                 }
-                if (outputs[2] > 0.5f)
+                if (outputs[3] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnHunger);
                     return;

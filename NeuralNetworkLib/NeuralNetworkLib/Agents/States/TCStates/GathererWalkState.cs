@@ -21,15 +21,18 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             bool retreat = (bool)parameters[2];
             Action onMove = parameters[3] as Action;
             float[] outputs = parameters[4] as float[];
+            float gatherOutput = (float)parameters[5];
+            float waitOutput = (float)parameters[6];
 
 
             behaviours.AddMultiThreadableBehaviours(0, onMove);
 
-            behaviours.SetTransitionBehaviour(() => ProcessTransitions(currentNode, targetNode, retreat, outputs));
+            behaviours.SetTransitionBehaviour(() => ProcessTransitions(currentNode, targetNode, retreat, outputs, gatherOutput, waitOutput));
             return behaviours;
         }
 
-        private void ProcessTransitions(SimNode<IVector> currentNode, SimNode<IVector> targetNode, bool retreat, float[] outputs)
+        private void ProcessTransitions(SimNode<IVector> currentNode, SimNode<IVector> targetNode, bool retreat,
+            float[] outputs, float gatherOutput, float waitOutput)
         {
             if (CheckRetreat(retreat, targetNode))
             {
@@ -45,13 +48,13 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             if (!IsAdjacentOrNear(currentNode, targetNode)) return;
 
-            if (outputs[0] > 0.5f)
+            if (gatherOutput > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnGather);
                 return;
             }
 
-            if (outputs[1] > 0.5f)
+            if (waitOutput > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnWait);
                 return;
@@ -196,16 +199,18 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             SimNode<IVector> targetNode = parameters[1] as SimNode<IVector>;
             bool retreat = (bool)parameters[2];
             Action onMove = parameters[3] as Action;
-            float[] outputs = parameters[4] as float[];
+            float waitOutput = (float)parameters[4];
+            float buildOutput = (float)parameters[5];
 
             behaviours.AddMultiThreadableBehaviours(0, onMove);
 
-            behaviours.SetTransitionBehaviour(() => ProcessBuilderTransitions(currentNode, targetNode, retreat, outputs));
+            behaviours.SetTransitionBehaviour(() =>
+                ProcessBuilderTransitions(currentNode, targetNode, retreat, waitOutput, buildOutput));
             return behaviours;
         }
 
         private void ProcessBuilderTransitions(SimNode<IVector> currentNode, SimNode<IVector> targetNode, bool retreat,
-            float[] outputs)
+            float waitOutput, float buildOutput)
         {
             if (CheckRetreat(retreat, targetNode))
             {
@@ -221,13 +226,13 @@ namespace NeuralNetworkLib.Agents.States.TCStates
 
             if (!IsAdjacentOrNear(currentNode, targetNode)) return;
 
-            if (outputs[0] > 0.5f)
+            if (waitOutput > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnWait);
                 return;
             }
 
-            if (outputs[1] > 0.5f)
+            if (buildOutput > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnBuild);
                 return;

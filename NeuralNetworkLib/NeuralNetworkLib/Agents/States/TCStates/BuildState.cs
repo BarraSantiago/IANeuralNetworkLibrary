@@ -11,7 +11,8 @@ public class BuildState : State
 
         bool retreat = Convert.ToBoolean(parameters[0]);
         Action OnBuild = parameters[1] as Action;
-        float[] outputs = parameters[2] as float[];
+        float waitOutput = (float)parameters[2];
+        float moveOutput = (float)parameters[3];
 
 
         behaviours.AddMultiThreadableBehaviours(0, () =>
@@ -27,12 +28,12 @@ public class BuildState : State
                 return;
             }
 
-            if (outputs[0] > 0.5f)
+            if (waitOutput > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnHunger);
                 return;
             }
-            if (outputs[1] > 0.5f)
+            if (moveOutput > 0.5f)
             {
                 OnFlag?.Invoke(Flags.OnTargetLost);
                 return;

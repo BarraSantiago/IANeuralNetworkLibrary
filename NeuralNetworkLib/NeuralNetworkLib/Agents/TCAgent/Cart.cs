@@ -84,6 +84,10 @@ namespace NeuralNetworkLib.Agents.TCAgent
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk);
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnWait, Behaviours.Wait);
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnReturnResource, Behaviours.ReturnResources);
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
+                () => { TargetNode = TownCenter.Position; });
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Walk,
+                () => { TargetNode = TownCenter.Position; });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
@@ -116,6 +120,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnHunger, Behaviours.Walk,
                 () => { TargetNode = TownCenter.Position; });
+            Fsm.SetTransition(Behaviours.Deliver, Flags.OnTargetLost, Behaviours.Walk,
+                () => { TargetNode = TownCenter.Position; });
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
@@ -146,22 +152,22 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         protected override object[] GatherTickParameters()
         {
-            return new object[] { Retreat, onGather, output[GetResourcesBrain] };
+            return new object[] { Retreat, onGather, output[movementBrain] };
         }
 
         private object[] DeliverTickParameters()
         {
-            return new object[] { onDeliver, Retreat, output[DeliverBrain] };
+            return new object[] { onDeliver, Retreat, output[movementBrain] };
         }
 
         private object[] ReturnTickParameters()
         {
-            return new object[] { onReturnResource, Retreat, output[ReturnResourcesBrain] };
+            return new object[] { onReturnResource, Retreat, output[GetResourcesBrain] };
         }
 
         protected override object[] WaitTickParameters()
         {
-            object[] objects = { Retreat, CurrentNode, OnWait, output[WaitBrain] };
+            object[] objects = { Retreat, CurrentNode, OnWait, output[ReturnResourcesBrain] };
             return objects;
         }
 
@@ -311,6 +317,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         private void DeliverResource()
         {
+            if(!CurrentNode.GetCoordinate().Adyacent(_target.CurrentNode.GetCoordinate())) return;
+            
             lock (_target)
             {
                 switch (resourceCarrying)
@@ -330,6 +338,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         CurrentWood--;
                         _target.CurrentWood++;
                         break;
+                    case ResourceType.None:
                     default:
                         return;
                 }

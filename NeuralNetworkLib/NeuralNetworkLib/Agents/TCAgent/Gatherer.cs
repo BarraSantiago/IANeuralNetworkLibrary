@@ -134,16 +134,20 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
     protected override object[] WaitTickParameters()
     {
-        object[] objects = { Retreat, CurrentNode, OnWait, CurrentFood };
+        object[] objects = { Retreat, CurrentNode, OnWait, output[GatherBrain] };
         return objects;
     }
 
     protected override object[] GatherTickParameters()
     {
-        return new object[]
-        {
-            Retreat, CurrentFood, CurrentGold, CurrentWood, ResourceLimit, ResourceGathering, onGather, TargetNode
-        };
+        return new object[] { Retreat, onGather, output[movementBrain] };
+    }
+
+    protected override object[] WalkTickParameters()
+    {
+        object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, output[movementBrain],
+                             output[GatherBrain][0], output[WaitBrain][0] };
+        return objects;
     }
 
     protected object[] GatherExitParameters()
