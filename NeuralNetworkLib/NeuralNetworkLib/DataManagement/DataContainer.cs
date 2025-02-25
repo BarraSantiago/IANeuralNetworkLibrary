@@ -120,7 +120,7 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Builder, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 2,
+                    AgentType = AgentTypes.Builder, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 3,
                     HiddenLayers = new[] { 3 }
                 },
                 new BrainConfiguration
@@ -130,7 +130,7 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.Movement, InputCount = 6, OutputCount = 3,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Movement, InputCount = 6, OutputCount = 4,
                     HiddenLayers = new[] { 3 }
                 },
                 new BrainConfiguration
