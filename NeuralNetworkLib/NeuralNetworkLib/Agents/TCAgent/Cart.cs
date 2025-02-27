@@ -61,7 +61,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
         protected override void FsmBehaviours()
         {
             Fsm.AddBehaviour<CartWaitState>(Behaviours.Wait, WaitTickParameters);
-            Fsm.AddBehaviour<CartWalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
+            Fsm.AddBehaviour<CartWalkState>(Behaviours.Walk, WalkTickParameters);
             Fsm.AddBehaviour<GetResourcesState>(Behaviours.GatherResources, GatherTickParameters);
             Fsm.AddBehaviour<DeliverResourceState>(Behaviours.Deliver, DeliverTickParameters);
             Fsm.AddBehaviour<ReturnResourceState>(Behaviours.ReturnResources, ReturnTickParameters);

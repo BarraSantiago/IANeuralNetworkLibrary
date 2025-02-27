@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using NeuralNetworkLib.Agents.AnimalAgents;
-using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.GraphDirectory;
 using NeuralNetworkLib.GraphDirectory.Voronoi;
@@ -28,7 +27,6 @@ public class DataContainer
     public static Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>> Animals = new();
     public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TcAgents = new();
 
-    public static FlockingManager FlockingManager = new();
     public static Dictionary<(BrainType, AgentTypes), BrainConfiguration> InputCountCache;
     public static BrainConfiguration[]? inputCounts;
     public static Dictionary<int, BrainType> HerbBrainTypes = new();
@@ -184,8 +182,8 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 3,
-                    HiddenLayers = new[] { 3 }
+                    AgentType = AgentTypes.Gatherer, BrainType = BrainType.Movement, InputCount = 4, OutputCount = 4,
+                    HiddenLayers = new[] { 4 }
                 },
                 new BrainConfiguration
                 {
@@ -468,6 +466,9 @@ public class DataContainer
         {
             AgentTypes.Carnivore => CarnBrainTypes,
             AgentTypes.Herbivore => HerbBrainTypes,
+            AgentTypes.Cart => CartBrainTypes,
+            AgentTypes.Gatherer => GathBrainTypes,
+            AgentTypes.Builder => BuilBrainTypes,
             _ => throw new ArgumentException("Invalid agent type")
         };
 

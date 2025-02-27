@@ -82,7 +82,6 @@ public class TcAgent<TVector, TTransform>
     public FSM<Behaviours, Flags> Fsm;
     public TownCenter TownCenter;
     public SimNode<IVector> CurrentNode;
-    public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
     public static float Time;
 
     protected float timer = 0;
@@ -91,10 +90,8 @@ public class TcAgent<TVector, TTransform>
     protected Action OnWait;
     protected int LastTimeEat = 0;
     protected int ResourceLimit = 15;
-    protected int? PathNodeId;
     protected TTransform transform = new TTransform();
     protected INode<IVector>? adjacentNode;
-    protected List<SimNode<IVector>> Path;
     protected static Voronoi alarmVoronoi;
     protected const int NoTarget = -1;
     protected int movementBrain;
@@ -118,8 +115,6 @@ public class TcAgent<TVector, TTransform>
         {
             targetNode = value;
             if (targetNode == null || targetNode.GetCoordinate() == null) return;
-            Path = Pathfinder.FindPath(CurrentNode, TargetNode);
-            PathNodeId = 0;
         }
     }
 
@@ -146,14 +141,6 @@ public class TcAgent<TVector, TTransform>
         CurrentNode = TownCenter.Position;
         alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
 
-        Pathfinder = AgentType switch
-        {
-            AgentTypes.Gatherer => DataContainer.GathererPathfinder,
-            AgentTypes.Cart => DataContainer.CartPathfinder,
-            AgentTypes.Builder => DataContainer.BuilderPathfinder,
-            _ => throw new ArgumentOutOfRangeException()
-        };
-
         OnMove += Move;
         OnWait += Wait;
 
@@ -177,6 +164,11 @@ public class TcAgent<TVector, TTransform>
         CurrentFood = 3;
         CurrentGold = 0;
         CurrentWood = 0;
+        SetPosition(TownCenter.Position.GetCoordinate());
+        TargetNode = null;
+        Retreat = false;
+        LastTimeEat = 0;
+        ResourceLimit = 15;
     }
 
     protected virtual void FsmBehaviours()
@@ -252,18 +244,6 @@ public class TcAgent<TVector, TTransform>
     protected virtual object[] WalkTickParameters()
     {
         object[] objects = { CurrentNode, TargetNode, Retreat, OnMove, output[movementBrain] };
-        return objects;
-    }
-
-    protected virtual object[] WalkEnterParameters()
-    {
-        object[] objects = { CurrentNode, TargetNode, Path, Pathfinder, AgentType };
-        return objects;
-    }
-
-    protected virtual object[] WalkExitParameters()
-    {
-        object[] objects = { PathNodeId };
         return objects;
     }
 
@@ -448,6 +428,7 @@ public class TcAgent<TVector, TTransform>
         else if (currentPos.Y >= maxY)
             currentPos.Y = minY + 1;
 
+        if(AcsVector != null) currentPos += AcsVector;
         INode<IVector> newPosNode = DataContainer.GetNode(currentPos);
         if (newPosNode != null)
         {

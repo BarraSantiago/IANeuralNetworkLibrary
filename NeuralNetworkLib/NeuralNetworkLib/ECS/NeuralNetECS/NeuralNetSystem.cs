@@ -87,12 +87,24 @@ public sealed class NeuralNetSystem : ECSSystem
         if (useParallel)
         {
             Parallel.For(0, neuronCount, parallelOptions,
-                j => { ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j); });
+                j =>
+                {
+                    if (inputs.Length != layer.neurons[j].weights.Length)
+                    {
+                        return;
+                    }
+                    ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j); 
+                    
+                });
         }
         else
         {
             for (int j = 0; j < neuronCount; j++)
             {
+                if (inputs.Length != layer.neurons[j].weights.Length)
+                {
+                    continue;
+                }
                 ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j);
             }
         }
@@ -116,7 +128,12 @@ public sealed class NeuralNetSystem : ECSSystem
         int inputLength = inputs.Length;
         ReadOnlySpan<float> weights = neuron.weights;
 
-        if (Vector.IsHardwareAccelerated && inputLength >= Vector<float>.Count)
+        if (inputs.Length != weights.Length)
+        {
+            return -1;
+        }
+        
+        if (Vector.IsHardwareAccelerated && inputLength >= Vector<float>.Count) 
         {
             Vector<float> sumVector = Vector<float>.Zero;
             int vectorSize = Vector<float>.Count;

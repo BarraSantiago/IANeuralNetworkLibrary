@@ -5,8 +5,8 @@ namespace NeuralNetworkLib.NeuralNetDirectory.NeuralNet
     
     public class NeuronLayer
     {
-        public BrainType BrainType;
-        public AgentTypes AgentType;
+        public BrainType BrainType { get; set; }
+        public AgentTypes AgentType { get; set; }
         public float Bias {  get; set; }= 1;
         private readonly float p = 0.5f;
         public Neuron[] neurons;

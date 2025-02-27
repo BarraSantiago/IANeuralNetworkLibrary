@@ -142,7 +142,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
     protected override object[] WaitTickParameters()
     {
-        object[] objects = { Retreat, CurrentNode, OnWait, output[GatherBrain] };
+        object[] objects = { Retreat, CurrentNode, OnWait, output[GatherBrain][0] };
         return objects;
     }
 

@@ -21,23 +21,24 @@ public class FitnessManager<TVector, TTransform>
     const float punishment = 0.90f;
     private const float MaxFitnessMod = 2f;
     private const float FitnessModIncrement = 1.1f;
-    public FitnessManager(Dictionary<uint, AnimalAgent<TVector, TTransform>> animalAgents)
+    public FitnessManager(Dictionary<uint, AnimalAgent<TVector, TTransform>> animalAgents, 
+        Dictionary<uint, TcAgent<TVector, TTransform>> tcAgents)
     {
         _animalAgents = animalAgents;
+        _tcAgents = tcAgents;
     }
 
     public void Tick()
     {
         Parallel.ForEach(_animalAgents.Keys, agentId =>
         {
-            AnimalAgent<TVector, TTransform>? agent = _animalAgents[agentId];
-            CalculateAnimalsFitness(agent.agentType, agentId);
+            CalculateAnimalsFitness(_animalAgents[agentId].agentType, agentId);
         });
 
         Parallel.ForEach(_tcAgents.Keys, agentId =>
         {
-            TcAgent<TVector, TTransform>? agent = _tcAgents[agentId];
-            CalculateTcFitness(agent.AgentType, agentId);
+            
+            CalculateTcFitness(_tcAgents[agentId].AgentType, agentId);
         });
     }
 
@@ -113,7 +114,7 @@ public class FitnessManager<TVector, TTransform>
         if (nearestPredatorNode?.CurrentNode?.GetCoordinate() == null) return;
         targetPosition = nearestPredatorNode.CurrentNode.GetCoordinate();
 
-        if (!IsMovingTowardsTarget(agentId, targetPosition))
+        if (!IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
         {
             Reward(nnComponent, reward, BrainType.Escape);
         }
@@ -132,9 +133,8 @@ public class FitnessManager<TVector, TTransform>
 
         if (nearestPredatorNode?.CurrentNode?.GetCoordinate() == null) return;
         IVector targetPosition = nearestPredatorNode.CurrentNode.GetCoordinate();
-        IVector target = agent.FoodPosition.GetCoordinate();
 
-        if (!IsMovingTowardsTarget(agentId, targetPosition))
+        if (!IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, targetPosition))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -143,7 +143,10 @@ public class FitnessManager<TVector, TTransform>
             Punish(nnComponent, punishment, BrainType.Movement);
         }
 
-        if (IsMovingTowardsTarget(agentId, target))
+        if(agent.FoodPosition == null) return;
+        
+        IVector target = agent.FoodPosition.GetCoordinate();
+        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -186,7 +189,7 @@ public class FitnessManager<TVector, TTransform>
         if (nearestHerbivoreNode?.CurrentNode?.GetCoordinate() == null) return;
         IVector targetPosition = nearestHerbivoreNode.CurrentNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agentId, targetPosition))
+        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
         {
             float killRewardMod = agent.HasKilled ? 2 : 1;
             float attackedRewardMod = agent.HasAttacked ? 1.5f : 0;
@@ -208,7 +211,7 @@ public class FitnessManager<TVector, TTransform>
 
         IVector herbPosition = DataContainer.GetPosition(nearestPrey.Item1, nearestPrey.Item2);
 
-        bool movingToPrey = IsMovingTowardsTarget(agentId, herbPosition);
+        bool movingToPrey = IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, herbPosition);
 
         if (movingToPrey)
         {
@@ -224,7 +227,7 @@ public class FitnessManager<TVector, TTransform>
 
     private void BuilderFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
-        foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
+        foreach (KeyValuePair<int, BrainType> brainType in _tcAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
@@ -283,7 +286,7 @@ public class FitnessManager<TVector, TTransform>
 
         IVector target = agent.TargetNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agentId, target))
+        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -295,15 +298,15 @@ public class FitnessManager<TVector, TTransform>
 
     private void CartFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
-        foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
+        foreach (KeyValuePair<int, BrainType> brainType in _tcAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
                 case BrainType.Movement:
                     CartMovementFC(agentId, nnComponent);
                     break;
-                case BrainType.Gather:
-                    CartGatherFC(agentId, nnComponent);
+                case BrainType.GetResources:
+                    CartGetResourcesFC(agentId, nnComponent);
                     break;
                 case BrainType.Deliver:
                     CartDeliverFC(agentId, nnComponent);
@@ -364,12 +367,12 @@ public class FitnessManager<TVector, TTransform>
             }
         }
 
-        if (isMaintainingDistance || isAligningWithFlock || IsMovingTowardsTarget(agentId, targetPosition))
+        if (isMaintainingDistance || isAligningWithFlock || IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
         {
             Reward(nnComponent, reward, BrainType.Flocking);
         }
 
-        if (isColliding || !IsMovingTowardsTarget(agentId, targetPosition))
+        if (isColliding || !IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
         {
             Punish(nnComponent, punishment, BrainType.Flocking);
         }
@@ -380,12 +383,11 @@ public class FitnessManager<TVector, TTransform>
         Cart agent = _tcAgents[agentId] as Cart;
         AnimalAgent<IVector, ITransform<IVector>> nearestPredatorNode =
             DataContainer.GetNearestEntity(AgentTypes.Carnivore, agent.Transform.position);
-        IVector target = agent._target.CurrentNode.GetCoordinate();
 
         if (nearestPredatorNode?.CurrentNode?.GetCoordinate() == null) return;
         IVector predatorPosition = nearestPredatorNode.CurrentNode.GetCoordinate();
 
-        if (!IsMovingTowardsTarget(agentId, predatorPosition))
+        if (!IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, predatorPosition))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -393,8 +395,9 @@ public class FitnessManager<TVector, TTransform>
         {
             Punish(nnComponent, punishment, BrainType.Movement);
         }
-
-        if (IsMovingTowardsTarget(agentId, target))
+        if(agent._target == null) return;
+        IVector target = agent._target.CurrentNode.GetCoordinate();
+        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -404,7 +407,7 @@ public class FitnessManager<TVector, TTransform>
         }
     }
 
-    private void CartGatherFC(uint agentId, NeuralNetComponent nnComponent)
+    private void CartGetResourcesFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Cart agent = _tcAgents[agentId] as Cart;
         if (agent.CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
@@ -420,7 +423,7 @@ public class FitnessManager<TVector, TTransform>
                 HandleResource(nnComponent, agent.CurrentFood, 30, agent.TownCenter.Food, 3);
                 break;
             case ResourceType.None:
-                Punish(nnComponent, punishment, BrainType.Gather);
+                Punish(nnComponent, punishment, BrainType.GetResources);
                 break;
             default:
                 throw new ArgumentException("Cart Gatherer, not a resource type");
@@ -442,6 +445,8 @@ public class FitnessManager<TVector, TTransform>
     private void CartDeliverFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Cart agent = _tcAgents[agentId] as Cart;
+        if(agent._target == null) return;
+
         if ((agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0) &&
             agent.CurrentNode.GetCoordinate().Adyacent(agent._target.CurrentNode.GetCoordinate()))
         {
@@ -459,7 +464,7 @@ public class FitnessManager<TVector, TTransform>
 
         IVector target = agent.TargetNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agentId, target) &&
+        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target) &&
             (agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0))
         {
             Reward(nnComponent, reward, BrainType.ReturnResources);
@@ -485,7 +490,7 @@ public class FitnessManager<TVector, TTransform>
 
     private void GathererFitnessCalculator(uint agentId, NeuralNetComponent nnComponent)
     {
-        foreach (KeyValuePair<int, BrainType> brainType in _animalAgents[agentId].brainTypes)
+        foreach (KeyValuePair<int, BrainType> brainType in _tcAgents[agentId].brainTypes)
         {
             switch (brainType.Value)
             {
@@ -530,7 +535,7 @@ public class FitnessManager<TVector, TTransform>
 
         IVector target = agent.TargetNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agentId, target))
+        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -565,12 +570,8 @@ public class FitnessManager<TVector, TTransform>
         Reward(nnComponent, reward * rewardMod, BrainType.Eat);
     }
 
-    private bool IsMovingTowardsTarget(uint agentId, IVector targetPosition)
+    private bool IsMovingTowardsTarget(IVector agentDirection, IVector currentPosition, IVector targetPosition)
     {
-        AnimalAgent<TVector, TTransform> agent = _animalAgents[agentId];
-        IVector currentPosition = agent.Transform.position;
-        IVector agentDirection = agent.Transform.forward;
-
         if (targetPosition == null || currentPosition == null) return false;
         IVector directionToTarget = (targetPosition - currentPosition).Normalized();
         if (directionToTarget == null || agentDirection == null) return false;

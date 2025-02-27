@@ -8,8 +8,8 @@ namespace NeuralNetworkLib.Agents.States.TCStates
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
-            Action onGatherResources = parameters[0] as Action;
-            bool retreat = Convert.ToBoolean(parameters[1]);
+            bool retreat = Convert.ToBoolean(parameters[0]);
+            Action onGatherResources = parameters[1] as Action;
             float[] outputs = parameters[2] as float[];
            
 
