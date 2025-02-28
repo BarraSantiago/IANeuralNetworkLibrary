@@ -72,7 +72,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
 
             adjacentNode = DataContainer.GetNode(coord);
             adjacentNode.IsOccupied = true;
-            CurrentNode = DataContainer.GetNode(adjacentNode.GetCoordinate());
+            SetPosition((adjacentNode.GetCoordinate()));
         });
     }
 

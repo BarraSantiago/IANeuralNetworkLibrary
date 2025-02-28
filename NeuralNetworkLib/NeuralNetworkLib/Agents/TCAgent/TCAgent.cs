@@ -68,7 +68,7 @@ public class TcAgent<TVector, TTransform>
             }
 
             transform.forward = (transform.position - value.position).Normalized();
-            transform = value;
+            transform.position = value.position;
         }
     }
 
@@ -117,7 +117,6 @@ public class TcAgent<TVector, TTransform>
             if (targetNode == null || targetNode.GetCoordinate() == null) return;
         }
     }
-
     private SimNode<IVector> targetNode;
 
     public virtual void Init()
@@ -137,8 +136,8 @@ public class TcAgent<TVector, TTransform>
         Fsm.OnStateChange += state =>
             CurrentState = (Behaviours)Math.Clamp(state, 0, Enum.GetValues(typeof(Behaviours)).Length);
         Time = 0;
-        Transform.position = TownCenter.Position.GetCoordinate();
-        CurrentNode = TownCenter.Position;
+        SetPosition(TownCenter.Position.GetCoordinate());
+
         alarmVoronoi = DataContainer.Voronois[(int)NodeTerrain.TownCenter];
 
         OnMove += Move;
@@ -452,7 +451,8 @@ public class TcAgent<TVector, TTransform>
     public virtual void SetPosition(IVector position)
     {
         if (!DataContainer.Graph.IsWithinGraphBorders(position)) return;
-        Transform = (TTransform)new ITransform<IVector>(position);
+        TTransform newTranform = (TTransform)new ITransform<IVector>(position);
+        Transform = newTranform;
         CurrentNode = DataContainer.GetNode(position);
     }
 }

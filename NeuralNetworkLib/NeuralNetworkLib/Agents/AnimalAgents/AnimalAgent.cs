@@ -46,7 +46,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 }
 
                 transform.forward = (transform.position - value.position).Normalized();
-                transform = value;
+                transform.position = value.position;
             }
         }
 

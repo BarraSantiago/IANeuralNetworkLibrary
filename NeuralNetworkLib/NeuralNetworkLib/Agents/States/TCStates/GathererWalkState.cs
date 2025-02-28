@@ -80,7 +80,7 @@ namespace NeuralNetworkLib.Agents.States.TCStates
             node.NodeTerrain is NodeTerrain.Mine or NodeTerrain.Tree or NodeTerrain.Lake;
 
         protected bool IsAdjacentOrNear(SimNode<IVector> currentNode, SimNode<IVector> targetNode) =>
-            currentNode.GetCoordinate().Adyacent(targetNode.GetCoordinate()) ||
+            currentNode.GetCoordinate().Adjacent(targetNode.GetCoordinate()) ||
             Approximately(currentNode.GetCoordinate(), targetNode.GetCoordinate(), 0.001f);
 
         private void HandleValidTarget(SimNode<IVector> targetNode)

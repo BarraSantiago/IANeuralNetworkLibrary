@@ -131,7 +131,7 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                 }
 
                 adjacentNode.IsOccupied = true;
-                CurrentNode = DataContainer.GetNode(adjacentNode.GetCoordinate());
+                SetPosition(adjacentNode.GetCoordinate());
             });
     }
 

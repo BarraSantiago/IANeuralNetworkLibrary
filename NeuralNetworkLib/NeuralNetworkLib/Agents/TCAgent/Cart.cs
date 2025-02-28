@@ -207,7 +207,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             input[DeliverBrain][0] = CurrentGold;
             input[DeliverBrain][1] = CurrentFood;
             input[DeliverBrain][2] = CurrentWood;
-            input[DeliverBrain][3] = !CurrentNode.GetCoordinate().Adyacent(TargetNode.GetCoordinate()) ? -1 : 1;
+            input[DeliverBrain][3] = !CurrentNode.GetCoordinate().Adjacent(TargetNode.GetCoordinate()) ? -1 : 1;
         }
        
         private void GetResourcesInputs()
@@ -323,7 +323,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         private void DeliverResource()
         {
-            if(!CurrentNode.GetCoordinate().Adyacent(_target.CurrentNode.GetCoordinate())) return;
+            if(!CurrentNode.GetCoordinate().Adjacent(_target.CurrentNode.GetCoordinate())) return;
             
             lock (_target)
             {

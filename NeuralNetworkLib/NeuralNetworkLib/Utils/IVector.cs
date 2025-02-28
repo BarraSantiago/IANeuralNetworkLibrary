@@ -86,7 +86,7 @@
             return deltaX * deltaX + deltaY * deltaY;
         }
 
-        public bool Adyacent(IVector a)
+        public bool Adjacent(IVector a)
         {
             if (a == null) return false;
 
