@@ -8,12 +8,11 @@ namespace NeuralNetworkLib.Agents.TCAgent
     public class Cart : TcAgent<IVector, ITransform<IVector>>
     {
         public ResourceType resourceCarrying;
-        public TcAgent<IVector, ITransform<IVector>> _target;
+        public TcAgent<IVector, ITransform<IVector>> TargetAgent { get; private set; }
+
         private Action onGather;
         private Action onDeliver;
         private Action onReturnResource;
-        private bool returnResource;
-
         private int movementBrain;
         private int movementInputCount;
         private int WaitBrain;
@@ -24,7 +23,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
         private int DeliverInputCount;
         private int ReturnResourcesBrain;
         private int ReturnResourcesInputCount;
-        
+        public bool returnResource;
+
         public override void Init()
         {
             AgentType = AgentTypes.Cart;
@@ -38,7 +38,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             onGather += Gather;
             onDeliver += DeliverResource;
             onReturnResource += ReturnResource;
-            
+
             movementBrain = GetBrainTypeKeyByValue(BrainType.Movement);
             movementInputCount = GetInputCount(BrainType.Movement);
             WaitBrain = GetBrainTypeKeyByValue(BrainType.Wait);
@@ -190,7 +190,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
             GetResourcesInputs();
             WaitInputs();
         }
-        
+
         private void ReturnResourcesInputs()
         {
             input[ReturnResourcesBrain] = new float[ReturnResourcesInputCount];
@@ -198,8 +198,12 @@ namespace NeuralNetworkLib.Agents.TCAgent
             input[ReturnResourcesBrain][0] = CurrentGold;
             input[ReturnResourcesBrain][1] = CurrentFood;
             input[ReturnResourcesBrain][2] = CurrentWood;
+            input[ReturnResourcesBrain][3] = CurrentNode.GetCoordinate().X;
+            input[ReturnResourcesBrain][4] = CurrentNode.GetCoordinate().Y;
+            input[ReturnResourcesBrain][5] = TownCenter.Position.GetCoordinate().X;
+            input[ReturnResourcesBrain][6] = TownCenter.Position.GetCoordinate().Y;
         }
-      
+
         private void DeliverInputs()
         {
             input[DeliverBrain] = new float[DeliverInputCount];
@@ -207,38 +211,57 @@ namespace NeuralNetworkLib.Agents.TCAgent
             input[DeliverBrain][0] = CurrentGold;
             input[DeliverBrain][1] = CurrentFood;
             input[DeliverBrain][2] = CurrentWood;
-            input[DeliverBrain][3] = !CurrentNode.GetCoordinate().Adjacent(TargetNode.GetCoordinate()) ? -1 : 1;
+            input[DeliverBrain][3] = CurrentNode.GetCoordinate().X;
+            input[DeliverBrain][4] = CurrentNode.GetCoordinate().Y;
+            input[DeliverBrain][5] = TargetAgent.CurrentNode.GetCoordinate().X;
+            input[DeliverBrain][6] = TargetAgent.CurrentNode.GetCoordinate().Y;
         }
-       
+
         private void GetResourcesInputs()
         {
-            const int minResourceAmount = 3;
-            const int maxResourceAmount = 30;
             input[GetResourcesBrain] = new float[GetResourcesInputCount];
 
-            input[GetResourcesBrain][0] = CurrentGold + CurrentFood + CurrentWood;
-            input[GetResourcesBrain][1] = TownCenter.Gold;
-            input[GetResourcesBrain][2] = TownCenter.Food;
-            input[GetResourcesBrain][3] = TownCenter.Wood;
-            input[GetResourcesBrain][4] = minResourceAmount;
-            input[GetResourcesBrain][5] = maxResourceAmount;
-            input[GetResourcesBrain][6] = resourceCarrying == ResourceType.None ? -1 : 1;
+            int resource = 0;
+            int tcResource = 0;
+            
+            switch (resourceCarrying)
+            {
+                case ResourceType.None:
+                    break;
+                case ResourceType.Gold:
+                    resource = CurrentGold;
+                    tcResource = TownCenter.Gold;
+                    break;
+                case ResourceType.Wood:
+                    resource = CurrentWood;
+                    tcResource = TownCenter.Wood;
+                    break;
+                case ResourceType.Food:
+                    resource = CurrentFood;
+                    tcResource = TownCenter.Food;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            input[GetResourcesBrain][0] = resource;
+            input[GetResourcesBrain][1] = tcResource;
+            input[GetResourcesBrain][2] = CurrentNode.GetCoordinate().X;
+            input[GetResourcesBrain][3] = CurrentNode.GetCoordinate().Y;
+            input[GetResourcesBrain][4] = TownCenter.Position.GetCoordinate().X;
+            input[GetResourcesBrain][5] = TownCenter.Position.GetCoordinate().Y;
         }
-      
+
         protected override void WaitInputs()
         {
             input[WaitBrain] = new float[WaitInputCount];
 
-            input[WaitBrain][0] = CurrentNode.GetCoordinate().X;
-            input[WaitBrain][1] = CurrentNode.GetCoordinate().Y;
-            input[WaitBrain][2] = Retreat ? 1 : 0;
-            input[WaitBrain][3] = Array.IndexOf(SafeRetreatTerrains, CurrentNode.NodeTerrain) == -1 ? 0 : 1;
+            input[WaitBrain][0] = Retreat ? 1 : 0;
+            input[WaitBrain][1] = Array.IndexOf(SafeRetreatTerrains, CurrentNode.NodeTerrain) == -1 ? 0 : 1;
         }
 
-       
+
         protected override void MovementInputs()
         {
-
             input[movementBrain] = new float[movementInputCount];
             input[movementBrain][0] = CurrentNode.GetCoordinate().X;
             input[movementBrain][1] = CurrentNode.GetCoordinate().Y;
@@ -323,26 +346,26 @@ namespace NeuralNetworkLib.Agents.TCAgent
 
         private void DeliverResource()
         {
-            if(!CurrentNode.GetCoordinate().Adjacent(_target.CurrentNode.GetCoordinate())) return;
-            
-            lock (_target)
+            if (!CurrentNode.GetCoordinate().Adjacent(TargetAgent.CurrentNode.GetCoordinate())) return;
+
+            lock (TargetAgent)
             {
                 switch (resourceCarrying)
                 {
                     case ResourceType.Food:
                         if (CurrentFood <= 0) return;
                         CurrentFood--;
-                        _target.CurrentFood++;
+                        TargetAgent.CurrentFood++;
                         break;
                     case ResourceType.Gold:
                         if (CurrentGold <= 0) return;
                         CurrentGold--;
-                        _target.CurrentGold++;
+                        TargetAgent.CurrentGold++;
                         break;
                     case ResourceType.Wood:
                         if (CurrentWood <= 0) return;
                         CurrentWood--;
-                        _target.CurrentWood++;
+                        TargetAgent.CurrentWood++;
                         break;
                     case ResourceType.None:
                     default:
@@ -427,9 +450,9 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         break;
                 }
 
-                _target = agentResource.Item1;
+                TargetAgent = agentResource.Item1;
                 resourceCarrying = agentResource.Item2;
-                return _target.CurrentNode;
+                return TargetAgent.CurrentNode;
             }
         }
     }

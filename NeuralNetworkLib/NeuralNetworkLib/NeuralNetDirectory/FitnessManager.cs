@@ -21,7 +21,8 @@ public class FitnessManager<TVector, TTransform>
     const float punishment = 0.90f;
     private const float MaxFitnessMod = 2f;
     private const float FitnessModIncrement = 1.1f;
-    public FitnessManager(Dictionary<uint, AnimalAgent<TVector, TTransform>> animalAgents, 
+
+    public FitnessManager(Dictionary<uint, AnimalAgent<TVector, TTransform>> animalAgents,
         Dictionary<uint, TcAgent<TVector, TTransform>> tcAgents)
     {
         _animalAgents = animalAgents;
@@ -30,22 +31,16 @@ public class FitnessManager<TVector, TTransform>
 
     public void Tick()
     {
-        Parallel.ForEach(_animalAgents.Keys, agentId =>
-        {
-            CalculateAnimalsFitness(_animalAgents[agentId].agentType, agentId);
-        });
+        Parallel.ForEach(_animalAgents.Keys,
+            agentId => { CalculateAnimalsFitness(_animalAgents[agentId].agentType, agentId); });
 
-        Parallel.ForEach(_tcAgents.Keys, agentId =>
-        {
-            
-            CalculateTcFitness(_tcAgents[agentId].AgentType, agentId);
-        });
+        Parallel.ForEach(_tcAgents.Keys, agentId => { CalculateTcFitness(_tcAgents[agentId].AgentType, agentId); });
     }
 
     private void CalculateTcFitness(AgentTypes agentType, uint agentId)
     {
         NeuralNetComponent nnComponent = ECSManager.GetComponent<NeuralNetComponent>(agentId);
-        
+
         switch (agentType)
         {
             case AgentTypes.Gatherer:
@@ -114,7 +109,7 @@ public class FitnessManager<TVector, TTransform>
         if (nearestPredatorNode?.CurrentNode?.GetCoordinate() == null) return;
         targetPosition = nearestPredatorNode.CurrentNode.GetCoordinate();
 
-        if (!IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
+        if (!IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, targetPosition))
         {
             Reward(nnComponent, reward, BrainType.Escape);
         }
@@ -143,10 +138,10 @@ public class FitnessManager<TVector, TTransform>
             Punish(nnComponent, punishment, BrainType.Movement);
         }
 
-        if(agent.FoodPosition == null) return;
-        
+        if (agent.FoodPosition == null) return;
+
         IVector target = agent.FoodPosition.GetCoordinate();
-        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
+        if (IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -189,7 +184,7 @@ public class FitnessManager<TVector, TTransform>
         if (nearestHerbivoreNode?.CurrentNode?.GetCoordinate() == null) return;
         IVector targetPosition = nearestHerbivoreNode.CurrentNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
+        if (IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, targetPosition))
         {
             float killRewardMod = agent.HasKilled ? 2 : 1;
             float attackedRewardMod = agent.HasAttacked ? 1.5f : 0;
@@ -211,7 +206,7 @@ public class FitnessManager<TVector, TTransform>
 
         IVector herbPosition = DataContainer.GetPosition(nearestPrey.Item1, nearestPrey.Item2);
 
-        bool movingToPrey = IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, herbPosition);
+        bool movingToPrey = IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, herbPosition);
 
         if (movingToPrey)
         {
@@ -257,7 +252,7 @@ public class FitnessManager<TVector, TTransform>
         {
             Reward(nnComponent, reward, BrainType.Build);
         }
-        else
+        else if (agent.CurrentState == Behaviours.Build)
         {
             Punish(nnComponent, punishment, BrainType.Build);
         }
@@ -274,7 +269,7 @@ public class FitnessManager<TVector, TTransform>
         {
             Reward(nnComponent, reward, BrainType.Wait);
         }
-        else
+        else if (agent.CurrentState == Behaviours.Wait)
         {
             Punish(nnComponent, punishment, BrainType.Wait);
         }
@@ -284,9 +279,11 @@ public class FitnessManager<TVector, TTransform>
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
+        if (agent.CurrentState != Behaviours.Walk) return;
+
         IVector target = agent.TargetNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
+        if (IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -367,12 +364,13 @@ public class FitnessManager<TVector, TTransform>
             }
         }
 
-        if (isMaintainingDistance || isAligningWithFlock || IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
+        if (isMaintainingDistance || isAligningWithFlock ||
+            IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, targetPosition))
         {
             Reward(nnComponent, reward, BrainType.Flocking);
         }
 
-        if (isColliding || !IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, targetPosition))
+        if (isColliding || !IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, targetPosition))
         {
             Punish(nnComponent, punishment, BrainType.Flocking);
         }
@@ -387,7 +385,7 @@ public class FitnessManager<TVector, TTransform>
         if (nearestPredatorNode?.CurrentNode?.GetCoordinate() == null) return;
         IVector predatorPosition = nearestPredatorNode.CurrentNode.GetCoordinate();
 
-        if (!IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, predatorPosition))
+        if (!IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, predatorPosition))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -395,9 +393,10 @@ public class FitnessManager<TVector, TTransform>
         {
             Punish(nnComponent, punishment, BrainType.Movement);
         }
-        if(agent._target == null) return;
-        IVector target = agent._target.CurrentNode.GetCoordinate();
-        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
+
+        if (agent.TargetAgent == null) return;
+        IVector target = agent.TargetAgent.CurrentNode.GetCoordinate();
+        if (IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -409,50 +408,109 @@ public class FitnessManager<TVector, TTransform>
 
     private void CartGetResourcesFC(uint agentId, NeuralNetComponent nnComponent)
     {
+        const int resourceCapacity = 30;
+        const int minTownCenterResource = 2;
+
         Cart agent = _tcAgents[agentId] as Cart;
-        if (agent.CurrentNode.NodeTerrain != NodeTerrain.TownCenter) return;
+
+        // Essential safety checks
+        if (agent.TownCenter == null || agent.CurrentNode == null || agent.TargetNode == null)
+        {
+            Punish(nnComponent, punishment, BrainType.GetResources);
+            return;
+        }
+
+        // Position validation
+        bool isAtTownCenter = agent.CurrentNode.GetCoordinate().Adjacent(agent.TownCenter.Position.GetCoordinate());
+        bool shouldGetResources = agent.CurrentState == Behaviours.GatherResources;
+
+        // Town center resource check
+        bool tcHasResources = false;
+        Func<int> getTownCenterResource = () => 0;
+        int resourceAmount = 0;
         switch (agent.resourceCarrying)
         {
             case ResourceType.Gold:
-                HandleResource(nnComponent, agent.CurrentGold, 30, agent.TownCenter.Gold, 2);
+                tcHasResources = agent.TownCenter.Gold >= minTownCenterResource;
+                getTownCenterResource = () => agent.TownCenter.Gold;
+                resourceAmount = agent.CurrentGold;
                 break;
             case ResourceType.Wood:
-                HandleResource(nnComponent, agent.CurrentWood, 30, agent.TownCenter.Wood, 2);
+                tcHasResources = agent.TownCenter.Wood >= minTownCenterResource;
+                getTownCenterResource = () => agent.TownCenter.Wood;
+                resourceAmount = agent.CurrentWood;
                 break;
             case ResourceType.Food:
-                HandleResource(nnComponent, agent.CurrentFood, 30, agent.TownCenter.Food, 3);
+                tcHasResources = agent.TownCenter.Food >= minTownCenterResource;
+                getTownCenterResource = () => agent.TownCenter.Food;
+                resourceAmount = agent.CurrentFood;
                 break;
             case ResourceType.None:
-                Punish(nnComponent, punishment, BrainType.GetResources);
-                break;
+                if (shouldGetResources) Punish(nnComponent, punishment, BrainType.GetResources);
+                return;
             default:
-                throw new ArgumentException("Cart Gatherer, not a resource type");
+                throw new ArgumentException("Invalid resource type");
+        }
+
+        bool shouldReward = isAtTownCenter && tcHasResources && resourceAmount < resourceCapacity;
+
+        float rewardValue = CalculateDynamicReward(resourceAmount, resourceCapacity, getTownCenterResource());
+
+        if (shouldGetResources)
+        {
+            if (shouldReward)
+            {
+                Reward(nnComponent, rewardValue, BrainType.GetResources);
+
+                if (resourceAmount > resourceCapacity * 0.9f)
+                {
+                    Reward(nnComponent, rewardValue * 0.5f, BrainType.GetResources);
+                }
+            }
+            else
+            {
+                float penalty = punishment * (isAtTownCenter ? 0.8f : 1.2f);
+                Punish(nnComponent, penalty, BrainType.GetResources);
+            }
+        }
+        else if (shouldReward)
+        {
+            Punish(nnComponent, punishment * 0.6f, BrainType.GetResources);
         }
     }
 
-    private void HandleResource(NeuralNetComponent nnComponent, int resource, int resourceLimit, int tcResource, int minResource)
+    private float CalculateDynamicReward(int currentResource, int maxCapacity, int tcResource)
     {
-        if (resource < resourceLimit || tcResource > 0 && resource < minResource)
-        {
-            Reward(nnComponent, reward, BrainType.Movement);
-        }
-        else if (tcResource <= 0)
-        {
-            Punish(nnComponent, punishment, BrainType.Movement);
-        }
+        // Scale reward based on both cart needs and town center availability
+        float capacityRatio = currentResource / (float)maxCapacity;
+        float tcResourceRatio = tcResource / (float)maxCapacity;
+
+        return 1f + (1f - capacityRatio) + tcResourceRatio * 0.5f;
     }
 
     private void CartDeliverFC(uint agentId, NeuralNetComponent nnComponent)
     {
         Cart agent = _tcAgents[agentId] as Cart;
-        if(agent._target == null) return;
+        if (agent.TargetAgent == null) return;
 
-        if ((agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0) &&
-            agent.CurrentNode.GetCoordinate().Adyacent(agent._target.CurrentNode.GetCoordinate()))
+        IVector target = agent.TargetAgent.CurrentNode.GetCoordinate();
+        bool hasResource = agent.CurrentGold + agent.CurrentWood + agent.CurrentFood > 0;
+        bool movingToTarget = agent.CurrentState == Behaviours.Walk &&
+                              IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, target);
+        bool isDelivering = agent.CurrentState == Behaviours.Deliver &&
+                            agent.CurrentNode.GetCoordinate().Adjacent(target);
+
+
+        if (hasResource && (isDelivering || movingToTarget))
         {
             Reward(nnComponent, reward, BrainType.Deliver);
         }
-        else
+        else if (hasResource && agent.CurrentNode.GetCoordinate().Adjacent(target) &&
+                 agent.CurrentState != Behaviours.Deliver)
+        {
+            Punish(nnComponent, punishment, BrainType.Deliver);
+        }
+        else if (agent.CurrentState == Behaviours.Deliver)
         {
             Punish(nnComponent, punishment, BrainType.Deliver);
         }
@@ -460,16 +518,25 @@ public class FitnessManager<TVector, TTransform>
 
     private void CartReturnResourcesFC(uint agentId, NeuralNetComponent nnComponent)
     {
-        TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
+        Cart agent = _tcAgents[agentId] as Cart;
 
-        IVector target = agent.TargetNode.GetCoordinate();
-
-        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target) &&
-            (agent.CurrentFood > 0 || agent.CurrentGold > 0 || agent.CurrentWood > 0))
+        if (agent.returnResource)
         {
-            Reward(nnComponent, reward, BrainType.ReturnResources);
+            IVector target = agent.TownCenter.Position.GetCoordinate();
+            bool isAdjacent = agent.CurrentNode.GetCoordinate().Adjacent(agent.TownCenter.Position.GetCoordinate());
+            bool hasResource = agent.CurrentGold + agent.CurrentWood + agent.CurrentFood > 0;
+            bool isReturning = IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, target);
+
+            if ((isAdjacent && agent.CurrentState == Behaviours.ReturnResources || isReturning) && hasResource)
+            {
+                Reward(nnComponent, reward, BrainType.ReturnResources);
+            }
+            else
+            {
+                Punish(nnComponent, punishment, BrainType.ReturnResources);
+            }
         }
-        else
+        else if (agent.CurrentState == Behaviours.ReturnResources)
         {
             Punish(nnComponent, punishment, BrainType.ReturnResources);
         }
@@ -478,11 +545,19 @@ public class FitnessManager<TVector, TTransform>
     private void CartWaitFC(uint agentId, NeuralNetComponent nnComponent)
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
-        if (agent.Retreat)
+        if (agent is
+            {
+                Retreat: true, TargetNode: { NodeTerrain: NodeTerrain.TownCenter or NodeTerrain.WatchTower },
+                CurrentState: Behaviours.Walk or Behaviours.Wait
+            })
         {
             Reward(nnComponent, reward, BrainType.Wait);
         }
-        else
+        else if (agent is { Retreat: true, CurrentState: not Behaviours.Walk and Behaviours.Wait })
+        {
+            Punish(nnComponent, punishment, BrainType.Wait);
+        }
+        else if (agent.CurrentState == Behaviours.Wait && !agent.Retreat)
         {
             Punish(nnComponent, punishment, BrainType.Wait);
         }
@@ -523,7 +598,7 @@ public class FitnessManager<TVector, TTransform>
         {
             Reward(nnComponent, reward, BrainType.Wait);
         }
-        else
+        else if (agent.CurrentState == Behaviours.Wait)
         {
             Punish(nnComponent, punishment, BrainType.Wait);
         }
@@ -533,9 +608,11 @@ public class FitnessManager<TVector, TTransform>
     {
         TcAgent<TVector, TTransform> agent = _tcAgents[agentId];
 
+        if (agent.CurrentState != Behaviours.Walk) return;
+
         IVector target = agent.TargetNode.GetCoordinate();
 
-        if (IsMovingTowardsTarget(agent.Transform.forward,agent.Transform.position, target))
+        if (IsMovingTowardsTarget(agent.Transform.forward, agent.Transform.position, target))
         {
             Reward(nnComponent, reward, BrainType.Movement);
         }
@@ -547,15 +624,51 @@ public class FitnessManager<TVector, TTransform>
 
     private void GathererGatherFC(uint agentId, NeuralNetComponent nnComponent)
     {
+        const int resourceLimit = 15;
         Gatherer agent = _tcAgents[agentId] as Gatherer;
-        if (agent is { CurrentFood: <= 0 } or { CurrentFood: >= 15, ResourceGathering: ResourceType.Food } or
-            { CurrentGold: >= 15 } or { CurrentWood: >= 15 })
+
+        bool isAdjacent = agent.CurrentNode.GetCoordinate().Adjacent(agent.TargetNode.GetCoordinate());
+        bool isResourceNode = agent.TargetNode.NodeTerrain is NodeTerrain.Lake or NodeTerrain.Mine or NodeTerrain.Tree;
+        bool hasFood = agent.CurrentFood > 0;
+        bool resourceUnderLimit = true;
+        float capacityRatio = 1;
+
+        switch (agent.ResourceGathering)
         {
-            Punish(nnComponent, punishment, BrainType.Gather);
+            case ResourceType.Food:
+                resourceUnderLimit = agent.CurrentFood < resourceLimit;
+                capacityRatio = (float)agent.CurrentFood / resourceLimit;
+                break;
+            case ResourceType.Gold:
+                resourceUnderLimit = agent.CurrentGold < resourceLimit;
+                capacityRatio = (float)agent.CurrentGold / resourceLimit;
+                break;
+            case ResourceType.Wood:
+                resourceUnderLimit = agent.CurrentWood < resourceLimit;
+                capacityRatio = (float)agent.CurrentWood / resourceLimit;
+                break;
+            default:
+                resourceUnderLimit = false;
+                break;
         }
-        else
+
+        capacityRatio *= 10;
+        bool shouldGather = isAdjacent && isResourceNode && hasFood && resourceUnderLimit;
+
+        if (shouldGather)
         {
-            Reward(nnComponent, reward, BrainType.Gather);
+            if (agent.CurrentState == Behaviours.GatherResources)
+            {
+                Reward(nnComponent, reward + capacityRatio, BrainType.Gather);
+            }
+            else
+            {
+                Punish(nnComponent, punishment, BrainType.Gather);
+            }
+        }
+        else if (agent.CurrentState == Behaviours.GatherResources)
+        {
+            Punish(nnComponent, punishment * 0.8f, BrainType.Gather);
         }
     }
 
@@ -588,15 +701,13 @@ public class FitnessManager<TVector, TTransform>
             id = DataContainer.GetBrainTypeKeyByValue(brainType, neuralNetComponent.Layers[0][0].AgentType);
             _brainTypeKeyCache[key] = id;
         }
-        
-        ref float fitnessMod = ref neuralNetComponent.FitnessMod[id];
-        fitnessMod = Math.Min(fitnessMod * FitnessModIncrement, MaxFitnessMod);
-        neuralNetComponent.Fitness[id] += reward * fitnessMod;
+
+        neuralNetComponent.Fitness[id] += reward * IncreaseFitnessMod(ref neuralNetComponent.FitnessMod[id]);
     }
 
     private void Punish(NeuralNetComponent neuralNetComponent, float punishment, BrainType brainType)
     {
-        const float mod = 0.9f;
+        const float modDecrement = 0.9f;
         (BrainType brainType, AgentTypes AgentType) key = (brainType, neuralNetComponent.Layers[0][0].AgentType);
         if (!_brainTypeKeyCache.TryGetValue(key, out int id))
         {
@@ -605,16 +716,12 @@ public class FitnessManager<TVector, TTransform>
         }
 
         ref float fitnessMod = ref neuralNetComponent.FitnessMod[id];
-        fitnessMod *= mod;
-        neuralNetComponent.Fitness[id] /= punishment + 0.05f * fitnessMod;
+        fitnessMod *= modDecrement;
+        neuralNetComponent.Fitness[id] *= punishment + 0.05f * fitnessMod;
     }
 
-    private float IncreaseFitnessMod(float fitnessMod)
+    private float IncreaseFitnessMod(ref float fitnessMod)
     {
-        const float maxFitness = 2;
-        const float mod = 1.1f;
-        fitnessMod *= mod;
-        if (fitnessMod > maxFitness) fitnessMod = maxFitness;
-        return fitnessMod;
+        return fitnessMod = Math.Min(fitnessMod * FitnessModIncrement, MaxFitnessMod);
     }
 }

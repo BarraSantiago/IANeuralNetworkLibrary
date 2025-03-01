@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using NeuralNetworkLib.DataManagement;
 using NeuralNetworkLib.ECS.Patron;
 using NeuralNetworkLib.NeuralNetDirectory.NeuralNet;
 
@@ -10,11 +9,14 @@ namespace NeuralNetworkLib.ECS.NeuralNetECS;
 public sealed class NeuralNetSystem : ECSSystem
 {
     private ParallelOptions parallelOptions;
-    private IDictionary<uint, NeuralNetComponent> neuralNetworkComponents = null;
-    private IDictionary<uint, OutputComponent> outputComponents = null;
-    private IDictionary<uint, InputComponent> inputComponents = null;
-    private IDictionary<uint, BrainAmountComponent> brainAmountComponents = null;
-    private IEnumerable<uint> queriedEntities = null;
+    private ConcurrentDictionary<uint, NeuralNetComponent> neuralNetworkComponents = null!;
+    private ConcurrentDictionary<uint, OutputComponent> outputComponents = null!;
+    private ConcurrentDictionary<uint, InputComponent> inputComponents = null!;
+    private ConcurrentDictionary<uint, BrainAmountComponent> brainAmountComponents = null!;
+    private ConcurrentBag<uint> queriedEntities = null!;
+
+    // Cache the Vector<float>.One value.
+    private static readonly Vector<float> VectorOne = new Vector<float>(1f);
 
     public override void Initialize()
     {
@@ -26,39 +28,54 @@ public sealed class NeuralNetSystem : ECSSystem
 
     public override void Deinitialize()
     {
-        neuralNetworkComponents = null;
-        outputComponents = null;
-        inputComponents = null;
-        queriedEntities = null;
-        brainAmountComponents = null;
+        neuralNetworkComponents = null!;
+        outputComponents = null!;
+        inputComponents = null!;
+        brainAmountComponents = null!;
+        queriedEntities = null!;
     }
 
     protected override void PreExecute(float deltaTime)
     {
-        neuralNetworkComponents ??= ECSManager.GetComponents<NeuralNetComponent>();
-        outputComponents ??= ECSManager.GetComponents<OutputComponent>();
-        inputComponents ??= ECSManager.GetComponents<InputComponent>();
-        brainAmountComponents ??= ECSManager.GetComponents<BrainAmountComponent>();
-        queriedEntities ??= ECSManager.GetEntitiesWithComponentTypes(
+        neuralNetworkComponents = new ConcurrentDictionary<uint, NeuralNetComponent>(
+            ECSManager.GetComponents<NeuralNetComponent>());
+        outputComponents = new ConcurrentDictionary<uint, OutputComponent>(
+            ECSManager.GetComponents<OutputComponent>());
+        inputComponents = new ConcurrentDictionary<uint, InputComponent>(
+            ECSManager.GetComponents<InputComponent>());
+        brainAmountComponents = new ConcurrentDictionary<uint, BrainAmountComponent>(
+            ECSManager.GetComponents<BrainAmountComponent>());
+
+        IEnumerable<uint> entities = ECSManager.GetEntitiesWithComponentTypes(
             typeof(NeuralNetComponent), typeof(OutputComponent), typeof(InputComponent));
+        queriedEntities = new ConcurrentBag<uint>(entities);
     }
 
     protected override void Execute(float deltaTime)
     {
-        OrderablePartitioner<uint>? partitioner =
-            Partitioner.Create(queriedEntities, EnumerablePartitionerOptions.NoBuffering);
+        // Use a partitioner over the ConcurrentBag’s underlying collection.
+        OrderablePartitioner<uint>? partitioner = Partitioner.Create(queriedEntities, EnumerablePartitionerOptions.NoBuffering);
 
         Parallel.ForEach(partitioner, parallelOptions, entityId =>
         {
-            NeuralNetComponent? neuralNet = neuralNetworkComponents[entityId];
-            OutputComponent? outputComp = outputComponents[entityId];
-            float[][] inputsArray = inputComponents[entityId].inputs;
-            int brainAmount = brainAmountComponents[entityId].BrainAmount;
+            // Lookups in ConcurrentDictionary are thread-safe.
+            if (!neuralNetworkComponents.TryGetValue(entityId, out NeuralNetComponent? neuralNet) ||
+                !outputComponents.TryGetValue(entityId, out OutputComponent? outputComp) ||
+                !inputComponents.TryGetValue(entityId, out InputComponent? inputComp) ||
+                !brainAmountComponents.TryGetValue(entityId, out BrainAmountComponent? brainComp))
+            {
+                return;
+            }
+
+            float[][] inputsArray = inputComp.inputs;
+            int brainAmount = brainComp.BrainAmount;
 
             Parallel.For(0, brainAmount, parallelOptions, i =>
             {
-                if (inputsArray[i] == null) return;
-                if (i >= neuralNet.Layers.Length || i >= inputsArray.Length) return;
+                if (i >= inputsArray.Length || inputsArray[i] == null)
+                    return;
+                if (i >= neuralNet.Layers.Length)
+                    return;
 
                 float[] currentInputs = inputsArray[i];
                 NeuronLayer[] layers = neuralNet.Layers[i];
@@ -86,16 +103,14 @@ public sealed class NeuralNetSystem : ECSSystem
 
         if (useParallel)
         {
-            Parallel.For(0, neuronCount, parallelOptions,
-                j =>
+            Parallel.For(0, neuronCount, parallelOptions, j =>
+            {
+                if (inputs.Length != layer.neurons[j].weights.Length)
                 {
-                    if (inputs.Length != layer.neurons[j].weights.Length)
-                    {
-                        return;
-                    }
-                    ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j); 
-                    
-                });
+                    return;
+                }
+                ComputeNeuronOutput(layer.neurons[j], inputs, outputs, j);
+            });
         }
         else
         {
@@ -119,6 +134,7 @@ public sealed class NeuralNetSystem : ECSSystem
         outputs[index] = FastTanh(sum);
     }
 
+    // Use a thread-local buffer to assist with vectorized operations.
     private static readonly ThreadLocal<float[]> vectorBuffer = new(() => new float[Vector<float>.Count]);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -128,12 +144,12 @@ public sealed class NeuralNetSystem : ECSSystem
         int inputLength = inputs.Length;
         ReadOnlySpan<float> weights = neuron.weights;
 
-        if (inputs.Length != weights.Length)
+        if (inputLength != weights.Length)
         {
             return -1;
         }
         
-        if (Vector.IsHardwareAccelerated && inputLength >= Vector<float>.Count) 
+        if (Vector.IsHardwareAccelerated && inputLength >= Vector<float>.Count)
         {
             Vector<float> sumVector = Vector<float>.Zero;
             int vectorSize = Vector<float>.Count;
@@ -142,16 +158,15 @@ public sealed class NeuralNetSystem : ECSSystem
 
             for (; i <= inputLength - vectorSize; i += vectorSize)
             {
+                // Use Span.CopyTo without extra allocations.
                 weights.Slice(i, vectorSize).CopyTo(buffer);
-                Vector<float> weightVec = new Vector<float>(buffer);
-
+                Vector<float> weightVec = new(buffer);
                 inputs.Slice(i, vectorSize).CopyTo(buffer);
-                Vector<float> inputVec = new Vector<float>(buffer);
-
+                Vector<float> inputVec = new(buffer);
                 sumVector += weightVec * inputVec;
             }
 
-            sum = Vector.Dot(sumVector, Vector<float>.One);
+            sum = Vector.Dot(sumVector, VectorOne);
 
             for (; i < inputLength; i++)
             {

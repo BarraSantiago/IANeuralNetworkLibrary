@@ -162,22 +162,22 @@ public class DataContainer
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.Deliver, InputCount = 4, OutputCount = 2,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Deliver, InputCount = 7, OutputCount = 2,
                     HiddenLayers = new[] { 3 }
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.ReturnResources, InputCount = 3, OutputCount = 1,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.ReturnResources, InputCount = 7, OutputCount = 1,
                     HiddenLayers = new[] { 2 }
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.Wait, InputCount = 4, OutputCount = 1,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.Wait, InputCount = 2, OutputCount = 1,
                     HiddenLayers = new[] { 2 }
                 },
                 new BrainConfiguration
                 {
-                    AgentType = AgentTypes.Cart, BrainType = BrainType.GetResources, InputCount = 7, OutputCount = 2,
+                    AgentType = AgentTypes.Cart, BrainType = BrainType.GetResources, InputCount = 6, OutputCount = 2,
                     HiddenLayers = new[] { 4 }
                 },
                 new BrainConfiguration

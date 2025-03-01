@@ -180,10 +180,12 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         input[GatherBrain][0] = CurrentFood;
         input[GatherBrain][1] = CurrentGold;
         input[GatherBrain][2] = CurrentWood;
-        input[GatherBrain][3] = (int)ResourceGathering;
-        input[GatherBrain][4] = ResourceLimit;
-        input[GatherBrain][5] = TargetNode.Resource;
-        input[GatherBrain][6] = ValidGatherTarget()? 1 : -1;
+        input[GatherBrain][3] = TargetNode.Resource;
+        input[GatherBrain][4] = ValidGatherTarget()? 1 : -1;
+        input[GatherBrain][5] = CurrentNode.X;
+        input[GatherBrain][6] = CurrentNode.Y;
+        input[GatherBrain][7] = TargetNode.X;
+        input[GatherBrain][8] = TargetNode.Y;
 
     }
 
