@@ -19,6 +19,7 @@
         TownCenter,
         Construction,
         WatchTower,
+        Mountain
     }
 
     public interface INode

@@ -24,7 +24,7 @@ public struct BrainConfiguration
 public class DataContainer
 {
     public static Sim2DGraph Graph;
-
+    public static NodeUpdater NodeUpdater = new();
     public static Dictionary<uint, AnimalAgent<IVector, ITransform<IVector>>> Animals = new();
     public static Dictionary<uint, TcAgent<IVector, ITransform<IVector>>> TcAgents = new();
 
@@ -162,7 +162,6 @@ public class DataContainer
                 node.GetCost()));
         }
 
-
         Voronois = new VoronoiDiagram<Point2D>[Enum.GetValues(typeof(NodeTerrain)).Length];
         VoronoiDiagram<Point2D>.Nodes = allNodes;
 
@@ -215,7 +214,10 @@ public class DataContainer
     public static void UpdateVoronoi(NodeTerrain terrain)
     {
         if (Voronois == null) return;
-
+        if (terrain is NodeTerrain.Construction or NodeTerrain.Empty) return;
+        terrain = terrain == NodeTerrain.WatchTower ? NodeTerrain.TownCenter : terrain;
+        List<Site<Point2D>> sites = GetSites(terrain);
+        Voronois[(int)terrain] = new Voronoi(sites, boundingPolygon);
         Voronois[(int)terrain].ComputeCellsStandard();
         Voronois[(int)terrain].ComputeCellWeights();
         // TODO Fix this
