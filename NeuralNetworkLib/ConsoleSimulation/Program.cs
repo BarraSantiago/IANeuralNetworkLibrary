@@ -13,10 +13,15 @@ class Program
     public static EcsPopulationManager populationManager = new EcsPopulationManager();
     static void Main(string[] args)
     {
-
         populationManager.Awake();
-
-
+        epochState = true;
+        ConsoleLogger.SetLogTypeEnabled(LogType.Epoch, epochState);
+        ConsoleLogger.SetLogTypeEnabled(LogType.Warning, false);
+        ConsoleLogger.SetLogTypeEnabled(LogType.Error, false);
+        ConsoleLogger.SetLogTypeEnabled(LogType.StateTransition, false);
+        ConsoleLogger.SetLogTypeEnabled(LogType.ActionDone, false);
+        ConsoleLogger.SetLogTypeEnabled(LogType.Simulation, false);
+        
         RunSimulation();
     }
 
@@ -28,7 +33,11 @@ class Program
         bool isRunning = true;
         DateTime lastUpdateTime = DateTime.Now;
 
-        Console.WriteLine("Simulation started. Press 'Q' to quit, 'P' to pause/resume.");
+        Console.WriteLine("Simulation started");
+        Console.WriteLine("Press 'Q' to quit, 'P' to pause/resume.");
+        Console.WriteLine("Press 'F1' for warning messages, 'F2' for error messages.");
+        Console.WriteLine("Press 'F3' for epoch messages, 'F4' for state transition messages.");
+        Console.WriteLine("Press 'F5' for action done messages, 'F6' for simulation messages.");
 
         while (isRunning)
         {
@@ -48,7 +57,7 @@ class Program
                         break;
                     case ConsoleKey.P:
                         populationManager.PauseSimulation();
-                        Console.WriteLine("Simulation " + (populationManager.isRunning ? "resumed" : "paused"));
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Simulation " + (populationManager.isRunning ? "resumed" : "paused"));
                         break;
                     case ConsoleKey.F1:
                         warningState = !warningState;

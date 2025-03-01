@@ -1,4 +1,5 @@
-﻿using NeuralNetworkLib.Agents.AnimalAgents;
+﻿using NeuralNetworkLib;
+using NeuralNetworkLib.Agents.AnimalAgents;
 using NeuralNetworkLib.Agents.Flocking;
 using NeuralNetworkLib.Agents.TCAgent;
 using NeuralNetworkLib.DataManagement;
@@ -82,8 +83,7 @@ namespace NeuralNetworkDirectory
             NeuronDataSystem.OnSpecificLoaded += SpecificLoaded;
             Herbivore<IVector, ITransform<IVector>>.OnDeath += RemoveEntity;
             ECSManager.Init();
-
-            //DataContainer.Graph.LoadGraph("GraphData.json");
+            
             StartSimulation();
             fitnessManager = new FitnessManager<IVector, ITransform<IVector>>(DataContainer.Animals);
             behaviourCount = GetHighestBehaviourCount();
@@ -145,7 +145,6 @@ namespace NeuralNetworkDirectory
             TCAgentType.Time = dt;
             AnimalAgentType.Time = dt;
             
-
             for (int i = 0; i < agentsCopy.Length; i++)
             {
                 AnimalAgentType agent = agentsCopy[i].Value;
@@ -206,6 +205,7 @@ namespace NeuralNetworkDirectory
 
         private void Epoch()
         {
+            ConsoleLogger.Epoch("Generation " + Generation);
             Generation++;
             PurgingSpecials();
 
@@ -221,11 +221,15 @@ namespace NeuralNetworkDirectory
 
             bool remainingCarn = carnivoreCount - missingCarnivores > 1;
             bool remainingHerb = herbivoreCount - missingHerbivores > 1;
+            ConsoleLogger.Epoch("Carnivores that survived " + (carnivoreCount - missingCarnivores) + " out of " + carnivoreCount);
+            ConsoleLogger.Epoch("Herbivores that survived " + (herbivoreCount - missingHerbivores) + " out of " + herbivoreCount);
 
             ECSManager.GetSystem<NeuralNetSystem>().Deinitialize();
             if (Generation % generationsPerSave == 0)
             {
                 Save(DirectoryPath, Generation);
+                
+                ConsoleLogger.Simulation("Gen " + Generation + " was succesufully saved.");
             }
 
             CleanMap();
@@ -297,7 +301,9 @@ namespace NeuralNetworkDirectory
 
             for (int i = 0; i < fitness.Length; i++)
             {
-                DataContainer.FitnessStagnationManager.AddFitnessData(agentType, brainTypes[i], fitness[i] / agentCount);
+                float totalFitness = fitness[i] < 1 ? 0 : fitness[i] / agentCount;
+                DataContainer.FitnessStagnationManager.AddFitnessData(agentType, brainTypes[i], totalFitness);
+                ConsoleLogger.Epoch("Average fitness for " + agentType + " " + brainTypes[i] + " is " + totalFitness);
             }
         }
 

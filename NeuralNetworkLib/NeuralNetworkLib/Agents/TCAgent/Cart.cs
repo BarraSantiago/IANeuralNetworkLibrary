@@ -53,20 +53,32 @@ namespace NeuralNetworkLib.Agents.TCAgent
         {
             base.WaitTransitions();
 
-            Fsm.SetTransition(Behaviours.Wait, Flags.OnReturnResource, Behaviours.ReturnResources);
+            Fsm.SetTransition(Behaviours.Wait, Flags.OnReturnResource, Behaviours.ReturnResources, () =>
+            {
+                ConsoleLogger.StateTransition(AgentType + " Transition: Wait > OnReturnResource > ReturnResources.");
+            });
         }
 
         protected override void GetResourcesTransitions()
         {
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk);
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnWait, Behaviours.Wait);
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnReturnResource, Behaviours.ReturnResources);
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
-                () =>
-                {
-                    TargetNode = GetRetreatNode();
-                    TownCenter.RefugeeCount++;
-                });
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk, () =>
+            {
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnFull > Walk.");
+            });
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnWait, Behaviours.Wait, () =>
+            {
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnWait > Wait.");
+            });
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnReturnResource, Behaviours.ReturnResources, () =>
+            {
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnReturnResource > ReturnResources.");
+            });
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk, () =>
+            {
+                TargetNode = GetRetreatNode();
+                TownCenter.RefugeeCount++;
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnRetreat > Walk.");
+            });
         }
 
         protected override void WalkTransitions()
@@ -76,35 +88,52 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 {
                     TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
+                    ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnRetreat > Walk.");
                 });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = GetTarget();
-                    
+                    ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnTargetLost > Walk.");
                 });
 
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetReach, Behaviours.Deliver);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetReach, Behaviours.Deliver, () =>
+            {
+                ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnTargetReach > Deliver.");
+            });
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
                 () =>
                 {
                     TargetNode = GetTarget();
+                    ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnGather > GatherResources.");
                 });
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnReturnResource, Behaviours.ReturnResources);
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait, () => { returnResource = true; });
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnReturnResource, Behaviours.ReturnResources, () =>
+            {
+                ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnReturnResource > ReturnResources.");
+            });
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait, () =>
+            {
+                returnResource = true;
+                ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnWait > Wait.");
+            });
         }
 
 
         protected override void DeliverTransitions()
         {
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnHunger, Behaviours.Walk,
-                () => { TargetNode = TownCenter.Position; });
+                () =>
+                {
+                    TargetNode = TownCenter.Position; 
+                    ConsoleLogger.StateTransition(AgentType + " Transition: Deliver > OnHunger > Walk.");
+                });
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
+                    ConsoleLogger.StateTransition(AgentType + " Transition: Deliver > OnRetreat > Walk.");
                 });
         }
 
@@ -115,12 +144,14 @@ namespace NeuralNetworkLib.Agents.TCAgent
                 {
                     returnResource = false;
                     TargetNode = GetTarget();
+                    ConsoleLogger.StateTransition(AgentType + " Transition: ReturnResources > OnHunger > GatherResources.");
                 });
             Fsm.SetTransition(Behaviours.ReturnResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = GetRetreatNode();
                     TownCenter.RefugeeCount++;
+                    ConsoleLogger.StateTransition(AgentType + " Transition: ReturnResources > OnRetreat > Walk.");
                 });
         }
 
@@ -187,6 +218,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
                     TownCenter.Wood++;
                 }
             }
+            
+            ConsoleLogger.ActionDone( AgentType + " Action: Return Resource.");
         }
 
         private void Gather()
@@ -214,6 +247,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         return;
                 }
             }
+            ConsoleLogger.ActionDone( AgentType + " Action: Gather Resource.");
         }
 
         private void DeliverResource()
@@ -241,6 +275,7 @@ namespace NeuralNetworkLib.Agents.TCAgent
                         return;
                 }
             }
+            ConsoleLogger.ActionDone( AgentType + " Action: Deliver Resource.");
         }
 
         public void Attacked()
@@ -250,6 +285,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
             CurrentFood = 0;
 
             TownCenter.SoundAlarm();
+            
+            ConsoleLogger.ActionDone( AgentType + " Action: Cart Attacked.");
         }
 
         protected override void Wait()
@@ -263,6 +300,8 @@ namespace NeuralNetworkLib.Agents.TCAgent
             TargetNode = GetTarget();
 
             Fsm.ForceTransition(Behaviours.Walk);
+            
+            ConsoleLogger.ActionDone( AgentType + " Action: Wait.");
         }
 
         private SimNode<IVector> GetTarget()

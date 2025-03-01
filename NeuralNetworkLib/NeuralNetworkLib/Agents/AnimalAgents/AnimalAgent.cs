@@ -222,6 +222,8 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 Food++;
                 currNode.Resource--;
             }
+            
+            ConsoleLogger.ActionDone( agentType + " Action: Eat.");
         }
 
 
@@ -265,6 +267,8 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
             }
 
             timer = 0;
+            
+            ConsoleLogger.ActionDone( agentType + " Action: Move.");
         }
 
         protected int GetInputCount(BrainType brainType)
@@ -288,8 +292,8 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
                 }
             }
 
-            throw new KeyNotFoundException(
-                $"The BrainType value '{value}' is not present in the '{agentType}' brainTypes dictionary.");
+            ConsoleLogger.Warning($"The BrainType value '{value}' is not present in the '{agentType}' brainTypes dictionary.");
+            return -1;
         }
     }
 }

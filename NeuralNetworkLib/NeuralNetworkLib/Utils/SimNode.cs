@@ -43,6 +43,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         {
             if (value <= _resource && value <= 0)
             {
+                ConsoleLogger.Simulation( NodeTerrain + " Is Out Of Resources.");
                 NodeTerrain terrain = NodeTerrain;
                 NodeTerrain = _nodeTerrain == NodeTerrain.Tree ? NodeTerrain.Stump : NodeTerrain.Empty;
                 DataContainer.OnUpdateVoronoi?.Invoke(terrain == NodeTerrain.WatchTower
@@ -121,6 +122,7 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         if (Resource >= 100)
         {
             NodeTerrain = NodeTerrain.WatchTower;
+            ConsoleLogger.Simulation( "Watch Tower Completed.");
         }
     }
 

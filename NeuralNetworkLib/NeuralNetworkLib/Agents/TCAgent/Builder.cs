@@ -52,11 +52,12 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
             IVector? coord = TargetNode.GetAdjacentNode();
             if (coord == null)
             {
-                throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
+                ConsoleLogger.Error(AgentType + ": WalkTransitions, adjacent node not found.");
             }
             adjacentNode = DataContainer.GetNode(coord);
             adjacentNode.IsOccupied = true;
             CurrentNode = DataContainer.GetNode(adjacentNode.GetCoordinate());
+            ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnBuild > Build.");
         });
     }
 
@@ -68,6 +69,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
                 CurrentNode.IsOccupied = false;
                 TargetNode = GetRetreatNode();
                 TownCenter.RefugeeCount++;
+                ConsoleLogger.StateTransition(AgentType + " Transition: Build > OnRetreat > Walk.");
             });
         Fsm.SetTransition(Behaviours.Build, Flags.OnHunger, Behaviours.Wait, () =>
         {
@@ -85,6 +87,8 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
             {
                 TownCenter.AskForResources(this, ResourceType.Wood);
             }
+            
+            ConsoleLogger.StateTransition(AgentType + " Transition: Build > OnHunger > Wait.");
         });
         Fsm.SetTransition(Behaviours.Build, Flags.OnTargetLost, Behaviours.Walk,
             () =>
@@ -92,6 +96,8 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
                 CurrentNode.IsOccupied = false;
                 IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
                 TargetNode = DataContainer.GetNode(node);
+                
+                ConsoleLogger.StateTransition(AgentType + " Transition: Build > OnTargetLost > Walk.");
             });
     }
 
@@ -103,8 +109,13 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
             {
                 IVector node = TownCenter.GetWatchTowerConstruction().GetCoordinate();
                 TargetNode = DataContainer.GetNode(node);
+                ConsoleLogger.StateTransition(AgentType + " Transition: Wait > OnTargetLost > Walk.");
             });
-        Fsm.SetTransition(Behaviours.Wait, Flags.OnBuild, Behaviours.Build);
+        Fsm.SetTransition(Behaviours.Wait, Flags.OnBuild, Behaviours.Build,
+            () =>
+            {
+                ConsoleLogger.StateTransition(AgentType + " Transition: Wait > OnBuild > Build.");
+            });
     }
 
     #endregion
@@ -139,5 +150,7 @@ public class Builder : TcAgent<IVector, ITransform<IVector>>
         }
 
         timer -= (float)Math.Floor(timer);
+        
+        ConsoleLogger.ActionDone( AgentType + " Action: Build.");
     }
 }

@@ -38,7 +38,7 @@ namespace NeuralNetworkLib
             if (!_enabledLogTypes.Contains(logType))
                 return;
 
-            string timestamp = _includeTimestamp ? $"[{DateTime.Now:HH:mm:ss.fff}] " : "";
+            string timestamp = _includeTimestamp ? $"[{DateTime.Now:HH:mm:ss}] " : "";
             string logTypeStr = $"[{logType}] ";
             string fullMessage = timestamp + logTypeStr + message;
 

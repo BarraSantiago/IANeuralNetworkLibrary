@@ -143,6 +143,7 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
             HasKilled = true;
             Eat();
+            ConsoleLogger.ActionDone( agentType + " Action: Attack.");
         }
 
         protected override void Eat()
@@ -162,23 +163,50 @@ namespace NeuralNetworkLib.Agents.AnimalAgents
 
         protected override void EatTransitions()
         {
-            Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat);
-            Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk);
-            Fsm.SetTransition(Behaviours.Eat, Flags.OnAttack, Behaviours.Attack);
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Eat > OnEat > Eat.");
+            });
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Eat > OnSearchFood > Walk.");
+            });
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnAttack, Behaviours.Attack, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Eat > OnAttack > Attack.");
+            });
         }
 
         protected override void WalkTransitions()
         {
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat);
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnAttack, Behaviours.Attack);
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnSearchFood, Behaviours.Walk);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Walk > OnEat > Eat.");
+            });
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnAttack, Behaviours.Attack, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Walk > OnAttack > Attack.");
+            });
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnSearchFood, Behaviours.Walk, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Walk > OnSearchFood > Walk.");
+            });
         }
 
         protected override void ExtraTransitions()
         {
-            Fsm.SetTransition(Behaviours.Attack, Flags.OnAttack, Behaviours.Attack);
-            Fsm.SetTransition(Behaviours.Attack, Flags.OnEat, Behaviours.Eat);
-            Fsm.SetTransition(Behaviours.Attack, Flags.OnSearchFood, Behaviours.Walk);
+            Fsm.SetTransition(Behaviours.Attack, Flags.OnAttack, Behaviours.Attack, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Attack > OnAttack > Attack.");
+            });
+            Fsm.SetTransition(Behaviours.Attack, Flags.OnEat, Behaviours.Eat, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Attack > OnEat > Eat.");
+            });
+            Fsm.SetTransition(Behaviours.Attack, Flags.OnSearchFood, Behaviours.Walk, () =>
+            {
+                ConsoleLogger.StateTransition(agentType + " Transition: Attack > OnSearchFood > Walk.");
+            });
         }
     }
 }

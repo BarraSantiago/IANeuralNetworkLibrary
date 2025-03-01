@@ -156,6 +156,8 @@ public class TcAgent<TVector, TTransform>
             {
                 TargetNode = GetRetreatNode();
                 TownCenter.RefugeeCount++;
+                
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnRetreat > Walk.");
             });
     }
 
@@ -173,9 +175,13 @@ public class TcAgent<TVector, TTransform>
             {
                 TargetNode = GetRetreatNode();
                 TownCenter.RefugeeCount++;
+                ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnRetreat > Walk.");
             });
 
-        Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait);
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.Wait, () =>
+        {
+            ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnWait > Wait.");
+        });
     }
 
     protected virtual void WaitTransitions()
@@ -185,6 +191,7 @@ public class TcAgent<TVector, TTransform>
             {
                 TargetNode = GetRetreatNode();
                 TownCenter.RefugeeCount++;
+                ConsoleLogger.StateTransition(AgentType + " Transition: Wait > OnRetreat > Walk.");
             });
     }
 
@@ -256,6 +263,8 @@ public class TcAgent<TVector, TTransform>
         Transform.position = CurrentNode.GetCoordinate();
         Transform.position += AcsVector;
         timer = (float)((relativeSpeed - Math.Truncate(relativeSpeed)) / speed);
+        
+        ConsoleLogger.ActionDone( AgentType + " Action: Move.");
     }
 
     protected SimNode<IVector> GetRetreatNode()

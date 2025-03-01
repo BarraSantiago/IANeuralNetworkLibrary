@@ -58,13 +58,13 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
         Fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
             () =>
             {
+                ConsoleLogger.StateTransition(AgentType + " Transition: Wait > OnGather > Walk.");
                 if (CurrentNode.NodeTerrain == NodeTerrain.TownCenter)
                 {
                     ResourceGathering = TownCenter.GetResourceNeeded();
                     TargetNode = GetTarget(ResourceGathering);
                     return;
                 }
-
                 Fsm.ForceTransition(Behaviours.GatherResources);
             });
     }
@@ -77,23 +77,34 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                 ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
                 TargetNode = GetRetreatNode();
                 TownCenter.RefugeeCount++;
+                
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnRetreat > Walk.");
             });
         Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
-            () => { TownCenter.AskForResources(this, ResourceType.Food); });
+            () =>
+            {
+                TownCenter.AskForResources(this, ResourceType.Food); 
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnHunger > Wait.");
+            });
 
         Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
             () =>
             {
                 ResourceGathering = TownCenter.RemoveFromResource(ResourceGathering);
                 TargetNode = TownCenter.Position;
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnFull > Walk.");
             });
         Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
             () =>
             {
                 ResourceGathering = TownCenter.GetResourceNeeded();
                 TargetNode = GetTarget(ResourceGathering);
+                ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnTargetLost > Walk.");
             });
-        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnGather, Behaviours.GatherResources);
+        Fsm.SetTransition(Behaviours.GatherResources, Flags.OnGather, Behaviours.GatherResources, () =>
+        {
+            ConsoleLogger.StateTransition(AgentType + " Transition: GatherResources > OnGather > GatherResources.");
+        });
     }
 
     protected override void WalkTransitions()
@@ -106,7 +117,9 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
                 if (TargetNode == null)
                 {
+                    ConsoleLogger.Warning(AgentType + " TargetNode is null.");
                 }
+                ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnTargetLost > Walk.");
             });
         Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
             () =>
@@ -115,11 +128,12 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                 adjacentNode = DataContainer.GetNode(coord);
                 if (adjacentNode == null)
                 {
-                    throw new Exception("Gatherer: WalkTransitions, adjacent node not found.");
+                    ConsoleLogger.Warning(AgentType + " WalkTransitions, adjacent node not found.");
                 }
 
                 adjacentNode.IsOccupied = true;
                 CurrentNode = DataContainer.GetNode(adjacentNode.GetCoordinate());
+                ConsoleLogger.StateTransition(AgentType + " Transition: Walk > OnGather > GatherResources.");
             });
     }
 
@@ -187,6 +201,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                 TownCenter.Food++;
             }
         }
+        
+        ConsoleLogger.ActionDone( AgentType + " Action: Wait.");
     }
 
     private void Gather()
@@ -206,7 +222,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                 GatherResource(ResourceType.Food);
                 break;
             default:
-                throw new Exception("Gatherer: Gather, resource type not found");
+                ConsoleLogger.Warning(AgentType + " , resource type not found");
+                break;
         }
     }
 
@@ -240,7 +257,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
                 
                 case ResourceType.None:
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(resourceType), resourceType, null);
+                    ConsoleLogger.Warning(AgentType + " , resource type is null.");
+                    break;
             }
         }
 
@@ -250,6 +268,8 @@ public class Gatherer : TcAgent<IVector, ITransform<IVector>>
 
         CurrentFood--;
         LastTimeEat = 0;
+        
+        ConsoleLogger.ActionDone( AgentType + " Action: Gather Resource.");
     }
 
     protected SimNode<IVector> GetTarget(ResourceType resourceType = ResourceType.None)

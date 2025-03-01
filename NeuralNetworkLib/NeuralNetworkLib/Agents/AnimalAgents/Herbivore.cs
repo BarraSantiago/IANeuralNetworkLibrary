@@ -158,22 +158,49 @@ public class Herbivore<TVector, TTransform> : AnimalAgent<TVector, TTransform>
     private void Die()
     {
         OnDeath?.Invoke(this);
+        ConsoleLogger.ActionDone( agentType + " Action: Die.");
     }
 
     protected override void EatTransitions()
     {
-        Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat, () => timer = 0);
-        Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk);
-        Fsm.SetTransition(Behaviours.Eat, Flags.OnEscape, Behaviours.Walk);
-        Fsm.SetTransition(Behaviours.Eat, Flags.OnAttack, Behaviours.Walk);
+        Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat, () =>
+        {
+            timer = 0;
+            ConsoleLogger.StateTransition(agentType + " Transition: Eat > OnEat > Eat.");
+        });
+        Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk, () =>
+        {
+            ConsoleLogger.StateTransition(agentType + " Transition: Eat > OnSearchFood > Walk.");
+        });
+        Fsm.SetTransition(Behaviours.Eat, Flags.OnEscape, Behaviours.Walk, () =>
+        {
+            ConsoleLogger.StateTransition(agentType + " Transition: Eat > OnEscape > Walk.");
+        });
+        Fsm.SetTransition(Behaviours.Eat, Flags.OnAttack, Behaviours.Walk, () =>
+        {
+            ConsoleLogger.StateTransition(agentType + " Transition: Eat > OnAttack > Walk.");
+        });
     }
 
     protected override void WalkTransitions()
     {
-        Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat, () => timer = 0);
-        Fsm.SetTransition(Behaviours.Walk, Flags.OnEscape, Behaviours.Walk);
-        Fsm.SetTransition(Behaviours.Walk, Flags.OnAttack, Behaviours.Walk);
-        Fsm.SetTransition(Behaviours.Walk, Flags.OnSearchFood, Behaviours.Walk);
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat, () =>
+        {
+            timer = 0;
+            ConsoleLogger.StateTransition(agentType + " Transition: Walk > OnEat > Eat.");
+        });
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnEscape, Behaviours.Walk, () =>
+        {
+            ConsoleLogger.StateTransition(agentType + " Transition: Walk > OnEscape > Walk.");
+        });
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnAttack, Behaviours.Walk, () =>
+        {
+            ConsoleLogger.StateTransition(agentType + " Transition: Walk > OnAttack > Walk.");
+        });
+        Fsm.SetTransition(Behaviours.Walk, Flags.OnSearchFood, Behaviours.Walk, () =>
+        {
+            ConsoleLogger.StateTransition(agentType + " Transition: Walk > OnSearchFood > Walk.");
+        });
     }
 
     protected override void ExtraTransitions()
