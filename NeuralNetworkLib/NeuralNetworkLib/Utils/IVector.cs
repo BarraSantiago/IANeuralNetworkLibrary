@@ -8,6 +8,13 @@
         IVector Normalized();
         float Distance(IVector other);
 
+        public new bool Equals(IVector other)
+        {
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return X.Equals(other.X) && Y.Equals(other.Y);
+        }
+        
         public static float Distance(IVector a, IVector b)
         {
             return (float)Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));

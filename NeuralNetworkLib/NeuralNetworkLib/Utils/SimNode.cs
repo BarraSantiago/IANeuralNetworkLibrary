@@ -79,6 +79,11 @@ public class SimNode<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Co
         return isBlocked;
     }
 
+    public void SetBlocked(bool blocked)
+    {
+        isBlocked = blocked;
+    }
+
     public float X { get; set; }
     public float Y { get; set; }
 

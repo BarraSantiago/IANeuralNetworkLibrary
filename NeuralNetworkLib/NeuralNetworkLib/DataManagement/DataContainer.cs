@@ -37,7 +37,7 @@ public class DataContainer
     public static AStarPath? BuilderPathfinder;
     public static AStarPath? CartPathfinder;
     public static Voronoi[] Voronois;
-    public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi2;
+    public static Action<NodeTerrain> OnUpdateVoronoi = UpdateVoronoi;
     public static FitnessStagnationManager FitnessStagnationManager = new();
 
     private const string FilePath = "BrainConfigurations.json";
@@ -212,7 +212,7 @@ public class DataContainer
         return pointsOfInterest.ToList();
     }
 
-    public static void UpdateVoronoi2(NodeTerrain terrain)
+    public static void UpdateVoronoi(NodeTerrain terrain)
     {
         if (Voronois == null) return;
 

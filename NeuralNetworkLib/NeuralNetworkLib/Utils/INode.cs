@@ -24,6 +24,7 @@
     public interface INode
     {
         public bool IsBlocked();
+        public void SetBlocked(bool blocked);
     }
 
     public interface INode<Coordinate> : IEquatable<Coordinate>

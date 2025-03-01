@@ -70,7 +70,7 @@ public class VoronoiDiagram<TPoint2D>
             ComputeCellWeights();
             // Record the error (cellWeight - targetWeight) for each site.
             Dictionary<Site<TPoint2D>, double> errors = new Dictionary<Site<TPoint2D>, double>();
-            foreach (var site in Sites)
+            foreach (Site<TPoint2D>? site in Sites)
             {
                 errors[site] = site.CellWeight - targetWeight;
             }

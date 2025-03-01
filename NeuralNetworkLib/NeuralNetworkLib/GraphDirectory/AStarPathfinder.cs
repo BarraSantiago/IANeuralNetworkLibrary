@@ -2,8 +2,7 @@
 
 namespace NeuralNetworkLib.GraphDirectory;
 
-public class
-    AStarPathfinder<TNodeType, TCoordinateType, TCoordinate> : Pathfinder<TNodeType, TCoordinateType, TCoordinate>
+public class AStarPathfinder<TNodeType, TCoordinateType, TCoordinate> : Pathfinder<TNodeType, TCoordinateType, TCoordinate>
     where TNodeType : INode, INode<TCoordinateType>, new()
     where TCoordinateType : IEquatable<TCoordinateType>, IVector
     where TCoordinate : ICoordinate<TCoordinateType>, new()
@@ -11,6 +10,14 @@ public class
     public AStarPathfinder(TNodeType[,] graph)
     {
         this.Graph = graph;
+    }
+    
+    public void UpdateNode(TCoordinateType nodeCoord, int newCost, bool blocked)
+    {
+        TNodeType node = Graph[(int)nodeCoord.X, (int)nodeCoord.Y];
+        node.SetCost(newCost);
+        node.SetBlocked(blocked);
+        
     }
 
     protected override int Distance(TCoordinate A, TCoordinate B)

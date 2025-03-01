@@ -79,6 +79,7 @@ public class TcAgent<TVector, TTransform>
     public SimNode<IVector> CurrentNode;
     public AStarPathfinder<SimNode<IVector>, IVector, CoordinateNode>? Pathfinder;
     public static float Time;
+    public List<SimNode<IVector>> Path;
 
     protected float timer = 0;
     protected int speed = 6;
@@ -89,13 +90,12 @@ public class TcAgent<TVector, TTransform>
     protected int? PathNodeId;
     protected TTransform transform = new TTransform();
     protected INode<IVector>? adjacentNode;
-    protected List<SimNode<IVector>> Path;
     protected static Voronoi alarmVoronoi;
 
-    protected SimNode<IVector> TargetNode
+    public SimNode<IVector> TargetNode
     {
         get => targetNode;
-        set
+        protected set
         {
             targetNode = value;
             if (targetNode == null || targetNode.GetCoordinate() == null) return;
