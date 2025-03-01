@@ -22,24 +22,24 @@ namespace NeuralNetworkDirectory
         #region Variables
         //"Population Settings"
         private int carnivoreCount = 10;
-        private int herbivoreCount = 20;
-        private float mutationRate = 0.01f;
-        private float mutationChance = 0.10f;
-        private int eliteCount = 4;
+        private int herbivoreCount = 10;
+        private float mutationRate = 0.07f;
+        private float mutationChance = 0.1f;
+        private int eliteCount = 2;
 
         //"Modifiable Settings"
         private int voronoiToDraw = 0;
-        public int Generation;
-        private float Bias = 0.0f;
-        private int generationsPerSave = 25;
+        public int Generation = 0;
+        private float Bias = 0.5f;
+        private int generationsPerSave = 50;
         private float generationDuration = 20.0f;
         private bool activateSave = false;
         private bool activateLoad = false;
         private int generationToLoad = 0;
         private float speed = 1.0f;
 
-        public int gridWidth = 10;
-        public int gridHeight = 10;
+        public int gridWidth = 200;
+        public int gridHeight = 200;
         public bool isRunning = false;
         private int missingCarnivores;
         private int missingHerbivores;
@@ -62,7 +62,6 @@ namespace NeuralNetworkDirectory
 
         #endregion
         
-        private bool _requiresRedraw;
         private readonly object _renderLock = new object();
         private const int maxBuildersCarts = 18;
         private const int maxGatherers = 18;
@@ -120,8 +119,6 @@ namespace NeuralNetworkDirectory
             }
 
             if (unitSpawned) UpdateTcAgentsCopy();
-            
-            _requiresRedraw = true;
         }
 
         private void UpdateAgentsCopy()

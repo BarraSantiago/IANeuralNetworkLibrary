@@ -16,3 +16,4 @@ F:\Image Campus\Image 2025\Cuatrimestre 1\Inteligancia Artificial\IANeuralNetwor
 F:\Image Campus\Image 2025\Cuatrimestre 1\Inteligancia Artificial\IANeuralNetworkLibrary\NeuralNetworkLib\ConsoleSimulation\obj\Debug\net7.0\ConsoleSimulation.pdb
 F:\Image Campus\Image 2025\Cuatrimestre 1\Inteligancia Artificial\IANeuralNetworkLibrary\NeuralNetworkLib\ConsoleSimulation\obj\Debug\net7.0\ConsoleSimulation.genruntimeconfig.cache
 F:\Image Campus\Image 2025\Cuatrimestre 1\Inteligancia Artificial\IANeuralNetworkLibrary\NeuralNetworkLib\ConsoleSimulation\obj\Debug\net7.0\ref\ConsoleSimulation.dll
+F:\Image Campus\Image 2025\Cuatrimestre 1\Inteligancia Artificial\IANeuralNetworkLibrary\NeuralNetworkLib\ConsoleSimulation\bin\Debug\net7.0\Newtonsoft.Json.dll
