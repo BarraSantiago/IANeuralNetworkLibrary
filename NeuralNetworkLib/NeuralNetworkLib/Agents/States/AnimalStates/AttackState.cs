@@ -16,7 +16,6 @@ namespace NeuralNetworkLib.Agents.States.AnimalStates
             Action? onAttack = parameters[0] as Action;
             float[] outputBrain1 = (float[])parameters[1];
             float[] outputBrain2 = (float[])parameters[2];
-            float outputBrain3 = (float)parameters[3];
 
             if (outputBrain1 == null || outputBrain2 == null)
             {
@@ -30,13 +29,13 @@ namespace NeuralNetworkLib.Agents.States.AnimalStates
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (outputBrain2[0] > 0.5f)
+                if (outputBrain1[0] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnAttack);
                     return;
                 }
 
-                if (outputBrain3 > 0.5f)
+                if (outputBrain2[0] > 0.5f)
                 {
                     OnFlag?.Invoke(Flags.OnSearchFood);
                     return;
